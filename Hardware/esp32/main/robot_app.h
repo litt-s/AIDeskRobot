@@ -5,7 +5,6 @@
 #include <cstdint>
 
 #include "aiui_api.h"
-#include "esp_audio_simple_player.h"
 #include "esp_err.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
@@ -50,10 +49,6 @@ private:
         AIUI_SILENCE,
         PLAYBACK_STARTED,
         PLAYBACK_DRAINED,
-        MEDIA_DECODER_DONE,
-        MEDIA_RESOLVED,
-        MEDIA_SEARCHED,
-        MEDIA_ANNOUNCE,
         MEDIA_STOP_REQUEST,
         GESTURE,
         STOP,
@@ -150,18 +145,7 @@ private:
     void StopAiui();
     void FeedAiui(const int16_t *samples, size_t sample_count);
     void HandleTtsResult(const aiui_event_result_t &result);
-    esp_err_t InitMediaPlayer();
-    void DeinitMediaPlayer();
-    void ParseMediaSemantic(const char *detail, const char *recognized_text,
-                            const char *sid);
-    bool StartMediaSearchFallback(const char *query, const char *sid);
-    void HandleSearchedMedia(const Event &event);
-    bool StartMediaAnnouncement();
-    void HandleResolvedMedia(const Event &event);
-    void StartPendingMedia();
-    void FinishMediaPlayback(bool allow_next);
-    void StopMediaPlayback();
-    void ReleaseMediaPlayer();
+
 
     static void WorkerEntry(void *ctx);
     static void AudioSendEntry(void *ctx);
@@ -183,33 +167,16 @@ private:
      * so the UI and the wake word engine are only touched from the app task. */
     static void CloudVoiceState(void *ctx, bool listening);
 #endif
-    static int MediaOutput(uint8_t *data, int data_size, void *ctx);
-    static int MediaEvent(esp_asp_event_pkt_t *event, void *ctx);
-    static void MediaSearchEntry(void *ctx);
-    static void MediaResolveEntry(void *ctx);
+
 
     QueueHandle_t event_queue_ = nullptr;
     TaskHandle_t worker_task_ = nullptr;
     TaskHandle_t boot_task_ = nullptr;
     AiuiRuntime aiui_{};
-    esp_asp_handle_t media_player_ = nullptr;
-    void *media_playlist_ = nullptr;
-    std::atomic<bool> media_active_{false};
-    std::atomic<bool> media_decoder_done_{false};
-    std::atomic<bool> media_pending_{false};
-    std::atomic<bool> media_release_pending_{false};
-    std::atomic<bool> media_search_running_{false};
-    std::atomic<bool> media_announcement_pending_{false};
-    std::atomic<bool> media_announcement_queued_{false};
-    std::atomic<bool> media_resolve_running_{false};
-    std::atomic<bool> suppress_music_failure_nlp_{false};
-    std::atomic<bool> suppress_music_failure_tts_{false};
-    char suppressed_music_sid_[64] = {};
+
     std::atomic<bool> session_exit_pending_{false};
     std::atomic<uint32_t> playback_generation_{0};
-    bool media_advance_after_drain_ = false;
-    bool media_paused_ = false;
-    uint64_t media_queued_ms_ = 0;
+
     std::atomic<RobotAppState> state_{RobotAppState::NEW};
     std::atomic<bool> running_{false};
     std::atomic<bool> boot_running_{false};
