@@ -344,3 +344,8 @@ T001–T017 与 T009 已完成（依据见各任务条目）。**T018 语音对�
 - 关键教训（已可复用）：**`robot_app.cpp` 是 CRLF 行尾**。第一次用 `\n` 拼匹配串导致 11 处替换全部"未命中"，脚本在写盘前抛错因而**文件未被破坏**——但也说明"用字符串精确替换"必须先把行尾风格确认清楚（本轮之后改用"按行数组 + 边界断言"的删法）。
 - 过程管理：中途因为 AIUI 与媒体共用事件循环、无法在单轮内完成全部拆除，曾把未编译通过的中间状态提交到本地分支 `t028-aiui-wip`（不推送），让 `main` 保持可编译；本轮完成后把该分支**压缩合并**回 `main`，删除 WIP 分支。这条路径以后可复用：**大重构先保证 main 可编译，中间态放本地分支**。
 - 未验证：**AIUI 仍在固件中**（会话层、凭据、配网页段、Kconfig、组件与 SDK 源码都还在），因此"移除 AIUI"整体**未完成**；真机未烧录。
+### 2026-10-15 — T028-3 移除 robot_app 的 AIUI 会话层（编译通过）
+- 顺序很关键：**先删头文件里的 AIUI 声明**，再编译——否则"实现已删、声明还在"的残留调用会**编译通过但链接失败**（单文件 `-c` 编译不链接）。改完后编译器立刻给出 102 处真实调用点，按它逐处清理即可。
+- 过程：①`robot_app.h` 重写为无 AIUI（去掉 `aiui_api.h`、`AiuiRuntime`、回复演示结构、AIUI 事件类型、全部 AIUI 方法声明，状态机删 `SESSION_ACTIVE`）；②`robot_app.cpp` 删除 AIUI 事件分支 165 行、PLAYBACK 旧主体 97 行、`MEDIA_STOP_REQUEST` 的 AIUI TTS 分支 64 行、`PcmConsumer` 的 AIUI 送帧分支 13 行、唤醒回落的 `StartAiui()`、`NETWORK_*` 里的 AIUI 判据、`TouchActivity` 残留与 6 组未使用的 AIUI 常量，并把 4 处提到 AIUI 的注释改写；③给 `PLAYBACK_STARTED/DRAINED` 加空处理（开关枚举要求穷尽）。结果 1295 → **1183 行**，`robot_app.cpp` 与 `app_main.cpp` **编译通过（0 error）**。
+- 过程中两次"断言失败"都发生在**写盘之前**，因此文件未被破坏——这正是"按行数组 + 首尾行断言"删法的价值：宁可报错也不写坏。
+- 未验证：真机未烧录；`robot_audio` 的 AIUI Opus 接口、配网页 AIUI 段、`aiui_secret`、Kconfig、`aiui_sdk`/`aiui_port` 组件与 `Hardware/include/aiui`、`Hardware/src/aiui` 仍待 T028-4/5 移除。

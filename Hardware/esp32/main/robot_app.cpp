@@ -48,47 +48,10 @@ constexpr int kVolumeStep = 10;
 constexpr uint8_t kDefaultVolume = 80;
 constexpr int kWakeSourceVoice = 0;
 constexpr int kWakeSourceBoot = 1;
-/*
- * The I2S callback delivers 640 samples (40 ms), but AIUI RTOS v3 accepts at
- * most 1024 payload bytes per audio frame. Match the 7911 reference flow:
- * split each capture block into two 320-sample / 640-byte / 20-ms frames.
- */
-constexpr size_t kAudioFrameSamples = 320;
-constexpr size_t kVadFrameSamples = 320;
-constexpr uint32_t kVadFrameMs = 20;
-constexpr uint32_t kVadSpeechStartMs = 520;
-/* 7911 demo: speech >25 frames, then silence >20 frames (20 ms/frame). */
-constexpr uint32_t kVadSpeechEndMs = 420;
-constexpr int32_t kAiuiCaptureGain = 1;
-/*
- * A drained local playback queue does not mean the cloud stream has ended:
- * AIUI may deliver the final status=2 packet several seconds after the
- * preceding audio packet. Only recover the transport after a prolonged period
- * with no TTS data at all.
- */
-constexpr uint32_t kTtsChunkStallTimeoutMs = 8000;
-constexpr uint8_t kAiuiMaxConnectRetries = 3;
-constexpr uint32_t kAiuiConnectRetryBaseMs = 1000;
-constexpr uint32_t kNoSpeechResultTimeoutMs = 5000;
 constexpr size_t kEventQueueDepth = 20;
-/* Preserve roughly 400 ms of buffering after switching to 20-ms frames. */
-constexpr size_t kAudioQueueDepth = 20;
-constexpr uint32_t kAiuiAudioTaskStackBytes = 8 * 1024;
 constexpr uint32_t kBootTaskStackBytes = 4096;
 constexpr uint32_t kProvisioningPromptStackBytes = 16 * 1024;
 constexpr uint32_t kReadyPromptStackBytes = 16 * 1024;
-constexpr uint32_t kMediaPlayerTaskStackBytes = 12 * 1024;
-constexpr uint32_t kMediaSearchTaskStackBytes = 12 * 1024;
-constexpr uint32_t kMediaResolveTaskStackBytes = 12 * 1024;
-constexpr uint32_t kMediaStartFallbackMs = 600;
-/* Keep reply gestures calm: the first one is immediate, later ones are
- * separated by a human-like 6-8 second pause. */
-constexpr uint32_t kReplyPresentationMinIntervalMs = 6000;
-constexpr uint32_t kReplyPresentationJitterMs = 2000;
-constexpr uint32_t kListeningAnimationMinIntervalMs = 6500;
-constexpr uint32_t kListeningAnimationJitterMs = 5500;
-constexpr uint32_t kPresentationBusyRetryMs = 1500;
-constexpr size_t kMaxPendingRandomPresentations = 4;
 const char *TAG = "robot_app";
 std::atomic<bool> s_provisioning_prompt_running{false};
 std::atomic<bool> s_ready_prompt_running{false};
@@ -591,7 +554,6 @@ void RobotApp::Deinit()
 {
     boot_running_.store(false);
 
-    DeinitAiui();
     if (gesture_ready_) {
         robot_gesture_deinit();
     }
@@ -645,109 +607,6 @@ void RobotApp::WorkerEntry(void *ctx)
                 heap_caps_free(event.payload);
             }
         }
-        if (self->state_.load() == RobotAppState::SESSION_ACTIVE &&
-            self->last_activity_ms_ != 0) {
-            uint64_t now = (uint64_t)(esp_timer_get_time() / 1000);
-            self->DispatchReplyPresentation(now);
-            self->MaybeDispatchListeningAnimation(now);
-
-            if (self->aiui_retry_at_ms_ != 0 &&
-                now >= self->aiui_retry_at_ms_) {
-                self->aiui_retry_at_ms_ = 0;
-                ++self->aiui_retry_count_;
-                ESP_LOGI(TAG, "AIUI connect retry %u/%u",
-                         (unsigned)self->aiui_retry_count_,
-                         (unsigned)kAiuiMaxConnectRetries);
-                if (aiui_start(self->aiui_.handle) != 0) {
-                    if (self->aiui_retry_count_ >=
-                        kAiuiMaxConnectRetries) {
-                        self->StopSession("AIUI connect retries exhausted");
-                        continue;
-                    }
-                    uint32_t retry_delay =
-                        (self->aiui_retry_count_ + 1U) *
-                        kAiuiConnectRetryBaseMs;
-                    self->aiui_retry_at_ms_ = now + retry_delay;
-                    ESP_LOGW(TAG,
-                             "AIUI retry start failed; next retry in %u ms",
-                             (unsigned)retry_delay);
-                }
-            }
-            uint32_t last_tts_chunk =
-                self->aiui_.tts_last_chunk_ms.load();
-            /*
-             * The TTS callback can update last_tts_chunk after WorkerEntry
-             * sampled `now`. Clamp that short cross-task race to zero instead
-             * of turning -N ms into a ~49-day unsigned timeout.
-             */
-            const uint32_t tts_now_ms =
-                (uint32_t)((uint64_t)esp_timer_get_time() / 1000ULL);
-            const int32_t signed_tts_gap_ms =
-                (int32_t)(tts_now_ms - last_tts_chunk);
-            const uint32_t tts_gap_ms =
-                last_tts_chunk == 0 || signed_tts_gap_ms < 0
-                    ? 0
-                    : (uint32_t)signed_tts_gap_ms;
-            if (self->aiui_.tts_playing.load() &&
-                !self->aiui_.tts_final_received.load() &&
-                last_tts_chunk != 0 &&
-                tts_gap_ms >= kTtsChunkStallTimeoutMs) {
-                /*
-                 * Do not resume audio on this WebSocket: until status=2 the
-                 * cloud still owns the previous request and will not treat
-                 * subsequent PCM as a new turn. Drain the local stream, close
-                 * the stale transport and let AIUI_DISCONNECTED reconnect it.
-                 */
-                self->aiui_.tts_last_chunk_ms.store(0);
-                self->aiui_.connected.store(false);
-                self->aiui_.audio_request_open.store(false);
-                self->aiui_.awaiting_reply.store(false);
-                self->aiui_.awaiting_reply_since_ms.store(0);
-                robot_audio_set_capture_paused(true);
-                if (self->aiui_.audio_queue) {
-                    xQueueReset(self->aiui_.audio_queue);
-                }
-                ESP_LOGE(TAG,
-                         "TTS final frame missing for %u ms; draining audio "
-                         "and reconnecting AIUI",
-                         (unsigned)tts_gap_ms);
-                if (robot_audio_aiui_opus_end() != ESP_OK) {
-                    self->StopSession("TTS stream recovery failed");
-                    continue;
-                }
-                if (aiui_stop(self->aiui_.handle) != 0) {
-                    self->StopSession("AIUI transport recovery failed");
-                    continue;
-                }
-            }
-            const uint32_t awaiting_since =
-                self->aiui_.awaiting_reply_since_ms.load();
-            if (self->aiui_.awaiting_reply.load() &&
-                !self->aiui_.turn_result_seen.load() &&
-                !self->aiui_.tts_playing.load() &&
-                awaiting_since != 0) {
-                const uint32_t reply_now_ms =
-                    (uint32_t)((uint64_t)esp_timer_get_time() / 1000ULL);
-                const int32_t reply_wait_ms =
-                    (int32_t)(reply_now_ms - awaiting_since);
-                if (reply_wait_ms >=
-                    (int32_t)kNoSpeechResultTimeoutMs) {
-                    self->ResumeListeningAfterNoResult(
-                        "AIUI returned no valid speech result");
-                }
-            }
-            if (!self->session_exit_pending_.load() &&
-
-                !self->aiui_.tts_playing.load() &&
-                !robot_audio_is_playing() &&
-                !self->aiui_.awaiting_reply.load() &&
-                !self->aiui_.utterance_active.load() &&
-                !self->aiui_.cloud_utterance_active.load() &&
-                now - self->last_activity_ms_ >=
-                    CONFIG_ROBOT_SESSION_IDLE_TIMEOUT_SECONDS * 1000ULL) {
-                self->BeginIdleTimeoutExit();
-            }
-        }
     }
     self->state_.store(RobotAppState::STOPPING);
     self->boot_running_.store(false);
@@ -758,7 +617,6 @@ void RobotApp::WorkerEntry(void *ctx)
         robot_wakeup_stop();
     }
 
-    self->StopAiui();
     robot_network_stop();
     self->state_.store(RobotAppState::STOPPED);
     vTaskDelete(nullptr);
@@ -769,32 +627,12 @@ esp_err_t RobotApp::SetupOnlineServices()
     if (!robot_network_time_ready()) {
         return ESP_ERR_INVALID_STATE;
     }
-    ESP_LOGI(TAG, "[online 1/3] AIUI credentials and runtime");
-    esp_err_t err = InitAiui();
-    if (err == ESP_ERR_NVS_NOT_FOUND || err == ESP_ERR_INVALID_ARG) {
-#if CONFIG_ROBOT_ALLOW_VOICELESS
-        /*
-         * Device-management-only build.  The voice stack is optional here, so a
-         * missing credential must not send the device back to provisioning:
-         * expressions, servos, buttons and the console channel keep working,
-         * while wake word, conversation and speech synthesis stay unavailable
-         * until a credential is provided.
-         */
-        ESP_LOGW(TAG, "AIUI credentials absent; running without the voice stack");
-        state_.store(RobotAppState::OFFLINE_WAKE_READY);
-        robot_ui_set_idle_animation(true);
-        return ESP_OK;
-#else
-        ESP_LOGW(TAG, "AIUI credentials absent; returning to local provisioning");
-        robot_network_enter_provisioning();
-        state_.store(RobotAppState::PROVISIONING);
-        return err;
-#endif
-    }
-    if (err != ESP_OK) {
-        state_.store(RobotAppState::FAILED);
-        return err;
-    }
+    /*
+     * There is no local speech stack any more: the wake word engine is the
+     * only thing to bring up here, and the console owns recognition, the
+     * model call and synthesis from then on.
+     */
+    esp_err_t err = ESP_OK;
 
 #if CONFIG_ROBOT_ENABLE_ESP_SR
     if (!wake_ready_) {
@@ -803,7 +641,6 @@ esp_err_t RobotApp::SetupOnlineServices()
         wake_ready_ = err == ESP_OK;
         if (!wake_ready_) {
             ESP_LOGE(TAG, "offline wake unavailable: %s", esp_err_to_name(err));
-            DeinitAiui();
             state_.store(RobotAppState::FAILED);
             return err;
         }
@@ -873,9 +710,6 @@ void RobotApp::HandleEvent(const Event &event)
          * something (the device restarts by itself) or by power-cycling.
          */
         case EventType::PROVISION_REQUEST:
-            if (state_.load() == RobotAppState::SESSION_ACTIVE) {
-                StopSession("provisioning requested from BOOT long press");
-            }
             ESP_LOGI(TAG, "provisioning requested from BOOT long press");
             robot_network_enter_provisioning();
             break;
@@ -885,7 +719,7 @@ void RobotApp::HandleEvent(const Event &event)
 #if CONFIG_ROBOT_CLOUD_VOICE
                 /*
                  * A console-triggered turn already holds the microphone. Waking
-                 * on top of it would start an AIUI session in the middle of a
+                 * on top of it would start a second turn in the middle of a
                  * recording, so drop this wake instead.
                  */
                 if (robot_voice_busy()) {
@@ -912,7 +746,7 @@ void RobotApp::HandleEvent(const Event &event)
                 /*
                  * With the cloud voice channel on, the wake word opens a turn
                  * against the role chosen in the console rather than the
-                 * built-in skill. Falling through to StartAiui when the turn
+                 * a cloud turn when it
                  * cannot start keeps the robot usable if the console has not
                  * been given voice credentials yet.
                  */
@@ -921,10 +755,9 @@ void RobotApp::HandleEvent(const Event &event)
                     break;
                 }
 #endif
-                if (StartAiui() == ESP_OK) {
-                    state_.store(RobotAppState::SESSION_ACTIVE);
-                    TouchActivity();
-                } else {
+                /* No local speech stack to fall back to: if the cloud turn
+                 * could not start, re-arm the wake engine and stay ready. */
+                {
                     robot_audio_set_capture_paused(false);
                     robot_wakeup_start();
                     robot_ui_set_idle_animation(true);
@@ -1008,275 +841,19 @@ void RobotApp::HandleEvent(const Event &event)
 #endif
             break;
         case EventType::NETWORK_TIME_READY:
-            if (!aiui_.handle) {
+            if (!wake_ready_) {
                 SetupOnlineServices();
             }
             break;
         case EventType::NETWORK_DISCONNECTED:
-            StopSession("network disconnected");
-            break;
-        case EventType::AIUI_CONNECTED: {
-            if (state_.load() != RobotAppState::SESSION_ACTIVE ||
-                session_exit_pending_.load() ||
-                !aiui_.active.load()) {
-                break;
-            }
-            aiui_.connected.store(true);
-            aiui_.awaiting_reply.store(false);
-            aiui_.awaiting_reply_since_ms.store(0);
-            aiui_.turn_result_seen.store(false);
-            aiui_.semantic_session_end_known.store(false);
-            aiui_.semantic_should_end_session.store(false);
-            aiui_.discard_tts_until_final.store(false);
-            aiui_.audio_request_open.store(false);
-            aiui_.cloud_utterance_active.store(false);
-            aiui_retry_at_ms_ = 0;
-            aiui_retry_count_ = 0;
-            if (aiui_.audio_queue) {
-                xQueueReset(aiui_.audio_queue);
-            }
-            const bool playback_active = robot_audio_is_playing();
-            robot_audio_set_capture_paused(playback_active);
-            TouchActivity();
-            const uint64_t now =
-                (uint64_t)(esp_timer_get_time() / 1000ULL);
-            next_listening_animation_ms_ =
-                now + kListeningAnimationMinIntervalMs +
-                (esp_random() % kListeningAnimationJitterMs);
-            ESP_LOGI(TAG, "AIUI connected");
-            if (playback_active) {
-                ESP_LOGI(TAG,
-                         "capture remains paused until playback drains");
-            }
-            break;
-        }
-        case EventType::AIUI_DISCONNECTED:
-            if (state_.load() != RobotAppState::SESSION_ACTIVE) {
-                break;
-            }
-            if (session_exit_pending_.load() || !aiui_.active.load()) {
-                ESP_LOGI(TAG,
-                         "AIUI disconnected for pending session exit");
-                break;
-            }
-            aiui_.connected.store(false);
-            aiui_.tts_playing.store(false);
-            aiui_.tts_final_received.store(false);
-            aiui_.awaiting_reply.store(false);
-            aiui_.awaiting_reply_since_ms.store(0);
-            aiui_.turn_result_seen.store(false);
-            aiui_.semantic_session_end_known.store(false);
-            aiui_.semantic_should_end_session.store(false);
-            aiui_.discard_tts_until_final.store(false);
-            aiui_.audio_request_open.store(false);
-            aiui_.cloud_utterance_active.store(false);
-            robot_audio_aiui_opus_abort();
-            robot_audio_set_capture_paused(true);
-            if (aiui_.audio_queue) {
-                xQueueReset(aiui_.audio_queue);
-            }
-            if (aiui_retry_at_ms_ != 0) {
-                break;
-            }
-            if (aiui_retry_count_ >= kAiuiMaxConnectRetries) {
-                StopSession("AIUI connect retries exhausted");
-                break;
-            }
-            {
-                uint32_t retry_delay =
-                    (aiui_retry_count_ + 1U) *
-                    kAiuiConnectRetryBaseMs;
-                aiui_retry_at_ms_ =
-                    (uint64_t)(esp_timer_get_time() / 1000) + retry_delay;
-                ESP_LOGW(TAG,
-                         "AIUI disconnected; retry %u/%u in %u ms",
-                         (unsigned)(aiui_retry_count_ + 1U),
-                         (unsigned)kAiuiMaxConnectRetries,
-                         (unsigned)retry_delay);
-            }
-            break;
-        case EventType::AIUI_ERROR:
-            ESP_LOGE(TAG, "AIUI error code=%d", event.code);
-            if (event.code == 10024 || event.code == 500) {
-                /*
-                 * 7911 treats an empty recognition/result turn as a request
-                 * failure rather than a broken WebSocket session.  Code 500
-                 * with "res empty" is the same condition after IAT succeeds:
-                 * discard this turn and immediately resume continuous
-                 * listening instead of leaving capture paused.
-                 */
-                ResumeListeningAfterNoResult(
-                    event.code == 500 ? "AIUI cloud returned empty response"
-                                      : "AIUI empty recognition");
-            } else if (event.code == 900018 || event.code == 10012) {
-                StopSession("AIUI cloud session timeout");
-            } else {
-                StopSession("AIUI error");
-            }
-            break;
-        case EventType::AIUI_RESULT:
-            HandleResult(event);
-            break;
-        case EventType::AIUI_SPEECH_END:
-            /*
-             * The rapid-interaction service reports its own VAD EOS before
-             * the local VAD on some utterances. Stop the external audio
-             * request at that point. Otherwise the server keeps the request
-             * open and may withhold the final TTS status=2 packet.
-             */
-            if (aiui_.audio_request_open.exchange(false)) {
-                robot_audio_set_capture_paused(true);
-                if (aiui_.audio_queue) {
-                    xQueueReset(aiui_.audio_queue);
-                }
-                if (aiui_send_audio(aiui_.handle, nullptr, 0) != 0) {
-                    aiui_.connected.store(false);
-                    Event disconnected = {};
-                    disconnected.type = EventType::AIUI_DISCONNECTED;
-                    disconnected.code = -1;
-                    PostEvent(disconnected);
-                } else {
-                    ESP_LOGI(TAG,
-                             "cloud VAD: speech ended; AIUI audio end sent");
-                }
-            }
-            break;
-        case EventType::AIUI_SILENCE:
-            /*
-             * Silence belongs to one audio request, not to the WebSocket
-             * session. The 7911 demo filters a late Silence after clearing
-             * cur_audio_stmid. Keep a valid result/TTS turn untouched; when
-             * no result exists, cancel only this recognition attempt and
-             * immediately return to continuous listening.
-             */
-            if (aiui_.turn_result_seen.load() ||
-                aiui_.tts_playing.load() ||
-                robot_audio_is_playing()) {
-                ESP_LOGI(TAG,
-                         "stale cloud Silence ignored after speech result");
-            } else {
-                ResumeListeningAfterNoResult("AIUI cloud Silence");
-            }
+            /* A cloud turn has its own failure path. */
+            ESP_LOGW(TAG, "network disconnected");
             break;
         case EventType::PLAYBACK_STARTED:
-            if (state_.load() != RobotAppState::SESSION_ACTIVE ||
-                static_cast<uint32_t>(event.code) !=
-                    playback_generation_.load() ||
-                !aiui_.tts_playing.load()) {
-                break;
-            }
-            reply_playback_started_ = true;
-            next_listening_animation_ms_ = 0;
-            ESP_LOGI(TAG, "AI reply presentation synchronized to playback");
-            if (reply_pending_expression_valid_) {
-                const int pending_expression = reply_pending_expression_;
-                reply_pending_expression_valid_ = false;
-                reply_pending_expression_ = -1;
-                ApplyReplyExpression(pending_expression,
-                                     "AIUI facial tag at playback");
-            }
-            ProcessReplyExpressionSegments(reply_expression_flush_pending_);
-            reply_expression_flush_pending_ = false;
-            DispatchReplyPresentation(
-                (uint64_t)(esp_timer_get_time() / 1000ULL));
+        case EventType::PLAYBACK_DRAINED:
+            /* Only the wake chime and streamed answers use the playback
+             * stream now; the module that plays them owns their lifetime. */
             break;
-        case EventType::PLAYBACK_DRAINED: {
-            if (state_.load() == RobotAppState::SESSION_ACTIVE &&
-                static_cast<uint32_t>(event.code) !=
-                    playback_generation_.load()) {
-                ESP_LOGW(TAG,
-                         "stale playback drain ignored: generation=%u "
-                         "current=%u",
-                         (unsigned)static_cast<uint32_t>(event.code),
-                         (unsigned)playback_generation_.load());
-                break;
-            }
-            if (session_exit_pending_.load()) {
-                StopSession("idle timeout");
-                break;
-            }
-            /*
-             * A DRAIN marker belongs to the stream that queued it. During
-             * continuous dialogue a delayed marker from an older prompt can
-             * arrive after the next TTS has already started. Never let that
-             * stale event clear tts_playing or reopen the microphone.
-             */
-            if (aiui_.tts_playing.load()) {
-                const size_t buffered_samples =
-                    robot_audio_playback_buffered_samples();
-                if (!aiui_.tts_final_received.load() ||
-                    buffered_samples != 0) {
-                    ESP_LOGW(TAG,
-                             "stale playback drain ignored: tts_final=%d "
-                             "buffered=%u ms",
-                             aiui_.tts_final_received.load() ? 1 : 0,
-                             (unsigned)((buffered_samples * 1000ULL) /
-                                        16000ULL));
-                    break;
-                }
-            }
-            const bool semantic_session_end_known =
-                aiui_.semantic_session_end_known.load();
-            const bool semantic_should_end_session =
-                aiui_.semantic_should_end_session.load();
-            const bool completed_tts = aiui_.tts_playing.load();
-            aiui_.tts_playing.store(false);
-            aiui_.tts_final_received.store(false);
-            aiui_.discard_tts_until_final.store(false);
-            aiui_.tts_last_chunk_ms.store(0);
-            aiui_.awaiting_reply.store(false);
-            aiui_.awaiting_reply_since_ms.store(0);
-            aiui_.turn_result_seen.store(false);
-            aiui_.audio_request_open.store(false);
-            aiui_.cloud_utterance_active.store(false);
-            aiui_.vad_speech_ms.store(0);
-            aiui_.vad_silence_ms.store(0);
-            aiui_.utterance_active.store(false);
-            if (completed_tts) {
-                ResetReplyPresentation();
-                const uint64_t now =
-                    (uint64_t)(esp_timer_get_time() / 1000ULL);
-                next_listening_animation_ms_ =
-                    now + kListeningAnimationMinIntervalMs +
-                    (esp_random() % kListeningAnimationJitterMs);
-            }
-            if (aiui_.vad_handle) {
-                vad_reset_trigger(
-                    static_cast<vad_handle_t>(aiui_.vad_handle));
-            }
-            if (aiui_.audio_queue) {
-                /*
-                 * Capture is paused while TTS is playing, but frames queued
-                 * between endpointing and the first TTS packet belong to the
-                 * previous request. Never send them as the beginning of the
-                 * next continuous-dialogue turn.
-                 */
-                xQueueReset(aiui_.audio_queue);
-            }
-
-            aiui_.semantic_session_end_known.store(false);
-            aiui_.semantic_should_end_session.store(false);
-            if (semantic_session_end_known &&
-                semantic_should_end_session) {
-                /*
-                 * shouldEndSession closes the cloud skill turn, not the
-                 * device's wake session.  Keep local continuous dialogue
-                 * active so a clarification question can be answered without
-                 * requiring another wake word.  Explicit exit commands and
-                 * the idle-timeout farewell still close the connection.
-                 */
-                ESP_LOGI(TAG,
-                         "AIUI skill turn ended; local dialogue remains active");
-            }
-            if (state_.load() == RobotAppState::SESSION_ACTIVE &&
-                !aiui_.connected.load()) {
-                robot_audio_set_capture_paused(true);
-            } else {
-                robot_audio_set_capture_paused(false);
-            }
-            TouchActivity();
-            break;
-        }
         case EventType::MEDIA_STOP_REQUEST:
             /*
              * A cloud voice turn owns the speaker while it streams.  Aborting
@@ -1291,70 +868,6 @@ void RobotApp::HandleEvent(const Event &event)
                  * queued would otherwise keep playing until then. */
                 robot_audio_abort_playback();
                 break;
-            }
-            if (session_exit_pending_.exchange(false)) {
-                robot_audio_abort_playback();
-                StopSession("idle timeout prompt interrupted");
-                break;
-            }
-            if (aiui_.tts_playing.load() || robot_audio_is_playing()) {
-                const bool interrupted_tts = aiui_.tts_playing.load();
-                const bool wait_for_tts_final =
-                    interrupted_tts &&
-                    !aiui_.tts_final_received.load();
-                robot_audio_set_capture_paused(true);
-            
-                robot_audio_aiui_opus_abort();
-                robot_audio_abort_playback();
-                playback_generation_.store(
-                    robot_audio_get_playback_generation());
-                aiui_.discard_tts_until_final.store(wait_for_tts_final);
-                aiui_.tts_playing.store(wait_for_tts_final);
-                aiui_.tts_final_received.store(false);
-                if (!wait_for_tts_final) {
-                    aiui_.tts_last_chunk_ms.store(0);
-                }
-                aiui_.awaiting_reply.store(wait_for_tts_final);
-                aiui_.awaiting_reply_since_ms.store(
-                    wait_for_tts_final
-                        ? (uint32_t)((uint64_t)esp_timer_get_time() /
-                                     1000ULL)
-                        : 0);
-                aiui_.turn_result_seen.store(false);
-                aiui_.semantic_session_end_known.store(false);
-                aiui_.semantic_should_end_session.store(false);
-                aiui_.audio_request_open.store(false);
-                aiui_.cloud_utterance_active.store(false);
-                aiui_.vad_speech_ms.store(0);
-                aiui_.vad_silence_ms.store(0);
-                aiui_.utterance_active.store(false);
-                if (aiui_.vad_handle) {
-                    vad_reset_trigger(
-                        static_cast<vad_handle_t>(aiui_.vad_handle));
-                }
-                if (aiui_.audio_queue) {
-                    xQueueReset(aiui_.audio_queue);
-                }
-                if (!wait_for_tts_final &&
-                    ((state_.load() == RobotAppState::SESSION_ACTIVE &&
-                      aiui_.connected.load()) ||
-                     state_.load() == RobotAppState::OFFLINE_WAKE_READY)) {
-                    robot_audio_set_capture_paused(false);
-                }
-                TouchActivity();
-                if (wait_for_tts_final) {
-                    ESP_LOGI(TAG,
-                             "TTS interrupted by BOOT; waiting for "
-                             "cloud final frame");
-                } else if (interrupted_tts) {
-                    ESP_LOGI(TAG,
-                             "TTS tail interrupted by BOOT; "
-                             "conversation resumed");
-                } else {
-                    ESP_LOGI(TAG,
-                             "media/output stopped by BOOT; "
-                             "conversation resumed");
-                }
             }
             break;
         case EventType::GESTURE:
@@ -1463,7 +976,7 @@ void RobotApp::SubmitGesture(robot_gesture_t gesture)
 
 void RobotApp::TouchActivity()
 {
-    last_activity_ms_ = (uint64_t)(esp_timer_get_time() / 1000);
+    /* Nothing to keep alive locally: a cloud turn owns its own lifetime. */
 }
 
 
@@ -1480,8 +993,8 @@ void RobotApp::TouchActivity()
 /*
  * Microphone level, throttled to roughly one line per second.
  *
- * This used to be logged only while an AIUI session was open. On a build
- * without AIUI credentials nothing consumes the frames at all - the wake word
+ * This is logged while a cloud turn owns the microphone. At other
+ * times nothing consumes the frames at all - the wake word
  * engine is not initialised either, because setup returns early - so there was
  * no way whatsoever to tell whether the microphone was capturing. "The robot
  * did not hear me" then has to be diagnosed from the microphone instead of
@@ -1516,19 +1029,6 @@ void RobotApp::PcmConsumer(void *ctx, const int16_t *samples,
     if (state == RobotAppState::OFFLINE_WAKE_READY) {
         log_microphone_level(samples, sample_count);
         robot_wakeup_feed_pcm(samples, sample_count, capture_ms);
-    } else if (state == RobotAppState::SESSION_ACTIVE) {
-        /*
-         * capture_paused is the primary gate. Keep this second gate here so
-         * an old playback callback can never enqueue microphone data into a
-         * TTS/media turn during a cross-task state transition.
-         */
-        if (self->aiui_.tts_playing.load() ||
-            self->aiui_.awaiting_reply.load() ||
-            false) {
-            return;
-        }
-        log_microphone_level(samples, sample_count);
-        self->FeedAiui(samples, sample_count);
     } else {
         /* A cloud voice turn records through a tap rather than here, but the
          * level is still worth seeing: it is the only evidence available when
@@ -1636,9 +1136,7 @@ void RobotApp::BootEntry(void *ctx)
                  * swallowed (it became a wake the state machine ignores).
                  */
                 event.type =
-
-                            self->aiui_.tts_playing.load() ||
-                            robot_audio_is_playing() ||
+                    robot_audio_is_playing() ||
                             cloud_voice_turn_busy()
                         ? EventType::MEDIA_STOP_REQUEST
                         : EventType::WAKE_TRIGGER;
@@ -1656,7 +1154,7 @@ void RobotApp::BootEntry(void *ctx)
              * handled, access point not started).
              */
             ESP_LOGI(TAG, "BOOT long press detected");
-            /* Handled on the worker task: leaving a session touches the AIUI
+            /* Handled on the worker task: the turn and the wake engine are owned
              * runtime and the playback stack, which only that task owns. */
             Event event = {};
             event.type = EventType::PROVISION_REQUEST;
