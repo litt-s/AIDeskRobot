@@ -332,3 +332,7 @@ T001–T017 与 T009 已完成（依据见各任务条目）。**T018 语音对�
 - 验证：`git status -sb` = `## main...origin/main`（无分歧）；`git ls-remote --heads origin` = `09a58005c8619f69d992a12c3fa12c0ae9bc098d refs/heads/main`；经本机代理 `curl -x http://127.0.0.1:7897` 探测仓库返回 **200（公开）**。
 - 环境事实（值得记住）：本机 git 走 `http.https://github.com.proxy=http://127.0.0.1:7897`（代理必须开着，直连 github.com 返回 000）；推送凭据由系统级 `credential.helper=manager` 提供，无需输入口令；**沙箱把工作区 `.git` 设为只读**，因此 `git add`／`commit`／`push` 必须在沙箱外执行（`index.lock: Permission denied` 就是它的表现）。
 - 未验证/待办：`.github/workflows/verify.yml` 尚未在 GitHub 上实际跑过；仓库若需转私有需用户在 GitHub 设置里操作；`ENCRYPTION_KEY` 仍只存在于本地 `.dev.vars` 与 Cloudflare secret（建议用户离线备份）。
+### 2026-10-15 — 规则新增：每过一个阶段提交（并推送）一次仓库
+- 用户要求："在项目规则上添加，项目每过一个小阶段就提交一次仓库"。
+- 落实：`AGENTS.md` 新增提交节奏条款——"一个阶段"＝一个编号任务完成，或一次验收与文档同步结束；提交信息写明任务号与要点；**提交前必做密钥扫描**（见 DEPLOY「源码托管」小节，真实密钥一律不入库）。`DEPLOY.md` 的源码托管小节同步写入该节奏与理由（小阶段提交既是留痕，也是成本最低的一次"改动全貌复查"，同时是回滚的粒度单位）。
+- 本条规则从 2026-10-15 起生效；仓库此前只有两个提交（`09a5800` 初始入库、`a242af9` 文档同步），历史提交粒度不再追改。
