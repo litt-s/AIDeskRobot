@@ -1,12 +1,9 @@
-menu "DeskEmoji AIUI"
+menu "DeskEmoji robot"
 
 config ROBOT_ENABLE_ESP_SR
     bool "Enable offline ESP-SR wake word"
     default y
 
-config ROBOT_ENABLE_EXPRESSION_TAG
-    bool "Prefer AIUI facial-expression tags"
-    default y
 
 config ROBOT_ENABLE_GESTURE
     bool "Enable PAJ7620U2 gestures"
@@ -20,16 +17,6 @@ config ROBOT_ENABLE_SERVO
     bool "Enable dual servos"
     default y
 
-config ROBOT_ALLOW_VOICELESS
-    bool "Run without AIUI credentials (device management only)"
-    default n
-    help
-        Normally a missing AIUI credential sends the device back to
-        provisioning, because the voice stack cannot start without it.  Enable
-        this to keep running instead: expressions, servos, buttons and the
-        self-hosted console channel stay available, while wake word, speech
-        recognition, conversation and speech synthesis remain unavailable.
-        Leave it off for a normal voice-enabled build.
 
 config ROBOT_SERVO_X_PIN
     int "Horizontal servo GPIO"
@@ -119,22 +106,10 @@ config ROBOT_MIC_SHIFT
         bit alignment and that measurement point at 16, so it is the default.
         Only lower it if the captured audio turns out too quiet.
 
-config ROBOT_SESSION_IDLE_TIMEOUT_SECONDS
-    int "Active-session idle timeout"
-    range 10 300
-    default 60
 
 config ROBOT_STA_CONNECT_TIMEOUT_SECONDS
     int "Saved Wi-Fi connection timeout"
     range 10 180
     default 60
-
-config ROBOT_AIUI_SCENE
-    string "Published AIUI v3 scene"
-    default "main"
-
-config ROBOT_AIUI_VCN
-    string "AIUI TTS voice name"
-    default "x6_wuyediantai_mini"
 
 endmenu

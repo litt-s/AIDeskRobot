@@ -18,12 +18,6 @@ typedef struct {
     void *provisioning_ctx;
 } robot_network_config_t;
 
-typedef struct {
-    char appid[33];
-    char appkey[65];
-    char appsecret[65];
-} robot_aiui_credentials_t;
-
 /*
  * Where the console channel points.  Provisioned from the setup page rather
  * than compiled in, because the address of the machine running the console
@@ -50,7 +44,6 @@ esp_err_t robot_network_enter_provisioning(void);
 bool robot_network_request_reprovision(void);
 bool robot_network_time_ready(void);
 esp_err_t robot_network_sync_time(void);
-esp_err_t robot_network_load_aiui_credentials(robot_aiui_credentials_t *credentials);
 esp_err_t robot_network_load_cloud_credentials(robot_cloud_credentials_t *credentials);
 void robot_network_stop(void);
 void robot_network_deinit(void);

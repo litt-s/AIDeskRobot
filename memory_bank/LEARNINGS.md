@@ -174,6 +174,12 @@
   1. **核对"是否已入库"要看索引，不是工作区**。我用 `git grep --cached` 复查时仍看到旧值，一度以为替换没生效；真实原因是沙箱把 `.git` 设为只读，`git add` 返回 `fatal: Unable to create '.../.git/index.lock': Permission denied`，而我把它的输出过滤成了只显示 warning 行，于是失败被自己藏起来了。**过滤命令输出时，永远保留 fatal/error 这两类行。**
   2. `<<<` 是 bash 的 here-string，PowerShell 里没有；提交信息长的时候应写进临时文件再用 `git commit -F <file>`（PowerShell 的 here-string `@'...'@` 可以安全地生成该文件）。
 - 还有一条环境事实：本机 `github.com` 直连返回 000，git 靠 `http.https://github.com.proxy=http://127.0.0.1:7897` 走本地代理；推送凭据来自系统级 `credential.helper=manager`。**"推送成功"和"能直连 GitHub"是两件事**，验证时要用代理。
+## 删除一个子系统时：先删声明，让编译器把调用点全部暴露出来（2026-10-15 移除 AIUI）
+- 背景：从 ESP32 固件里整体移除 AIUI（约 470 行 `robot_app` 代码 + 2 个组件 + 厂商 SDK 源码 + 配网页字段 + Kconfig + 音频解码路径）。
+- **关键顺序**：如果先删实现、保留声明，单文件 `-c` 编译**不会报错**（不链接），问题要到链接期才炸，而且错误信息指向链接符号而不是调用点，排查成本高得多。正确顺序是**先删头文件里的声明**：改完 `robot_app.h` 后编译器一次给出 **102 处**调用点；`robot_audio.h` 同理给出 27 处。**用编译器当清单**比人肉 grep 更可靠，也更快。
+- 删大块代码时用"**按行数组 + 首尾行断言**"：先定位起止行并断言两行内容，再从后往前删（避免行号漂移）。本轮三次断言失败都发生在写盘之前——**文件一个字都没被改坏**；这比"字符串精确替换"稳妥得多，尤其在 CRLF/LF 混用的工程里（本轮 `.c` 是 CRLF、`.h` 是 LF，同一个匹配串不可能同时命中，必须用 `\r?\n` 或按行处理）。
+- 收尾要扫两遍：①所有编译单元（本轮 6 个）都过一遍编译器；②对整套仓库再 grep 一遍 `AIUI|aiui`，剩下的应当只有注释/文档。**"某一处编译通过"不等于"子系统删干净"**。
+- 依赖清理也是删除的一部分：删掉代码后要连带删掉 `CMakeLists` 的 `REQUIRES`／`idf_component.yml` 的依赖（`78/esp-opus`、`esp_audio_simple_player`），否则构建仍然拉取无用组件；`Kconfig` 里已无引用的选项同样该删——但**必须先确认没有任何源文件引用**（本轮 `ROBOT_ENABLE_ESP_SR`／`ROBOT_ENABLE_GESTURE`／`ROBOT_ENABLE_SERVO` 仍在用，保留）。
 ## 待调查
 其他供应商兼容性、真实浏览器暂停续写整链路、Cloudflare 远程 migration 与生产部署仍待验证。server/index.ts 仍保留 `if(false)` 的旧 chat-legacy 死代码与 chat_locks 过期检查，属待清理项；这不构成可路由漏洞，但会增加维护成本。
 

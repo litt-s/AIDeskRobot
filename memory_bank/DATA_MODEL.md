@@ -17,4 +17,4 @@ users(id,username,password_hash,salt)；sessions(token_hash,user_id,expires_at)�
 暂停与继续以数据库状态为准，不依赖前端内存。生成状态 state=running/paused/completed/failed；token 为本次生成标识，checkpoint、finalize、pause、resume 全部带 token 条件更新，被替换的旧 token 不能写入或覆盖新生成。每个 delta 先 checkpoint 落库再下发，pause 显式把 state 置 paused 并写 interrupted；resume 仅接受 paused/failed，CAS 换新 token 后基于 partial 与原上下文续写并追加到同一 assistant 消息，不重复插入用户消息；lease 15s，失联由 reconcile 收敛为 paused 提示可续写。上下文最多取最近100条complete消息按时间正序，页面历史仍保留全部。
 
 ## 设备侧 NVS（配网页写入，不是 D1）
-`wifi_cfg`：`ssid`、`password`；`cloud_cfg`：`url`（控制台服务器地址）、`key`（设备码）；`aiui_secret`：`appid`、`appkey`、`appsecret`。配网页**填了才写、留空不写**（逐字段保存，没填的字段保持原值）；设备码在 NVS 内明文保存，页面只显示后四位，不显示完整值。启动时逐字段回落：NVS 缺哪一项才用固件编译值（`ROBOT_CLOUD_URL`／`ROBOT_CLOUD_KEY`）；AIUI 三项必须齐备才生效。
+`wifi_cfg`：`ssid`、`password`；`cloud_cfg`：`url`（控制台服务器地址）、`key`（设备码）。配网页**填了才写、留空不写**（逐字段保存，没填的字段保持原值）；设备码在 NVS 内明文保存，页面只显示后四位，不显示完整值。启动时逐字段回落：NVS 缺哪一项才用固件编译值（`ROBOT_CLOUD_URL`／`ROBOT_CLOUD_KEY`）。

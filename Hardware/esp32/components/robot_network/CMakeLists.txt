@@ -1,5 +1,5 @@
 idf_component_register(
-    SRCS "robot_network.c" "robot_music.c"
+    SRCS "robot_network.c"
     INCLUDE_DIRS "include"
     PRIV_REQUIRES
         esp_wifi esp_event esp_netif nvs_flash esp_http_server

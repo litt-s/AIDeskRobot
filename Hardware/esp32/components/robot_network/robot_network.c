@@ -73,7 +73,7 @@ static void set_connection_state(connection_state_t state)
 
 /*
  * The setup page is assembled from a static head, the current configuration and
- * a static tail, and each concern (Wi-Fi, the console device channel, the AIUI
+ * a static tail, and each concern (Wi-Fi and the console device channel)
  * credentials) has its own form and its own submit button.  One shared form was
  * the reason the two settings interfered: saving the device code meant
  * resubmitting the Wi-Fi fields too, and the empty password box then overwrote
@@ -145,11 +145,6 @@ static const char PROVISION_PAGE_TAIL[] =
     "<label>设备码</label><input name=devicekey maxlength=63 "
     "autocapitalize=off autocorrect=off spellcheck=false "
     "placeholder='XXXX-XXXX-XXXX'>"
-    "<h3 style='margin-top:24px'>AIUI 凭据（可选）</h3>"
-    "<p class=hint>三项需同时填写；三项都不填则保持现有凭据不变。</p>"
-    "<label>APPID</label><input name=appid maxlength=32>"
-    "<label>APPKEY</label><input name=appkey type=password maxlength=64>"
-    "<label>APPSECRET</label><input name=appsecret type=password maxlength=64>"
     "<p class=hint>没填的输入框一律保持原来的值，保存后设备自动重启。</p>"
     "<button class=primary type=submit>保存并重启</button>"
     "</form></div>"
@@ -337,13 +332,10 @@ static esp_err_t root_handler(httpd_req_t *request)
     char password[64] = {0};
     char key_mask[32] = {0};
     robot_cloud_credentials_t cloud = {0};
-    robot_aiui_credentials_t aiui = {0};
 
     load_saved_wifi(ssid, sizeof(ssid), password, sizeof(password));
     const bool have_cloud =
         robot_network_load_cloud_credentials(&cloud) == ESP_OK;
-    const bool have_aiui =
-        robot_network_load_aiui_credentials(&aiui) == ESP_OK;
     if (have_cloud && cloud.device_key[0]) {
         device_key_mask(cloud.device_key, key_mask, sizeof(key_mask));
     }
@@ -383,12 +375,6 @@ static esp_err_t root_handler(httpd_req_t *request)
     if (err == ESP_OK) {
         err = send_escaped_text(request, key_mask[0] ? key_mask
                                                      : "未配置（用固件内置值）");
-    }
-    if (err == ESP_OK) {
-        err = send_escaped_text(request, " ｜ AIUI 凭据：");
-    }
-    if (err == ESP_OK) {
-        err = send_escaped_text(request, have_aiui ? "已配置" : "未配置");
     }
     if (err == ESP_OK) {
         err = httpd_resp_send_chunk(request, PROVISION_PAGE_TAIL,
@@ -596,29 +582,6 @@ static esp_err_t write_wifi(const char *ssid, const char *password)
     return err;
 }
 
-static esp_err_t write_aiui(const char *appid, const char *appkey,
-                            const char *appsecret)
-{
-    nvs_handle_t nvs = 0;
-    esp_err_t err = nvs_open("aiui_secret", NVS_READWRITE, &nvs);
-    if (err == ESP_OK) {
-        err = nvs_set_str(nvs, "appid", appid);
-    }
-    if (err == ESP_OK) {
-        err = nvs_set_str(nvs, "appkey", appkey);
-    }
-    if (err == ESP_OK) {
-        err = nvs_set_str(nvs, "appsecret", appsecret);
-    }
-    if (err == ESP_OK) {
-        err = nvs_commit(nvs);
-    }
-    if (nvs) {
-        nvs_close(nvs);
-    }
-    return err;
-}
-
 /*
  * A bare host[:port] is what people actually type, and the ESP-IDF HTTP client
  * refuses it outright ("Error parse url"), leaving a robot that looks online
@@ -692,36 +655,15 @@ static esp_err_t save_handler(httpd_req_t *request)
     }
     char ssid[33] = {0};
     char password[64] = {0};
-    char appid[33] = {0};
-    char appkey[65] = {0};
-    char appsecret[65] = {0};
     char server[128] = {0};
     char devicekey[64] = {0};
     form_value(form, "ssid", ssid, sizeof(ssid));
     form_value(form, "password", password, sizeof(password));
-    form_value(form, "appid", appid, sizeof(appid));
-    form_value(form, "appkey", appkey, sizeof(appkey));
-    form_value(form, "appsecret", appsecret, sizeof(appsecret));
     form_value(form, "server", server, sizeof(server));
     form_value(form, "devicekey", devicekey, sizeof(devicekey));
     memset(form, 0, (size_t)request->content_len + 1);
     free(form);
 
-    /*
-     * The AIUI credentials are the one set that cannot be written piecemeal:
-     * nothing works until all three are present, so a partial set is refused
-     * before anything at all is written rather than saved half-way.
-     */
-    const bool have_aiui = appid[0] || appkey[0] || appsecret[0];
-    if (have_aiui && !(appid[0] && appkey[0] && appsecret[0])) {
-        memset(password, 0, sizeof(password));
-        memset(appkey, 0, sizeof(appkey));
-        memset(appsecret, 0, sizeof(appsecret));
-        memset(devicekey, 0, sizeof(devicekey));
-        return send_saved_page(request, "AIUI 凭据不完整",
-                               "APPID、APPKEY、APPSECRET 需要同时填写，本次未写入任何内容。",
-                               false);
-    }
 
     char changed[96] = {0};
     esp_err_t err = ESP_OK;
@@ -729,12 +671,6 @@ static esp_err_t save_handler(httpd_req_t *request)
         err = write_wifi(ssid, password);
         if (err == ESP_OK) {
             append_change(changed, sizeof(changed), "Wi-Fi");
-        }
-    }
-    if (err == ESP_OK && have_aiui) {
-        err = write_aiui(appid, appkey, appsecret);
-        if (err == ESP_OK) {
-            append_change(changed, sizeof(changed), "AIUI 凭据");
         }
     }
     if (err == ESP_OK && (server[0] || devicekey[0])) {
@@ -750,8 +686,6 @@ static esp_err_t save_handler(httpd_req_t *request)
         }
     }
     memset(password, 0, sizeof(password));
-    memset(appkey, 0, sizeof(appkey));
-    memset(appsecret, 0, sizeof(appsecret));
     memset(devicekey, 0, sizeof(devicekey));
     if (err == ESP_ERR_INVALID_SIZE) {
         return send_saved_page(request, "服务器地址太长",
@@ -1003,7 +937,7 @@ esp_err_t robot_network_start(void)
         ESP_LOGW(TAG, "unable to disable Wi-Fi power save: %s",
                  esp_err_to_name(err));
     } else {
-        ESP_LOGI(TAG, "Wi-Fi power save disabled for AIUI streaming");
+        ESP_LOGI(TAG, "Wi-Fi power save disabled for cloud voice streaming");
     }
     xEventGroupClearBits(s_network.events, GOT_IP_BIT | REPROVISION_BIT);
     set_connection_state(CONNECTION_CONNECTING);
@@ -1113,34 +1047,6 @@ esp_err_t robot_network_sync_time(void)
     return sync_time();
 }
 
-esp_err_t robot_network_load_aiui_credentials(robot_aiui_credentials_t *credentials)
-{
-    if (!credentials) {
-        return ESP_ERR_INVALID_ARG;
-    }
-    memset(credentials, 0, sizeof(*credentials));
-    nvs_handle_t nvs = 0;
-    esp_err_t err = nvs_open("aiui_secret", NVS_READONLY, &nvs);
-    size_t appid_size = sizeof(credentials->appid);
-    size_t appkey_size = sizeof(credentials->appkey);
-    size_t secret_size = sizeof(credentials->appsecret);
-    if (err == ESP_OK) {
-        err = nvs_get_str(nvs, "appid", credentials->appid, &appid_size);
-    }
-    if (err == ESP_OK) {
-        err = nvs_get_str(nvs, "appkey", credentials->appkey, &appkey_size);
-    }
-    if (err == ESP_OK) {
-        err = nvs_get_str(nvs, "appsecret", credentials->appsecret, &secret_size);
-    }
-    if (nvs) {
-        nvs_close(nvs);
-    }
-    if (err != ESP_OK) {
-        memset(credentials, 0, sizeof(*credentials));
-    }
-    return err;
-}
 
 esp_err_t robot_network_load_cloud_credentials(robot_cloud_credentials_t *credentials)
 {
@@ -1156,7 +1062,7 @@ esp_err_t robot_network_load_cloud_credentials(robot_cloud_credentials_t *creden
     /*
      * Each field stands on its own, so a device provisioned with only one of
      * them still uses that one and falls back for the other.  A missing field
-     * is therefore not an error here, unlike the AIUI credentials, where all
+     * is therefore not an error here, unlike the voice credentials, where all
      * three are useless without the rest.
      */
     bool found = false;

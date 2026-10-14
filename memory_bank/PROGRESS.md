@@ -349,3 +349,10 @@ T001–T017 与 T009 已完成（依据见各任务条目）。**T018 语音对�
 - 过程：①`robot_app.h` 重写为无 AIUI（去掉 `aiui_api.h`、`AiuiRuntime`、回复演示结构、AIUI 事件类型、全部 AIUI 方法声明，状态机删 `SESSION_ACTIVE`）；②`robot_app.cpp` 删除 AIUI 事件分支 165 行、PLAYBACK 旧主体 97 行、`MEDIA_STOP_REQUEST` 的 AIUI TTS 分支 64 行、`PcmConsumer` 的 AIUI 送帧分支 13 行、唤醒回落的 `StartAiui()`、`NETWORK_*` 里的 AIUI 判据、`TouchActivity` 残留与 6 组未使用的 AIUI 常量，并把 4 处提到 AIUI 的注释改写；③给 `PLAYBACK_STARTED/DRAINED` 加空处理（开关枚举要求穷尽）。结果 1295 → **1183 行**，`robot_app.cpp` 与 `app_main.cpp` **编译通过（0 error）**。
 - 过程中两次"断言失败"都发生在**写盘之前**，因此文件未被破坏——这正是"按行数组 + 首尾行断言"删法的价值：宁可报错也不写坏。
 - 未验证：真机未烧录；`robot_audio` 的 AIUI Opus 接口、配网页 AIUI 段、`aiui_secret`、Kconfig、`aiui_sdk`/`aiui_port` 组件与 `Hardware/include/aiui`、`Hardware/src/aiui` 仍待 T028-4/5 移除。
+### 2026-10-15 — T028-4/T028-5 移除 AIUI 的其余部分（robot_audio / 配网页 / Kconfig / 组件 / SDK）
+- `robot_audio`：删除 AIUI Opus 的队列、任务、解码状态与 4 个公开接口（223 行），以及已无调用者的 Ogg/Opus 文件播放函数（121 行）；去掉 `opus.h` 与 `78__esp-opus` 依赖（robot_audio.c 909 → 787 行）。
+- `robot_network`：删除 `aiui_secret`、`write_aiui()`、`robot_network_load_aiui_credentials()` 与 `robot_aiui_credentials_t`、配网页「AIUI 凭据」段、状态卡里的 AIUI 行；连带删除只服务于 AIUI 音乐的 `robot_music.c/.h`（1122 行）。
+- Kconfig：删除 `ROBOT_ALLOW_VOICELESS`／`ROBOT_AIUI_SCENE`／`ROBOT_AIUI_VCN`／`ROBOT_ENABLE_EXPRESSION_TAG`／`ROBOT_SESSION_IDLE_TIMEOUT_SECONDS`；菜单名 `DeskEmoji AIUI` → `DeskEmoji robot`；结构自检无问题。
+- 组件与 SDK：删除 `esp32/components/aiui_sdk`、`aiui_port` 与 AIUI SDK 源码 `Hardware/include/aiui`、`Hardware/src/aiui`；`esp32/CMakeLists.txt` 去掉 `AIUI_VENDOR_ROOT` 校验；`main/CMakeLists.txt` 去掉 `aiui_sdk`／`aiui_port`／`esp_audio_simple_player`／`gmf_core`；`main/idf_component.yml` 去掉 `78/esp-opus` 与 `esp_audio_simple_player`；删除 `preflight` 的两份 AIUI 清单。
+- 验证：六个固件源文件（robot_audio、robot_network、robot_cloud、robot_voice、robot_app、app_main）编译通过（0 error）。**未验证：真机未烧录**——移除 AIUI 后的整机行为必须烧录复验（唤醒词→云端语音、设备通道、配网、表情动作、音量与按键）。
+- 方法学：这一轮再次验证"**先把声明删掉，让编译器把所有调用点变成错误**"的做法——robot_app 一次得到 102 处、robot_audio 得到 27 处精确清单，比人工搜索可靠；另外两次断言失败都在写盘之前，文件未被破坏。

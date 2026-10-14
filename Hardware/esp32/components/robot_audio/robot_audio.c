@@ -15,26 +15,14 @@
 #include "freertos/event_groups.h"
 #include "freertos/queue.h"
 #include "freertos/task.h"
-#include "opus.h"
 
 #define AUDIO_FRAME_SAMPLES 640
 #define PLAYBACK_QUEUE_DEPTH 256
-#define AIUI_OPUS_QUEUE_DEPTH 32
-/*
- * Keep Opus off the AIUI WebSocket callback stack. The 7911 reference also
- * copies TTS data into a player task; libopus decoding needs a larger stack
- * than the network callback owns.
- */
-#define AIUI_OPUS_TASK_STACK_BYTES 12288
 #define FILE_PLAYBACK_QUEUE_TIMEOUT_MS 1000
 #define STREAM_PLAYBACK_QUEUE_TIMEOUT_MS 500
-#define AIUI_OPUS_QUEUE_TIMEOUT_MS 20
-#define AIUI_OPUS_MAX_PACKET_BYTES 1275
-#define AIUI_OPUS_MAX_PENDING_BYTES (64 * 1024)
-#define AIUI_OPUS_MAX_FRAME_SAMPLES 1920
 /*
- * Decoded AIUI TTS is 16 kHz mono S16_LE. Use an adaptive first-play gate:
- * when AIUI sends an initial burst, 400 ms is enough to start immediately;
+ * Decoded speech is 16 kHz mono S16_LE. Use an adaptive first-play gate:
+ * when the stream opens with an initial burst, 400 ms is enough to start;
  * on a slower connection, wait for 600 ms instead. This keeps the fast path
  * close to the 7911 response time without bringing back word-by-word stalls.
  * Count decoded PCM rather than WebSocket messages because chunk sizes vary.
@@ -57,7 +45,6 @@
 #define I2S_PLAYBACK_TIMEOUT_MS 200
 #define CAPTURE_EXIT_BIT BIT0
 #define PLAYBACK_EXIT_BIT BIT1
-#define AIUI_OPUS_EXIT_BIT BIT2
 
 /* Microphone taps besides the primary consumer. One is enough today (the
  * cloud voice recorder); the array keeps room for a second without a redesign. */
@@ -76,30 +63,15 @@ typedef struct {
     int16_t samples[];
 } playback_message_t;
 
-typedef enum {
-    AIUI_OPUS_BEGIN,
-    AIUI_OPUS_DATA,
-    AIUI_OPUS_END,
-    AIUI_OPUS_ABORT,
-    AIUI_OPUS_STOP,
-} aiui_opus_message_type_t;
-
-typedef struct {
-    aiui_opus_message_type_t type;
-    size_t size;
-    uint8_t data[];
-} aiui_opus_message_t;
 
 typedef struct {
     robot_audio_config_t config;
     i2s_chan_handle_t rx;
     i2s_chan_handle_t tx;
     QueueHandle_t playback_queue;
-    QueueHandle_t aiui_opus_queue;
     EventGroupHandle_t events;
     TaskHandle_t capture_task;
     TaskHandle_t playback_task;
-    TaskHandle_t aiui_opus_task;
     /*
      * Keep the 3.75 KiB capture workspace out of the 4 KiB FreeRTOS task
      * stack. Putting these arrays in capture_task() overflowed that stack
@@ -108,14 +80,6 @@ typedef struct {
     int32_t capture_raw[AUDIO_FRAME_SAMPLES];
     int16_t capture_pcm[AUDIO_FRAME_SAMPLES];
     int32_t playback_output[320];
-    int16_t aiui_opus_pcm[AIUI_OPUS_MAX_FRAME_SAMPLES];
-    OpusDecoder *aiui_opus_decoder;
-    uint8_t *aiui_opus_pending;
-    size_t aiui_opus_pending_size;
-    size_t aiui_opus_pending_capacity;
-    uint32_t aiui_opus_packets;
-    uint64_t aiui_opus_samples;
-    bool aiui_opus_active;
     robot_pcm_consumer_fn consumer;
     void *consumer_ctx;
     robot_pcm_consumer_fn taps[AUDIO_PCM_TAP_SLOTS];
@@ -135,7 +99,6 @@ static const char *TAG = "robot_audio";
 static robot_audio_state_t s_audio;
 static portMUX_TYPE s_playback_lock = portMUX_INITIALIZER_UNLOCKED;
 
-static void aiui_opus_task(void *arg);
 
 static uint32_t volume_to_gain_q16(uint8_t volume)
 {
@@ -344,7 +307,7 @@ static void playback_task(void *arg)
             write_pcm(message->samples, message->sample_count,
                       message->generation);
             /*
-             * Keep the stream open while waiting for the next AIUI chunk.
+             * Keep the stream open while waiting for the next chunk.
              * Re-entering prebuffer after every transient gap caused the
              * several-second pauses heard between otherwise valid chunks.
              */
@@ -531,14 +494,8 @@ esp_err_t robot_audio_init(const robot_audio_config_t *config)
 
     s_audio.playback_queue =
         xQueueCreate(PLAYBACK_QUEUE_DEPTH, sizeof(playback_message_t *));
-    s_audio.aiui_opus_queue =
-        xQueueCreate(AIUI_OPUS_QUEUE_DEPTH, sizeof(aiui_opus_message_t *));
     s_audio.events = xEventGroupCreate();
-    int opus_error = OPUS_OK;
-    s_audio.aiui_opus_decoder = opus_decoder_create(16000, 1, &opus_error);
-    if (!s_audio.playback_queue || !s_audio.aiui_opus_queue ||
-        !s_audio.events || !s_audio.aiui_opus_decoder ||
-        opus_error != OPUS_OK) {
+    if (!s_audio.playback_queue || !s_audio.events) {
         goto fail;
     }
     s_audio.initialized = true;
@@ -557,14 +514,11 @@ esp_err_t robot_audio_start(void)
     ESP_RETURN_ON_ERROR(i2s_channel_enable(s_audio.rx), TAG, "enable rx");
     ESP_RETURN_ON_ERROR(i2s_channel_enable(s_audio.tx), TAG, "enable tx");
     s_audio.running = true;
-    xEventGroupClearBits(s_audio.events, CAPTURE_EXIT_BIT | PLAYBACK_EXIT_BIT |
-                                         AIUI_OPUS_EXIT_BIT);
+    xEventGroupClearBits(s_audio.events, CAPTURE_EXIT_BIT | PLAYBACK_EXIT_BIT);
     if (xTaskCreate(capture_task, "audio_capture", 4096, NULL, 7,
                     &s_audio.capture_task) != pdPASS ||
         xTaskCreate(playback_task, "audio_playback", 4096, NULL, 6,
-                    &s_audio.playback_task) != pdPASS ||
-        xTaskCreate(aiui_opus_task, "aiui_opus", AIUI_OPUS_TASK_STACK_BYTES,
-                    NULL, 6, &s_audio.aiui_opus_task) != pdPASS) {
+                    &s_audio.playback_task) != pdPASS) {
         robot_audio_stop();
         return ESP_ERR_NO_MEM;
     }
@@ -581,19 +535,11 @@ void robot_audio_stop(void)
         stop->type = PLAYBACK_STOP;
         xQueueSend(s_audio.playback_queue, &stop, 0);
     }
-    aiui_opus_message_t *opus_stop = calloc(1, sizeof(*opus_stop));
-    if (opus_stop) {
-        opus_stop->type = AIUI_OPUS_STOP;
-        if (xQueueSend(s_audio.aiui_opus_queue, &opus_stop, 0) != pdTRUE) {
-            free(opus_stop);
-        }
-    }
     s_audio.running = false;
     i2s_channel_disable(s_audio.rx);
     i2s_channel_disable(s_audio.tx);
     xEventGroupWaitBits(s_audio.events,
-                        CAPTURE_EXIT_BIT | PLAYBACK_EXIT_BIT |
-                            AIUI_OPUS_EXIT_BIT,
+                        CAPTURE_EXIT_BIT | PLAYBACK_EXIT_BIT,
                         pdFALSE, pdTRUE, pdMS_TO_TICKS(1500));
     s_audio.playing = false;
     portENTER_CRITICAL(&s_playback_lock);
@@ -618,20 +564,9 @@ void robot_audio_deinit(void)
         }
         vQueueDelete(s_audio.playback_queue);
     }
-    if (s_audio.aiui_opus_queue) {
-        aiui_opus_message_t *message = NULL;
-        while (xQueueReceive(s_audio.aiui_opus_queue, &message, 0) == pdTRUE) {
-            free(message);
-        }
-        vQueueDelete(s_audio.aiui_opus_queue);
-    }
     if (s_audio.events) {
         vEventGroupDelete(s_audio.events);
     }
-    if (s_audio.aiui_opus_decoder) {
-        opus_decoder_destroy(s_audio.aiui_opus_decoder);
-    }
-    free(s_audio.aiui_opus_pending);
     if (s_audio.initialized) {
         esp_vfs_spiffs_unregister("assets");
     }
@@ -759,229 +694,6 @@ void robot_audio_abort_playback(void)
     }
 }
 
-static void reset_aiui_opus_state(bool active)
-{
-    s_audio.aiui_opus_pending_size = 0;
-    s_audio.aiui_opus_packets = 0;
-    s_audio.aiui_opus_samples = 0;
-    s_audio.aiui_opus_active = active;
-    if (s_audio.aiui_opus_decoder) {
-        opus_decoder_ctl(s_audio.aiui_opus_decoder, OPUS_RESET_STATE);
-    }
-}
-
-static esp_err_t queue_aiui_opus_message(aiui_opus_message_type_t type,
-                                         const uint8_t *data,
-                                         size_t size)
-{
-    if (!s_audio.running || !s_audio.aiui_opus_queue) {
-        return ESP_ERR_INVALID_STATE;
-    }
-    if ((size > 0 && !data) ||
-        size > SIZE_MAX - sizeof(aiui_opus_message_t)) {
-        return ESP_ERR_INVALID_ARG;
-    }
-    aiui_opus_message_t *message = NULL;
-    if (type == AIUI_OPUS_DATA && size > 0) {
-        message = heap_caps_malloc(sizeof(*message) + size,
-                                   MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-    }
-    if (!message) {
-        message = malloc(sizeof(*message) + size);
-    }
-    if (!message) {
-        return ESP_ERR_NO_MEM;
-    }
-    message->type = type;
-    message->size = size;
-    if (size > 0) {
-        memcpy(message->data, data, size);
-    }
-    if (xQueueSend(s_audio.aiui_opus_queue, &message,
-                   pdMS_TO_TICKS(AIUI_OPUS_QUEUE_TIMEOUT_MS)) != pdTRUE) {
-        ESP_LOGW(TAG, "AIUI Opus queue full: type=%d bytes=%u queued=%u",
-                 (int)type, (unsigned)size,
-                 (unsigned)uxQueueMessagesWaiting(s_audio.aiui_opus_queue));
-        free(message);
-        return ESP_ERR_TIMEOUT;
-    }
-    return ESP_OK;
-}
-
-static esp_err_t decode_aiui_opus_data(const uint8_t *data, size_t size)
-{
-    if (!data || size == 0) {
-        return ESP_ERR_INVALID_ARG;
-    }
-
-    esp_err_t result = ESP_OK;
-    if (!s_audio.aiui_opus_active) {
-        reset_aiui_opus_state(true);
-        ESP_LOGW(TAG, "AIUI Opus stream recovered without begin frame");
-    }
-    if (size > AIUI_OPUS_MAX_PENDING_BYTES -
-                   s_audio.aiui_opus_pending_size) {
-        result = ESP_ERR_INVALID_SIZE;
-        goto done;
-    }
-
-    const size_t required = s_audio.aiui_opus_pending_size + size;
-    if (required > s_audio.aiui_opus_pending_capacity) {
-        size_t capacity = s_audio.aiui_opus_pending_capacity
-                              ? s_audio.aiui_opus_pending_capacity
-                              : 4096;
-        while (capacity < required &&
-               capacity < AIUI_OPUS_MAX_PENDING_BYTES / 2) {
-            capacity *= 2;
-        }
-        if (capacity < required) {
-            capacity = AIUI_OPUS_MAX_PENDING_BYTES;
-        }
-        uint8_t *grown = realloc(s_audio.aiui_opus_pending, capacity);
-        if (!grown) {
-            result = ESP_ERR_NO_MEM;
-            goto done;
-        }
-        s_audio.aiui_opus_pending = grown;
-        s_audio.aiui_opus_pending_capacity = capacity;
-    }
-    memcpy(s_audio.aiui_opus_pending + s_audio.aiui_opus_pending_size,
-           data, size);
-    s_audio.aiui_opus_pending_size += size;
-
-    size_t offset = 0;
-    while (s_audio.aiui_opus_pending_size - offset >= 2) {
-        const uint8_t *packet = s_audio.aiui_opus_pending + offset;
-        const size_t packet_size = ((size_t)packet[0] << 8) | packet[1];
-        if (packet_size == 0 || packet_size > AIUI_OPUS_MAX_PACKET_BYTES) {
-            ESP_LOGE(TAG, "invalid AIUI Opus packet length=%u offset=%u",
-                     (unsigned)packet_size, (unsigned)offset);
-            result = ESP_ERR_INVALID_RESPONSE;
-            goto done;
-        }
-        if (s_audio.aiui_opus_pending_size - offset < packet_size + 2) {
-            break;
-        }
-        int decoded = opus_decode(
-            s_audio.aiui_opus_decoder, packet + 2, (opus_int32)packet_size,
-            s_audio.aiui_opus_pcm, AIUI_OPUS_MAX_FRAME_SAMPLES, 0);
-        if (decoded < 0) {
-            ESP_LOGE(TAG, "AIUI Opus decode failed: %s",
-                     opus_strerror(decoded));
-            result = ESP_ERR_INVALID_RESPONSE;
-            goto done;
-        }
-        result = queue_message(
-            PLAYBACK_PCM, s_audio.aiui_opus_pcm, (size_t)decoded,
-            pdMS_TO_TICKS(STREAM_PLAYBACK_QUEUE_TIMEOUT_MS));
-        if (result != ESP_OK) {
-            goto done;
-        }
-        ++s_audio.aiui_opus_packets;
-        s_audio.aiui_opus_samples += (uint64_t)decoded;
-        offset += packet_size + 2;
-    }
-    if (offset > 0) {
-        s_audio.aiui_opus_pending_size -= offset;
-        memmove(s_audio.aiui_opus_pending,
-                s_audio.aiui_opus_pending + offset,
-                s_audio.aiui_opus_pending_size);
-    }
-
-done:
-    if (result != ESP_OK) {
-        reset_aiui_opus_state(false);
-    }
-    return result;
-}
-
-static esp_err_t finish_aiui_opus_stream(void)
-{
-    const size_t pending = s_audio.aiui_opus_pending_size;
-    const uint32_t packets = s_audio.aiui_opus_packets;
-    const uint64_t samples = s_audio.aiui_opus_samples;
-    reset_aiui_opus_state(false);
-    if (pending != 0) {
-        ESP_LOGW(TAG, "AIUI Opus stream ended with %u pending bytes",
-                 (unsigned)pending);
-    }
-    ESP_LOGI(TAG, "AIUI Opus stream complete: packets=%u duration=%u ms",
-             (unsigned)packets,
-             (unsigned)((samples * 1000ULL) / 16000ULL));
-    return robot_audio_finish_playback();
-}
-
-static void aiui_opus_task(void *arg)
-{
-    (void)arg;
-    while (s_audio.running) {
-        aiui_opus_message_t *message = NULL;
-        if (xQueueReceive(s_audio.aiui_opus_queue, &message,
-                          pdMS_TO_TICKS(100)) != pdTRUE) {
-            continue;
-        }
-        if (!message) {
-            continue;
-        }
-        if (message->type == AIUI_OPUS_STOP) {
-            free(message);
-            break;
-        }
-
-        esp_err_t err = ESP_OK;
-        switch (message->type) {
-        case AIUI_OPUS_BEGIN:
-            reset_aiui_opus_state(true);
-            ESP_LOGI(TAG, "AIUI Opus stream opened");
-            break;
-        case AIUI_OPUS_DATA:
-            err = decode_aiui_opus_data(message->data, message->size);
-            break;
-        case AIUI_OPUS_END:
-            err = finish_aiui_opus_stream();
-            break;
-        case AIUI_OPUS_ABORT:
-            reset_aiui_opus_state(false);
-            break;
-        default:
-            err = ESP_ERR_INVALID_ARG;
-            break;
-        }
-        free(message);
-        if (err != ESP_OK) {
-            ESP_LOGE(TAG, "AIUI Opus worker failed: %s (0x%x)",
-                     esp_err_to_name(err), (unsigned)err);
-            reset_aiui_opus_state(false);
-            robot_audio_finish_playback();
-        }
-    }
-    reset_aiui_opus_state(false);
-    xEventGroupSetBits(s_audio.events, AIUI_OPUS_EXIT_BIT);
-    vTaskDelete(NULL);
-}
-
-esp_err_t robot_audio_aiui_opus_begin(void)
-{
-    return queue_aiui_opus_message(AIUI_OPUS_BEGIN, NULL, 0);
-}
-
-esp_err_t robot_audio_aiui_opus_write(const uint8_t *data, size_t size)
-{
-    if (!data || size == 0) {
-        return ESP_ERR_INVALID_ARG;
-    }
-    return queue_aiui_opus_message(AIUI_OPUS_DATA, data, size);
-}
-
-esp_err_t robot_audio_aiui_opus_end(void)
-{
-    return queue_aiui_opus_message(AIUI_OPUS_END, NULL, 0);
-}
-
-void robot_audio_aiui_opus_abort(void)
-{
-    (void)queue_aiui_opus_message(AIUI_OPUS_ABORT, NULL, 0);
-}
 
 esp_err_t robot_audio_play_wav_file(const char *path)
 {
@@ -1044,128 +756,6 @@ esp_err_t robot_audio_play_wav_file(const char *path)
     }
     free(samples);
     fclose(file);
-    if (result == ESP_OK) {
-        result = queue_message(PLAYBACK_DRAIN, NULL, 0,
-                               pdMS_TO_TICKS(FILE_PLAYBACK_QUEUE_TIMEOUT_MS));
-    }
-    return result;
-}
-
-esp_err_t robot_audio_play_ogg_file(const char *path)
-{
-    if (!path) {
-        return ESP_ERR_INVALID_ARG;
-    }
-    FILE *file = fopen(path, "rb");
-    if (!file) {
-        return ESP_ERR_NOT_FOUND;
-    }
-    fseek(file, 0, SEEK_END);
-    long length = ftell(file);
-    fseek(file, 0, SEEK_SET);
-    if (length <= 0 || length > 64 * 1024) {
-        fclose(file);
-        return ESP_ERR_INVALID_SIZE;
-    }
-    uint8_t *data = malloc((size_t)length);
-    if (!data || fread(data, 1, (size_t)length, file) != (size_t)length) {
-        free(data);
-        fclose(file);
-        return ESP_FAIL;
-    }
-    fclose(file);
-
-    int opus_error = OPUS_OK;
-    OpusDecoder *decoder = opus_decoder_create(16000, 1, &opus_error);
-    if (!decoder || opus_error != OPUS_OK) {
-        free(data);
-        return ESP_FAIL;
-    }
-    int16_t *decoded = malloc(960 * sizeof(*decoded));
-    if (!decoded) {
-        opus_decoder_destroy(decoder);
-        free(data);
-        return ESP_ERR_NO_MEM;
-    }
-
-    bool head_seen = false;
-    bool tags_seen = false;
-    esp_err_t result = ESP_OK;
-    size_t offset = 0;
-    while (offset + 27 <= (size_t)length) {
-        while (offset + 4 <= (size_t)length && memcmp(data + offset, "OggS", 4) != 0) {
-            ++offset;
-        }
-        if (offset + 27 > (size_t)length) {
-            break;
-        }
-        uint8_t segments = data[offset + 26];
-        size_t table = offset + 27;
-        if (table + segments > (size_t)length) {
-            result = ESP_ERR_INVALID_RESPONSE;
-            break;
-        }
-        size_t body = table + segments;
-        size_t body_size = 0;
-        for (uint8_t i = 0; i < segments; ++i) {
-            body_size += data[table + i];
-        }
-        if (body + body_size > (size_t)length) {
-            result = ESP_ERR_INVALID_RESPONSE;
-            break;
-        }
-        size_t cursor = body;
-        for (uint8_t i = 0; i < segments;) {
-            size_t packet_start = cursor;
-            size_t packet_size = 0;
-            uint8_t lace;
-            do {
-                lace = data[table + i++];
-                packet_size += lace;
-                cursor += lace;
-            } while (lace == 255 && i < segments);
-            if (!packet_size) {
-                continue;
-            }
-            const uint8_t *packet = data + packet_start;
-            if (!head_seen && packet_size >= 19 && memcmp(packet, "OpusHead", 8) == 0) {
-                head_seen = packet[9] == 1;
-                continue;
-            }
-            if (head_seen && !tags_seen && packet_size >= 8 &&
-                memcmp(packet, "OpusTags", 8) == 0) {
-                tags_seen = true;
-                continue;
-            }
-            if (!head_seen || !tags_seen) {
-                continue;
-            }
-            int decoded_samples = opus_decode(decoder, packet, (opus_int32)packet_size,
-                                              decoded, 960, 0);
-            if (decoded_samples < 0) {
-                result = ESP_ERR_INVALID_RESPONSE;
-                break;
-            }
-            /*
-             * File decoding runs much faster than real-time playback. Apply
-             * bounded backpressure here so a normal prompt longer than the
-             * queue capacity is not reported as ESP_ERR_TIMEOUT.
-             */
-            result = queue_message(PLAYBACK_PCM, decoded,
-                                   (size_t)decoded_samples,
-                                   pdMS_TO_TICKS(FILE_PLAYBACK_QUEUE_TIMEOUT_MS));
-            if (result != ESP_OK) {
-                break;
-            }
-        }
-        if (result != ESP_OK) {
-            break;
-        }
-        offset = body + body_size;
-    }
-    opus_decoder_destroy(decoder);
-    free(decoded);
-    free(data);
     if (result == ESP_OK) {
         result = queue_message(PLAYBACK_DRAIN, NULL, 0,
                                pdMS_TO_TICKS(FILE_PLAYBACK_QUEUE_TIMEOUT_MS));
