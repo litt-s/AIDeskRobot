@@ -76,3 +76,11 @@
   - 待办：仓库若需改为私有由用户在 GitHub 设置调整；`.github/workflows/verify.yml` 尚未在 GitHub 上实际运行过。
 
 - T027 协作规则：提交节奏与提交信息约定（2026-10-15 用户要求）：已完成。`AGENTS.md` 明确"每过一个阶段（一个编号任务完成／一次验收结束，含文档同步）就提交并推送"，并固化**提交信息格式** `T0xx <阶段>：<要点1>；<要点2>`——带任务号与要点，便于日后按任务回溯（`git log --grep T0xx`）；要点写"改了什么／验证到什么"，未验证项也必须写明；提交前做密钥扫描。`DEPLOY.md` 的源码托管小节同步该约定与示例。本条规则改动本身即按新格式提交（见该提交信息），作为约定的第一个样例。
+
+- T028 移除 AIUI（2026-10-15 用户要求"我现在根本不需要 AIUI，在不影响所有完成的功能的情况下可以移除"）：**进行中 · 方案待确认（未写代码）**。依赖图已摸清：
+  - **可直接删**：`esp32/components/aiui_sdk`（4 文件 89 KB）、`esp32/components/aiui_port`（5 文件 15 KB）、`src/aiui`（13 文件 216 KB）、`include/aiui`（16 文件 50 KB）、`src/demo/*` 与根 `CMakeLists.txt` 的桌面 demo 目标；配网页「AIUI 凭据」段、NVS `aiui_secret`、`robot_network_load_aiui_credentials()`；Kconfig `menu "DeskEmoji AIUI"`（`ROBOT_AIUI_SCENE`／`ROBOT_AIUI_VCN`／`ROBOT_ALLOW_VOICELESS`）。
+  - **规模**：`main/robot_app.cpp` 4045 行中 **470 行**含 AIUI（会话、事件、TTS 播放、媒体语义搜索、空闲告别、重试收敛）；`robot_audio` 有 4 个 AIUI Opus 接口（`robot_audio_aiui_opus_begin/write/end/abort`）。
+  - **必须保留（与 AIUI 无关）**：`robot_wakeup`（ESP-SR 唤醒词，云端一轮靠它触发）、`robot_cloud`／`robot_voice`（设备通道 + 云端语音 + 云播报 `/api/device/say`）、表情/动作/舵机/手势、配网（Wi-Fi + 控制台地址 + 设备码）。
+  - **两处待用户拍板**：①**音乐/媒体播放**（`robot_music`＋媒体搜索/播放器）用 AIUI 凭据做 HMAC 签名，且**唯一触发入口是 AIUI 语义结果**（"放首歌"），删 AIUI 后成死代码——建议一并删除；若音乐要保留，则只能"保留凭据存储、只删语音助手本体"。②**桌面 demo 工程**（`Hardware/src/demo`＋根 CMake）本是 AIUI 的桌面参考实现，删 AIUI 后基本空壳——建议整个删除。
+  - 分阶段实施（每阶段独立编译验证 + 单任务号提交 + 文档同步）：028-1 删桌面 demo 与 AIUI 组件；028-2 删凭据存储与配网页 AIUI 段、Kconfig；028-3 拆 `robot_app` 状态机（保留唤醒词→云端一轮/设备通道/表情动作/配网）；028-4（若同意）删音乐与媒体播放；028-5 文档与 `AGENTS.md` 同步（**解除现有"不改动 aiui_*/robot_audio/robot_wakeup 既有行为"的约束**，改为"AIUI 已移除"）。
+  - 验证与风险：我只能做**编译级验证**（用 `build/compile_commands.json` 的真实命令逐文件编译），**真机必须由你烧录复验**（开机→配网→设备通道→唤醒词→云端语音→表情/动作/音量/播报）；兜底是 git 历史（`09a5800` 起），删错可回退；每阶段一个提交，可随时叫停。
