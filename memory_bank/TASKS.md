@@ -74,3 +74,5 @@
   - 忽略规则（体积从 653 MB 降到 8.5 MB）：`Hardware/esp32/build/`（236 MB）与 `Hardware/esp32/managed_components/`（409 MB）可由 `idf.py` 重新生成；`Hardware/esp32/sdkconfig`／`sdkconfig.old`（**含真实设备码 `CONFIG_ROBOT_CLOUD_KEY`**）、`dependencies.lock`、`tmp-*`；`.dev.vars`／`node_modules/`／`dist/`／`.wrangler/` 由根 `.gitignore` 覆盖。
   - **提交前的密钥扫描发现并处理了一处泄露风险**：`Hardware/esp32/components/aiui_sdk/aiui_api_esp.c:823` 与 `Hardware/src/aiui/aiui_api.c:654` 的注释里带有一份疑似真实的 AIUI `appid/key/api_secret`（随 SDK 附带的示例文本），已替换为 `<你的appid>` 等占位符（纯注释、不影响功能）。核查结论：索引中不含 `sdkconfig`、`.dev.vars`、`build`、`managed_components`，也不含真实设备码。
   - 待办：仓库若需改为私有由用户在 GitHub 设置调整；`.github/workflows/verify.yml` 尚未在 GitHub 上实际运行过。
+
+- T027 协作规则：提交节奏与提交信息约定（2026-10-15 用户要求）：已完成。`AGENTS.md` 明确"每过一个阶段（一个编号任务完成／一次验收结束，含文档同步）就提交并推送"，并固化**提交信息格式** `T0xx <阶段>：<要点1>；<要点2>`——带任务号与要点，便于日后按任务回溯（`git log --grep T0xx`）；要点写"改了什么／验证到什么"，未验证项也必须写明；提交前做密钥扫描。`DEPLOY.md` 的源码托管小节同步该约定与示例。本条规则改动本身即按新格式提交（见该提交信息），作为约定的第一个样例。

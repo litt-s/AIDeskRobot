@@ -24,6 +24,7 @@ npm run build && wrangler deploy             # 已执行
 - 忽略规则（必须保留，否则仓库会从 8.5 MB 涨到 650 MB+）：`Hardware/esp32/build/`、`Hardware/esp32/managed_components/`（`idf.py` 可重新生成）、`Hardware/esp32/sdkconfig`／`sdkconfig.old`（**含本机真实设备码 `CONFIG_ROBOT_CLOUD_KEY`**）、`dependencies.lock`、`tmp-*`；根 `.gitignore` 另覆盖 `.dev.vars`／`node_modules/`／`dist/`／`.wrangler/`。
 - **每次提交前的密钥扫描（强制步骤）**：`git grep --cached` 搜真实设备码与常见密钥模式（`ENCRYPTION_KEY=`、`appkey`／`appsecret`／`api_key` 的字面量、长 base64/hex）。本次扫到并处理：`aiui_sdk` 的注释示例里带有一份疑似真实 AIUI `appid/key/api_secret`，已替换为占位符。**扫描必须覆盖 vendored 第三方代码**，不能只看自己写的文件。
 - **提交节奏（项目规则）**：每过一个阶段提交并推送一次——一个编号任务完成、或一次验收与文档同步结束即提交；提交信息写明任务号与要点。这不只是留痕：`git diff` 是小阶段验收之外最便宜的一次"改动全貌复查"，也是回滚的粒度单位。
+- **提交信息约定（便于按任务回溯）**：`T0xx <阶段>：<要点1>；<要点2>`，例如 `T023 验收：真机 capture report 无丢帧；长静音压缩生效`。要点写"改了什么／验证到什么"，空话（如"更新了文件"）不写；未验证项必须写明（如"未验证：真机"）。一个提交只归一个任务号；规则/流程类改动也给一个任务号，便于日后 `git log --grep T0xx` 直接回溯。
 - 后续更新流程：`git add -A` → 密钥扫描 → `git commit -m …` → `git push`。本机 `github.com` 直连不通，git 通过 `http.https://github.com.proxy=http://127.0.0.1:7897` 走本地代理（代理需在运行）；凭据由系统级 `credential.helper=manager` 提供。
 - 未验证：`.github/workflows/verify.yml` 尚未在 GitHub 上实际运行。
 ## 回滚
