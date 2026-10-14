@@ -1,6 +1,6 @@
 # AIDesk 机器人控制台 PRD
 
-状态：已确认；最后更新：2026-10-13。用户已明确批准全方案并连续执行 T001–T006，每项验收及文档同步后进入下一项。2026-10-15 用户要求部署控制台并已执行（Cloudflare Worker + D1，详见 DEPLOY 与 TASKS T025）；GitHub 推送仍禁止；不得修改 Hardware、Android、MiniProgram、Design。
+状态：已确认；最后更新：2026-10-13。用户已明确批准全方案并连续执行 T001–T006，每项验收及文档同步后进入下一项。2026-10-15 用户要求部署控制台并已执行（Cloudflare Worker + D1，详见 DEPLOY 与 TASKS T025）；GitHub 推送已按用户 2026-10-15 的要求执行（见 TASKS T026）；不得修改 Hardware、Android、MiniProgram、Design。
 
 ## 确认记录
 2026-10-13 用户明确批准。

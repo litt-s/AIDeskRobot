@@ -320,3 +320,15 @@ T001–T017 与 T009 已完成（依据见各任务条目）。**T018 语音对�
 - **验证结果（关键，且是负面结论）**：从本机 `curl` 该地址拿不到任何响应（`http=000`，`Could not connect ... after 21s`）；`Resolve-DnsName` 显示 `aidesk-console.1763584993.workers.dev` 被解析成 **Facebook 的 IP**（`31.13.85.34`、`2a03:2880:f10c:283:face:b00c:0:25de`），而同一时刻 `https://www.cloudflare.com/` 返回 **200** ——这是典型的 **`*.workers.dev` DNS 污染**，不是部署失败。又查了账号 zone 列表：**0 个域名**，所以也无法立刻绑自定义域名绕过。
 - 结论与待决：部署本身已完成（Worker/版本/D1/迁移/secret 全部就绪），但**"线上可用"不成立**：本机浏览器与机器人都访问不到该地址。三条出路已写入 TASKS T025（接域名到 Cloudflare 绑 custom domain／用代理仅人可访问／换国内可达托管）。**在此之前不得把控制台记为"已上线"**，也不要让机器人切到该地址（会立刻失联）。
 - 文档同步：AGENTS.md（解除部署禁令并记录已创建资源）、PRD.md（状态/变更/不做三处）、TASKS T025、PROGRESS 本条、DEPLOY 实际执行记录与回滚、LEARNINGS 新增"部署成功 ≠ 可访问"。
+### 2026-10-15 — T026 源码托管到 GitHub（公开仓库，提交 09a5800）
+- 用户要求："这些代码还没有提交到 github，帮我推送到 GitHub"，并给出已建好的空仓库 `https://github.com/litt-s/AIDeskRobot.git`。这解除了 AGENTS/PRD 里"不得推送"的原约束（已同步改 AGENTS.md、PRD.md）。
+- 侦察（关键前提）：**工作区没有 `.git`**——不是"没提交"，而是从来没有仓库，因此必须从零 init；`Hardware` 目录 653 MB（其中 `build/` 236 MB、`managed_components/` 409 MB）若不排除会直接毁掉仓库；`Hardware/esp32/sdkconfig` 里有**真实设备码** `CONFIG_ROBOT_CLOUD_KEY`，只应存在于 NVS/配网页。
+- 执行：
+  1. 补 `.gitignore`：`Hardware/esp32/build/`、`managed_components/`、`sdkconfig`、`sdkconfig.old`、`dependencies.lock`、`tmp-*`（根 `.gitignore` 原本已覆盖 `.dev.vars`／`node_modules/`／`dist/`／`.wrangler/`）；新增 `.gitattributes`（`* text=auto`，仓库内存 LF）。
+  2. `git init -b main`；本地身份设为 `litt-s <litt-s@users.noreply.github.com>`（仓库级，用户可自行改）。
+  3. `git add -A` → **502 文件 / 8.51 MB**（体积从 653 MB 压到 8.5 MB）。
+  4. **提交前密钥扫描**：搜真实设备码与常见密钥模式。真实设备码未出现 ✓；但发现 `Hardware/esp32/components/aiui_sdk/aiui_api_esp.c:823` 与 `Hardware/src/aiui/aiui_api.c:654` 的注释示例里带着一份**疑似真实的 AIUI `appid/key/api_secret`**（随 SDK 附带的示例文本）→ 替换为 `<你的appid>`／`<你的appkey>`／`<你的apisecret>` 占位符（纯注释，功能无影响）。复查索引：不含 `sdkconfig`／`.dev.vars`／`build`／`managed_components`／真实设备码。
+  5. 提交 `09a5800 初始提交：AIDesk 机器人控制台（控制台 + ESP32 固件）`；`git remote add origin https://github.com/litt-s/AIDeskRobot.git`；`git push -u origin main` → `* [new branch] main -> main`，跟踪已建立。
+- 验证：`git status -sb` = `## main...origin/main`（无分歧）；`git ls-remote --heads origin` = `09a58005c8619f69d992a12c3fa12c0ae9bc098d refs/heads/main`；经本机代理 `curl -x http://127.0.0.1:7897` 探测仓库返回 **200（公开）**。
+- 环境事实（值得记住）：本机 git 走 `http.https://github.com.proxy=http://127.0.0.1:7897`（代理必须开着，直连 github.com 返回 000）；推送凭据由系统级 `credential.helper=manager` 提供，无需输入口令；**沙箱把工作区 `.git` 设为只读**，因此 `git add`／`commit`／`push` 必须在沙箱外执行（`index.lock: Permission denied` 就是它的表现）。
+- 未验证/待办：`.github/workflows/verify.yml` 尚未在 GitHub 上实际跑过；仓库若需转私有需用户在 GitHub 设置里操作；`ENCRYPTION_KEY` 仍只存在于本地 `.dev.vars` 与 Cloudflare secret（建议用户离线备份）。

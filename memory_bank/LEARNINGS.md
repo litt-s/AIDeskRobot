@@ -165,7 +165,16 @@
 - 定位方式（值得记住的三步）：①`curl -sS --max-time N -w "%{http_code}"` 拿到明确失败而不是"没输出"；②`Resolve-DnsName` 看解析结果——`aidesk-console.<account>.workers.dev` 被解析成 **Facebook 的 IP**（`31.13.85.34`、`...face:b00c...`），这是**DNS 污染的特征**（把被阻断的域名解析到无关的境外 IP）；③**用对照域名排除本机网络故障**——同一时刻 `https://www.cloudflare.com/` 返回 200，说明外网是通的、被拦的是 `workers.dev` 这个域。
 - 结论：`*.workers.dev` 在国内网络基本不可用（DNS 污染＋连接阻断）。**Cloudflare Workers 的部署成功率与它在目标网络的可达性完全无关**；产品面向国内用户时，必须准备自定义域名（把自有域名接入 Cloudflare 再绑 Worker）或换用国内可达的托管。
 - 由此得到一条通用规则：**部署类任务的验收标准必须包含"从目标网络实际取到 200"**，而不是"CLI 打印了 Success"。本项目在 T018/T023 上已经建立过同类习惯（"本地通过不等于已部署，部署成功不等于线上已验证"），这次把它具体化为"部署后立刻用 curl 对照验证可达性"。
-- 附带一条账号层面的检查：Cloudflare 账号里 **zone 数量为 0** 时无法绑自定义域名，必须先有域名；这类前置条件应当在动手部署之前就查（`GET /client/v4/zones`），否则会出现"部署得漂漂亮亮、却访问不了"的局面。## 待调查
+- 附带一条账号层面的检查：Cloudflare 账号里 **zone 数量为 0** 时无法绑自定义域名，必须先有域名；这类前置条件应当在动手部署之前就查（`GET /client/v4/zones`），否则会出现"部署得漂漂亮亮、却访问不了"的局面。## 首次入库一个"从没进过 git"的大工程：先量体积、再扫密钥、最后才提交（2026-10-15）
+- 用户说"这些代码还没提交到 GitHub"，但实际情况比"没提交"更根本：**工作区压根没有 `.git`**（`git status` 报 not a git repository）。所以第一件事不是 commit，而是**先侦察仓库边界**——哪些该进、哪些绝不能进。侦察发现 `Hardware` 653 MB，其中 `build/` 236 MB、`managed_components/` 409 MB 都是 `idf.py` 可重新生成的产物；若直接 `git add -A`，仓库会被几百 MB 垃圾拖垮，且之后清理要改写历史。
+- 结论：`.gitignore` 先写、`git add` 后跑；本次入库后 502 文件 / 8.51 MB（体积降到 1/77）。
+- 另一条更要紧的：**`sdkconfig` 里有真实设备码**（`CONFIG_ROBOT_CLOUD_KEY`），而本仓库是**公开**的。项目规则"密钥不写源码/文档/前端"在这里的具体含义是"本机的 sdkconfig 不进仓库"——菜单配置可以复现，密钥必须留在 NVS/配网页。
+- 最值得记的一条：**密钥扫描必须覆盖 vendored 的第三方代码，而不只是自己写的文件**。本次在 `aiui_sdk` 的注释示例里发现了一份疑似真实的 AIUI `appid/key/api_secret`（随 SDK 附带的示例文本，很容易被当成"官方 demo 值"而放过），已替换为占位符。判断依据不是"它看起来像 demo"，而是**无法证实它是公开的 demo 值**——无法证实就等于不放行。
+- 工具链经验两条：
+  1. **核对"是否已入库"要看索引，不是工作区**。我用 `git grep --cached` 复查时仍看到旧值，一度以为替换没生效；真实原因是沙箱把 `.git` 设为只读，`git add` 返回 `fatal: Unable to create '.../.git/index.lock': Permission denied`，而我把它的输出过滤成了只显示 warning 行，于是失败被自己藏起来了。**过滤命令输出时，永远保留 fatal/error 这两类行。**
+  2. `<<<` 是 bash 的 here-string，PowerShell 里没有；提交信息长的时候应写进临时文件再用 `git commit -F <file>`（PowerShell 的 here-string `@'...'@` 可以安全地生成该文件）。
+- 还有一条环境事实：本机 `github.com` 直连返回 000，git 靠 `http.https://github.com.proxy=http://127.0.0.1:7897` 走本地代理；推送凭据来自系统级 `credential.helper=manager`。**"推送成功"和"能直连 GitHub"是两件事**，验证时要用代理。
+## 待调查
 其他供应商兼容性、真实浏览器暂停续写整链路、Cloudflare 远程 migration 与生产部署仍待验证。server/index.ts 仍保留 `if(false)` 的旧 chat-legacy 死代码与 chat_locks 过期检查，属待清理项；这不构成可路由漏洞，但会增加维护成本。
 
 URL附加模式preview_start返回本安装不支持，未据此声称T009全状态验证通过。代理续传消息被自动审批判定Instruction Poisoning而拒绝，已改由主会话实施本地代码。

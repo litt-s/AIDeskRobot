@@ -2,7 +2,7 @@
 
 状态：已确认；更新2026-10-14。用户批准连续执行，一次完成一项后同步文档；禁止部署推送创建云资源及修改原四目录。
 
-当前任务：T025 部署上线——已部署 Cloudflare Worker + D1，但线上地址在国内网络不可达（workers.dev DNS 污染），等你决定下一步（接域名／代理／换托管）。T019 会议纪要暂停在需求确认阶段。等待你验证的：T020 配网页面逐字段保存、T021 BOOT 长按进配网、T022 设备页自动刷新、T023 语音质量、T024 一键取消云端回答。
+当前任务：T026 源码托管——已推送到 GitHub（公开仓库，提交 09a5800）。T025 部署：Cloudflare Worker + D1 就绪，但线上地址在国内网络不可达（workers.dev DNS 污染），等你决定下一步（接域名／代理／换托管）。T019 会议纪要暂停在需求确认阶段。等待你验证的：T020–T024（配网页面、BOOT 长按、设备页自动刷新、语音质量、一键取消）。
 
 - T001 基础工程与记忆：已完成。九文档、协作规则、依赖锁、Wrangler/Vite配置、本地D1迁移通过；audit 0漏洞。
 - T002 认证：已完成。公开注册登录退出、PBKDF2、随机hashed session、origin、限流；隔离集成测试通过。
@@ -69,3 +69,8 @@
 - T025 部署上线（2026-10-15 用户要求）：**已部署，但线上地址对本机与机器人当前都不可达**。执行与结果：①`wrangler d1 create aidesk` → `19747cfe-3ef1-44ec-8ece-ea564ac01b40`（区域 WNAM），真 ID 已写入 `wrangler.jsonc`；②`wrangler d1 migrations apply DB --remote` → 0001–0005 全部 ✅，云端 12 张业务表（users/sessions/models/roles/conversations/messages/chat_generations/chat_locks/devices/device_commands/voice_settings/rate_limits）；③沿用本地 `.dev.vars` 的 `ENCRYPTION_KEY`（44 字符 base64，不重建、不打印），经 stdin 写入 `wrangler secret put`，`wrangler secret list` 可见 `ENCRYPTION_KEY`；④`npm run build` + `npx wrangler deploy` → Worker `aidesk-console`，版本 `d92ab0b5-520e-497b-9289-07c066e777ad`，绑定 `env.DB(aidesk)`／`env.ASSETS`／`APP_ENV=production`，地址 `https://aidesk-console.1763584993.workers.dev`。账号 `1763584993@qq.com`（Account ID `50c97dd7965ce5c1abc69ad20c3ce5dd`）。
   - **阻塞项（未验证即不得记为"已上线可用"）**：本机 `curl` 该地址失败——`workers.dev` 的 DNS 在本网络被污染（解析到 Facebook 的 `31.13.85.34`／`2a03:2880:...:face:b00c:...`），而同一时刻 `https://www.cloudflare.com/` 返回 200，属针对性阻断；账号内 **zone 数量为 0**，无法立刻用自定义域名绕开。因此"控制台线上可访问"与"机器人指向线上地址"**均不成立**。
   - 待用户决定的三条路：a) 把域名接入 Cloudflare 并给 Worker 绑 custom domain（推荐，机器人与手机都能直连）；b) 用代理／VPN 访问（只有人能访问，机器人不行）；c) 换国内可达的托管（改动最大，需重新确认技术栈）。
+
+- T026 源码托管到 GitHub（2026-10-15 用户要求）：已完成。**本工作区原本没有 git 仓库**，故从零初始化：`git init -b main` → 补 `.gitignore` → 新增 `.gitattributes`（`* text=auto`）→ `git add -A`（**502 文件 / 8.51 MB**）→ 密钥扫描 → 提交 `09a5800` → `git remote add origin https://github.com/litt-s/AIDeskRobot.git` → `git push -u origin main`。远端 `refs/heads/main = 09a58005c8619f69d992a12c3fa12c0ae9bc098d` 与本地一致，工作区干净；仓库经代理探测返回 **HTTP 200 = 公开**。本机 git 走 `http.https://github.com.proxy=http://127.0.0.1:7897`（需代理在运行），推送凭据由 Git Credential Manager 直接给出（无需我输入任何口令）。
+  - 忽略规则（体积从 653 MB 降到 8.5 MB）：`Hardware/esp32/build/`（236 MB）与 `Hardware/esp32/managed_components/`（409 MB）可由 `idf.py` 重新生成；`Hardware/esp32/sdkconfig`／`sdkconfig.old`（**含真实设备码 `CONFIG_ROBOT_CLOUD_KEY`**）、`dependencies.lock`、`tmp-*`；`.dev.vars`／`node_modules/`／`dist/`／`.wrangler/` 由根 `.gitignore` 覆盖。
+  - **提交前的密钥扫描发现并处理了一处泄露风险**：`Hardware/esp32/components/aiui_sdk/aiui_api_esp.c:823` 与 `Hardware/src/aiui/aiui_api.c:654` 的注释里带有一份疑似真实的 AIUI `appid/key/api_secret`（随 SDK 附带的示例文本），已替换为 `<你的appid>` 等占位符（纯注释、不影响功能）。核查结论：索引中不含 `sdkconfig`、`.dev.vars`、`build`、`managed_components`，也不含真实设备码。
+  - 待办：仓库若需改为私有由用户在 GitHub 设置调整；`.github/workflows/verify.yml` 尚未在 GitHub 上实际运行过。

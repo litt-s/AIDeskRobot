@@ -19,6 +19,12 @@ wrangler secret put ENCRYPTION_KEY           # 已执行：值从 stdin 读，�
 npm run build && wrangler deploy             # 已执行
 ```
 再次发布只需最后两步（`npm run build` → `wrangler deploy`）；新增迁移后再跑一次 `d1 migrations apply DB --remote`。
+## 源码托管（GitHub，2026-10-15 执行）
+- 仓库：`https://github.com/litt-s/AIDeskRobot.git`（**公开**），分支 `main`，初始提交 `09a5800`（502 文件 / 8.51 MB）。本工作区此前**没有 git 仓库**，故本次从零 `git init`。
+- 忽略规则（必须保留，否则仓库会从 8.5 MB 涨到 650 MB+）：`Hardware/esp32/build/`、`Hardware/esp32/managed_components/`（`idf.py` 可重新生成）、`Hardware/esp32/sdkconfig`／`sdkconfig.old`（**含本机真实设备码 `CONFIG_ROBOT_CLOUD_KEY`**）、`dependencies.lock`、`tmp-*`；根 `.gitignore` 另覆盖 `.dev.vars`／`node_modules/`／`dist/`／`.wrangler/`。
+- **每次提交前的密钥扫描（强制步骤）**：`git grep --cached` 搜真实设备码与常见密钥模式（`ENCRYPTION_KEY=`、`appkey`／`appsecret`／`api_key` 的字面量、长 base64/hex）。本次扫到并处理：`aiui_sdk` 的注释示例里带有一份疑似真实 AIUI `appid/key/api_secret`，已替换为占位符。**扫描必须覆盖 vendored 第三方代码**，不能只看自己写的文件。
+- 后续更新流程：`git add -A` → 密钥扫描 → `git commit -m …` → `git push`。本机 `github.com` 直连不通，git 通过 `http.https://github.com.proxy=http://127.0.0.1:7897` 走本地代理（代理需在运行）；凭据由系统级 `credential.helper=manager` 提供。
+- 未验证：`.github/workflows/verify.yml` 尚未在 GitHub 上实际运行。
 ## 回滚
 `wrangler rollback [version-id]`（或 Dashboard → Workers → Deployments → Rollback）回到上一个版本；D1 的 schema 变更前先用 `wrangler d1 export DB --remote --output backup.sql` 备份，回滚 schema 需手工执行反向 SQL。密钥不回滚（轮换后旧数据无法解密）。
 ## 当前状态
