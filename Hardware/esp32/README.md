@@ -252,7 +252,7 @@ idf.py build
 
 | 文件 | 用途 |
 | --- | --- |
-| `build/deskemoji_aiui.bin` | 应用固件 |
+| `build/deskemoji_robot.bin` | 应用固件 |
 | `build/bootloader/bootloader.bin` | 二级 Bootloader |
 | `build/partition_table/partition-table.bin` | 分区表 |
 | `build/srmodels/srmodels.bin` | ESP-SR/MultiNet 模型 |
@@ -269,7 +269,7 @@ idf.py -p COMx flash monitor
 ```
 
 `flash` 会按项目清单同时烧录应用、分区表、模型和资源。新设备不要只单独写入
-`deskemoji_aiui.bin`，否则会缺少离线唤醒模型或提示音。
+`deskemoji_robot.bin`，否则会缺少离线唤醒模型或提示音。
 
 生成量产合并固件：
 

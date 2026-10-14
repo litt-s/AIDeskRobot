@@ -67,10 +67,9 @@ bool robot_voice_busy(void);
 const char *robot_voice_last_result(void);
 
 /*
- * Speak one sentence on the robot without going through the wake word or the
- * built-in AIUI session. This is what the console's "播报" button uses on a
- * build without AIUI credentials, where the AIUI route can only answer
- * "no voice service configured".
+ * Speak one sentence on the robot without going through the wake word or any
+ * session: the server does the synthesis. This is what the console's "播报"
+ * button uses.
  */
 esp_err_t robot_voice_say(const char *text);
 

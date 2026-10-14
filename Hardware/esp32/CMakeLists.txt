@@ -4,7 +4,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(IDF_TARGET esp32s3 CACHE STRING "ESP-IDF target")
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
-project(deskemoji_aiui)
+project(deskemoji_robot)
 
 if(NOT IDF_VERSION_MAJOR EQUAL 5 OR NOT IDF_VERSION_MINOR EQUAL 5)
     message(FATAL_ERROR "ESP-IDF 5.5.x is required; found ${IDF_VERSION}")

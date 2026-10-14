@@ -21,7 +21,7 @@
 
 ## 构建产物
 
-- 应用：`build/deskemoji_aiui.bin`（约 1.53 MiB）
+- 应用：`build/deskemoji_robot.bin`（约 1.53 MiB）
 - 应用分区：0x800000 字节，剩余约 81%
 - 离线唤醒模型：`build/srmodels/srmodels.bin`
 - 配网音频资源：`build/assets.bin`
@@ -31,7 +31,7 @@
 ```text
 0x000000  build/bootloader/bootloader.bin
 0x008000  build/partition_table/partition-table.bin
-0x010000  build/deskemoji_aiui.bin
+0x010000  build/deskemoji_robot.bin
 0x810000  build/srmodels/srmodels.bin
 0xB10000  build/assets.bin
 ```
