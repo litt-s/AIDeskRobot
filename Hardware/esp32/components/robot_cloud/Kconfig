@@ -1,0 +1,103 @@
+menu "DeskEmoji cloud device channel"
+
+    config ROBOT_CLOUD_ENABLE
+        bool "Enable the self-hosted console channel"
+        default n
+        help
+            When enabled the device periodically contacts your own server to
+            fetch emotion, action, volume and announcement commands issued from
+            the console, and reports its firmware version and volume.
+
+    config ROBOT_CLOUD_URL
+        string "Server base URL"
+        depends on ROBOT_CLOUD_ENABLE
+        default ""
+        help
+            No trailing slash.  Use https://your-domain in production, or
+            http://<pc-lan-address>:8787 while testing against a local server.
+
+            Prefer leaving this blank and setting it on the setup page instead:
+            the address belongs to the machine running the console, which moves
+            whenever it joins another network, and a value baked into the
+            firmware would have to be reflashed to follow it.  Whatever is set
+            here is only the fallback used when the setup page supplied nothing.
+
+    config ROBOT_CLOUD_KEY
+        string "Device key"
+        depends on ROBOT_CLOUD_ENABLE
+        default ""
+        help
+            Short code issued once when binding the device in the console.
+
+            Best left blank: enter it on the setup page instead, so the firmware
+            image carries no credential at all.  Anything set here is compiled
+            into the binary, so an sdkconfig holding a real key must never be
+            committed.  As with the URL, this value is only the fallback used
+            when the setup page supplied nothing.
+
+    config ROBOT_CLOUD_POLL_INTERVAL_S
+        int "Command poll interval (seconds)"
+        depends on ROBOT_CLOUD_ENABLE
+        default 3
+        range 1 60
+
+    config ROBOT_CLOUD_STATUS_INTERVAL_S
+        int "Status report interval (seconds)"
+        depends on ROBOT_CLOUD_ENABLE
+        default 60
+        range 10 3600
+
+    config ROBOT_CLOUD_VOICE
+        bool "Enable the cloud voice conversation channel"
+        depends on ROBOT_CLOUD_ENABLE
+        default n
+        help
+            When enabled the device can record one utterance, send it to the
+            console server and play back the spoken answer.  The server runs
+            speech recognition, the model call and speech synthesis, so the
+            account needs voice credentials configured in the console and the
+            device needs a voice role selected there.
+
+            Requires the account to have configured voice credentials and this
+            device to have a voice role, otherwise the server answers 409 and
+            the robot reports the reason without recording anything.
+
+    config ROBOT_CLOUD_VOICE_MAX_RECORD_MS
+        int "Recording ceiling per utterance (milliseconds)"
+        depends on ROBOT_CLOUD_VOICE
+        default 10000
+        range 1000 30000
+        help
+            Hard stop for one utterance.  A speech that long is unusual, so
+            this mostly bounds how much PSRAM the recording buffer reserves.
+
+    config ROBOT_CLOUD_VOICE_SILENCE_MS
+        int "Trailing silence that ends an utterance (milliseconds)"
+        depends on ROBOT_CLOUD_VOICE
+        default 900
+        range 300 3000
+        help
+            How long the robot waits after you stop talking before it sends
+            the audio.  Lower feels snappier but clips slow speakers.
+
+    config ROBOT_CLOUD_VOICE_THRESHOLD
+        int "Silence threshold (16-bit PCM level)"
+        depends on ROBOT_CLOUD_VOICE
+        default 700
+        range 40 4000
+        help
+            Frames whose RMS is below this count as silence; after
+            ROBOT_CLOUD_VOICE_SILENCE_MS of them the utterance is sent.  Raise it
+            in a noisy room, lower it if the robot stops before you finish.
+
+            This number is only meaningful next to the capture gain, because it
+            is an absolute level: change ROBOT_MIC_SHIFT and it has to be moved
+            by the same factor.  It used to sit at 320, chosen while the gain
+            was 16x too high (see ROBOT_MIC_SHIFT); once that was corrected,
+            ordinary speech reported an RMS of 1500-2300 while the threshold
+            stayed at roughly a fifth of it, so room noise tripped it constantly
+            and the utterance always ran to the recording ceiling.  Measured on
+            the DeskEmoji board with the gain corrected: 700 ends the utterance
+            about a second after you stop talking.
+
+endmenu

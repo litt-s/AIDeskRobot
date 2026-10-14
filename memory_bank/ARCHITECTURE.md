@@ -1,0 +1,31 @@
+# AIDesk 机器人控制台 ARCHITECTURE
+
+状态：已确认；最后更新：2026-10-14。用户已明确批准全方案并连续执行，每项验收及文档同步后进入下一项。禁止部署、推送、创建云资源；不得修改 Hardware、Android、MiniProgram、Design。
+
+## 总体
+web → /api → Hono 鉴权 → D1；聊天由 Worker 解密凭据并请求 HTTPS provider，前端不可访问凭据。
+## 目录
+server：鉴权、安全、API、provider 出站策略、设备通道；generation：持久生成状态与流；shared：公开类型；web：React；migrations：SQL；tests：安全/接口/生成/设备；scripts：本地初始化；memory_bank：项目权威记忆。
+## 入口
+Vite proxy /api → 8787；统一 Worker ASSETS SPA；后续多设备与小程序共享同一套 /api。
+## 配置边界
+production 未配置密钥时拒绝服务。开发密钥仅示例或 gitignored .dev.vars。
+## 错误处理与权限
+所有 API 资源按 user_id 授权；未登录401、跨租户404、来源403、频率429。模型密钥只在Worker解密；聊天通过 SSE 流传输，生成状态（running/paused/completed/failed）与片段以 D1 为权威逐条落库，暂停/继续可跨请求与跨页面恢复。server/generation.ts 负责流与状态机，server/chat-routes.ts 负责路由与并发准入，provider 出站仅允许配置域名且拒绝重定向。
+来源校验（server/origins.ts）只对带 cookie 的 `/api/*` 生效：同源一律放行；production 除此之外一律拒绝；development 另放行 host 为 loopback 或私有地址字面量的 origin——因为开发机的局域网地址随网络变化，逐个登记会在换网后失效，且失败发生在登录之前、表现像"登录坏了"。`DEV_ALLOWED_ORIGINS` 仍用于该规则覆盖不到的情况（隧道域名等），精确匹配、不支持通配。
+## 设备通道
+设备以一次性签发的密钥鉴权（服务端只存哈希与掩码），通过 `/api/device/*` 握手、轮询待执行指令并回报结果；指令与状态存 D1，`/api/devices/*` 供控制台管理。该前缀在来源校验与会话鉴权中间件上按路径放行，改由设备密钥与独立限流保护，因此设备请求不需要 Origin 或 Cookie。当前采用轮询而非长连接：Worker 无法把一次 HTTP 请求的消息推给另一条 WebSocket 连接，推送需要 Durable Objects，属后续按需评估项。
+设备侧由 Hardware/esp32/components/robot_cloud 实现同一协议：轮询指令、执行后回报、周期上报状态；它只依赖 robot_ui／robot_motion／robot_audio 的既有接口，播报通过 robot_app 注入的回调复用本地语音栈，因此不侵入既有语音链路。
+配网是设备侧唯一的配置入口（`robot_network.c` 的 SoftAP + HTTP 服务）。进入方式有三种：保存的 Wi-Fi 连不上时自动进入（等 `ROBOT_STA_CONNECT_TIMEOUT_SECONDS` 超时）、开机后的连接窗口内短按 BOOT（`robot_network_request_reprovision()` 只在 CONNECTING 状态接受）、以及**长按 BOOT ≥800 ms**——最后这条由 `robot_app` 投递 `EventType::PROVISION_REQUEST` 给 worker 处理：会话中先 `StopSession` 再 `robot_network_enter_provisioning()`，已在配网时同一手势会**重申配网**（`robot_network_enter_provisioning()` 在已开页时重新调用 provisioning 回调，把屏幕与提示音再给一遍，不再重启）——早期版本在这里做重启，但"是否在配网中"在 app 与网络两侧可能不一致，重启看起来就是"长按没反应"，因此手势只保留一个含义。退出配网靠保存后自动重启或断电重启。按键语义上长按与短按互斥（`poll_button` 长按触发后不再补发短按），因此短按"唤醒/停止播放"的既有行为未变。
+页面本身是**一个表单 + 一个「保存并重启」按钮**：`/save` 把**填了的字段逐个写进**对应的 NVS 命名空间（`wifi_cfg`／`cloud_cfg`／`aiui_secret`），**留空的字段一律不写**，所以改设备码不必动 Wi-Fi、改 Wi-Fi 也不会动设备码；页面顶部显示当前配置，设备码只显示后四位。三条字段规则：①Wi-Fi 名留空＝Wi-Fi 完全不动；②Wi-Fi 名与已存相同且密码留空＝沿用已存密码，换到**别的**网络且密码留空＝按开放网络处理；③AIUI 三项必须同时填、缺一项整段拒写——这是唯一一条不能逐字段写入的规则，因为三项缺一都用不了。设备启动时读 NVS，某个字段缺失才回落到固件编译值（`ROBOT_CLOUD_URL`／`ROBOT_CLOUD_KEY`）。
+## 语音通道
+机器人只有语音输入，所以语音不是网页端的附属功能，而是设备的主交互通道。`/api/device/voice` 用设备密钥鉴权，一次请求完成一轮对话：设备上传一段完整 PCM → Worker 调火山 ASR 转写 → 用设备绑定角色的模型流式生成回复 → 按句切分、逐句调 TTS → 把 PCM 边合成边下发给设备播放。**设备全程不需要 WebSocket**，也不需要理解模型协议，换语音供应商只改 server/voice 的适配层。
+分层：`frames.ts` 是火山二进制帧的纯编解码，`stream.ts` 是设备侧 `[类型][长度][负载]` 分帧，两者都不碰网络，因此可离线单测；`pipeline.ts` 负责分句与流水线编排，依赖以接口注入，测试用假实现即可覆盖全部分支；`volc.ts` 是传输层；`routes.ts` 把三者接到 HTTP 与 D1 上。
+两个必须记住的约束：①火山 ASR 走 Workers 的 `fetch()` + `Upgrade: websocket`，**URL 必须写 `https://`，写 `wss://` 会被 Fetch API 直接拒绝**；②`AbortSignal` 打不断卡住的握手，所以每一步都用 `withDeadline` 做墙钟兜底，保证设备总能收到明确的失败帧而不是无限等待。
+凭据与角色：语音凭据按账号 AES-GCM 加密存储，未配置时回落平台环境变量；设备用哪个角色由控制台的 `devices.role_id` 决定，对话写入该设备专属会话，因此控制台能直接看到机器人聊了什么。
+## 设备侧语音
+`Hardware/esp32/components/robot_cloud/robot_voice.c` 实现机器人这一端：独立任务等待触发 → 等唤醒提示音播完并解除采集暂停（否则每句话前都会粘上提示音）→ 挂麦克风旁路录音，用能量 VAD 判断说完（见到说话后静音满 900 ms，或到 10 秒上限）→ 把整段 PCM POST 到 `/api/device/voice` → 增量解析同一套分帧，PCM 帧直接 `robot_audio_play_pcm` 边收边播。全程只有一次 HTTP 请求，没有 WebSocket。
+两个接口上的取舍：①`robot_audio` 原本**只有一个**麦克风 consumer 槽位，而唤醒词引擎已经占用它，再注册就会把唤醒词顶掉；因此改为在既有 consumer 之后追加最多 2 个旁路（`robot_audio_add_pcm_tap`），主 consumer 的位置与行为完全不变。②robot_app 新增 `RobotAppState::CLOUD_VOICE_ACTIVE`——在这个状态下 PcmConsumer 既不喂唤醒词也不喂 AIUI（录音由旁路完成），于是既有的两条分支一行都不用改；云端一轮失败时仍回落到原有 AIUI 路径，保证没配好凭据时机器人照常可用。
+触发方式有两种：控制台设备页的「和它说句话」（`listen` 指令，便于逐步排查音频链路）与唤醒词（`CONFIG_ROBOT_CLOUD_VOICE` 打开时接管）。 取消：BOOT 短按在云端一轮进行中（录音或播报）会走 `robot_voice_cancel()`——`robot_voice` 据此停止录音或截断回复流并丢弃已排队音频、恢复采集，控制台指令记录记为「已取消」；只丢弃本地队列会表现为"跳一段后继续说"，因为回复是边收边播的流。此外 `speak` 指令优先走 `/api/device/say`（云合成，不需要 AIUI 会话），失败才回落到内置语音栈——无 AIUI 凭据的固件因此也能播报。已知限制：AIUI 会话进行中按 `listen` 会让两边同时占麦；BOOT 键在云端一轮进行中不中断。
+## 语音失败为什么必须落库
+一轮语音对话的失败是**静默**的：设备拿不到音频就不会出声，而失败原因原本只写在设备串口日志里，控制台一个字都看不到。这在真机排查时直接把"能不能修"变成了"能不能看见"。因此 `runVoiceTurn` 会返回 `failure` 字段，路由层无论成败都把结果写进该设备的专属会话（回复或失败原因作为助手消息，失败时 status=failed）。诊断语音问题时应先看这条会话，而不是先怀疑固件。

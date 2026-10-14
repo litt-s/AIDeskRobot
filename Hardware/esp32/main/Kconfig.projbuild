@@ -1,0 +1,140 @@
+menu "DeskEmoji AIUI"
+
+config ROBOT_ENABLE_ESP_SR
+    bool "Enable offline ESP-SR wake word"
+    default y
+
+config ROBOT_ENABLE_EXPRESSION_TAG
+    bool "Prefer AIUI facial-expression tags"
+    default y
+
+config ROBOT_ENABLE_GESTURE
+    bool "Enable PAJ7620U2 gestures"
+    default y
+
+config ROBOT_ENABLE_RANDOM_ANIMATION
+    bool "Enable idle random animation"
+    default y
+
+config ROBOT_ENABLE_SERVO
+    bool "Enable dual servos"
+    default y
+
+config ROBOT_ALLOW_VOICELESS
+    bool "Run without AIUI credentials (device management only)"
+    default n
+    help
+        Normally a missing AIUI credential sends the device back to
+        provisioning, because the voice stack cannot start without it.  Enable
+        this to keep running instead: expressions, servos, buttons and the
+        self-hosted console channel stay available, while wake word, speech
+        recognition, conversation and speech synthesis remain unavailable.
+        Leave it off for a normal voice-enabled build.
+
+config ROBOT_SERVO_X_PIN
+    int "Horizontal servo GPIO"
+    range 0 48
+    default 11
+    help
+        Signal pin of the horizontal (pan) servo.  Default 11 matches the
+        DeskEmoji board this firmware was ported from; change it when a board
+        variant wires its servos differently.
+
+config ROBOT_SERVO_Y_PIN
+    int "Vertical servo GPIO"
+    range 0 48
+    default 12
+    help
+        Signal pin of the vertical (tilt) servo.  Default 12, same caveat as
+        the horizontal pin.
+
+config ROBOT_SERVO_SELFTEST
+    bool "Sweep both servos once at boot (bring-up aid)"
+    default n
+    help
+        Runs before Wi-Fi comes up and sweeps the horizontal then the vertical
+        servo from limit to limit, logging each phase.  Useful to tell a silent
+        servo apart from a firmware or connection problem: if nothing moves here,
+        the fault is on the hardware side (power, wiring, servo).  Adds a few
+        seconds to boot, so keep it off for normal use.
+
+config ROBOT_MIC_RIGHT_CHANNEL
+    bool "I2S microphone drives the RIGHT channel"
+    default n
+    help
+        The L/R pin of the microphone selects which half of the I2S frame it
+        drives: tied to GND it drives the left half, tied to VDD the right one.
+        This firmware reads the left half, which matches the DeskEmoji board
+        and the schematic.  Reading the half the microphone does not drive
+        yields nothing but silence - which looks exactly like a dead microphone
+        except that the captured level is precisely zero everywhere.
+
+        Enable this only if the microphone is wired the other way round.
+        Check pin 6 (L/R) of the microphone against GND with a multimeter
+        first: continuity to GND means the default is already correct.
+
+config ROBOT_MIC_SAMPLE_RATE
+    int "Microphone sample rate (Hz)"
+    range 8000 48000
+    default 16000
+    help
+        Rate of the capture channel only.  The speaker keeps its own fixed rate
+        because the server sends 16 kHz speech back and both ends have to agree;
+        capture and playback are separate I2S controllers, so this one can move
+        on its own.
+
+        The board this firmware was ported from runs its I2S microphone at
+        24000.  16000 is also inside the microphone's supported clock range and
+        is what the cloud speech service expects to be told, so the default
+        stays there.  Change it only when investigating capture problems, and
+        remember the device reports this value to the server in the
+        X-Sample-Rate header, so the two cannot drift apart.
+
+config ROBOT_MIC_SHIFT
+    int "Microphone 32-bit to 16-bit right shift (capture gain)"
+    range 8 16
+    default 16
+    help
+        The I2S peripheral hands over one 32-bit slot per sample while the
+        microphone drives only its top bits, so the raw value is shifted right
+        before it is clamped into 16 bits.  This shift is the capture gain, and
+        it is the one number that decides whether the audio is usable:
+
+          too small - ordinary speech lands past full scale, the clamp flattens
+                      it into a square wave, and recognition hears nothing while
+                      the level still looks healthy: the peak sits pinned at
+                      32768, the RMS is over half of full scale, and nearly every
+                      sample counts as "voiced"
+          too large - the audio is quiet and recognition struggles the other way
+
+        This microphone puts its 24 bits in the top of the 32-bit slot, so 16 is
+        the value that maps its full range onto the full 16-bit range.  The
+        firmware this board was ported from uses 12 and still works, because it
+        feeds the microphone through an audio front end with automatic gain
+        control; this firmware sends the raw capture to the server and so has to
+        get the gain right here.
+
+        Measured on the DeskEmoji board at 24000 Hz: with 12, speech reports a
+        peak of 32768, an RMS of 18552 and 14-16% of samples clamped.  Both the
+        bit alignment and that measurement point at 16, so it is the default.
+        Only lower it if the captured audio turns out too quiet.
+
+config ROBOT_SESSION_IDLE_TIMEOUT_SECONDS
+    int "Active-session idle timeout"
+    range 10 300
+    default 60
+
+config ROBOT_STA_CONNECT_TIMEOUT_SECONDS
+    int "Saved Wi-Fi connection timeout"
+    range 10 180
+    default 60
+
+config ROBOT_AIUI_SCENE
+    string "Published AIUI v3 scene"
+    default "main"
+
+config ROBOT_AIUI_VCN
+    string "AIUI TTS voice name"
+    default "x6_wuyediantai_mini"
+
+endmenu

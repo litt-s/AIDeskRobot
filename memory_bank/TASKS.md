@@ -1,0 +1,71 @@
+# AIDesk 机器人控制台 TASKS
+
+状态：已确认；更新2026-10-14。用户批准连续执行，一次完成一项后同步文档；禁止部署推送创建云资源及修改原四目录。
+
+当前任务：T025 部署上线——已部署 Cloudflare Worker + D1，但线上地址在国内网络不可达（workers.dev DNS 污染），等你决定下一步（接域名／代理／换托管）。T019 会议纪要暂停在需求确认阶段。等待你验证的：T020 配网页面逐字段保存、T021 BOOT 长按进配网、T022 设备页自动刷新、T023 语音质量、T024 一键取消云端回答。
+
+- T001 基础工程与记忆：已完成。九文档、协作规则、依赖锁、Wrangler/Vite配置、本地D1迁移通过；audit 0漏洞。
+- T002 认证：已完成。公开注册登录退出、PBKDF2、随机hashed session、origin、限流；隔离集成测试通过。
+- T003 模型：已完成。CRUD、AES-GCM、mask、HTTPS URL检查、真实连接测试接口。
+- T004 角色：已完成。system/任务/模型关联、授权CRUD。
+- T005 聊天：已完成。真实OpenAI兼容流式provider、持久历史与中文响应式UI。
+- T006 验收：已完成（含provider诊断修复）。安全集成测试、构建typecheck、Browser五宽度无水平溢出、本地迁移、GitHub部署准备；无 key 的真实provider未验证。
+- T011 持久暂停与继续生成：已完成。2026-10-14 用户实测"暂停后继续、刷新与重新进入后恢复"功能可用；实现为 migrations/0003_generations.sql、server/generation.ts、server/chat-routes.ts，配合前端 pause/resume 与状态恢复。
+- T012 聊天交互体验：已完成。2026-10-14 用户实测回车发送、滚动跟随、续写提示与撤销功能均可用。
+- T013 对话布局与重新生成：已完成。2026-10-14 用户实测提问右置、回复左置与"重新生成"均可用。实现为样式反向布局与服务端 `POST /api/conversations/:id/regenerate`（删除该轮旧回复、保留原提问并以上文重新生成，不新增用户消息；生成中拒绝）。
+
+## 设备接入阶段（2026-10-14 用户确认）
+用户确认的推进顺序：①设备管理 → ②语音对话闭环 → ③会议纪要。理由：后两者都复用设备通道；语音选型未定不阻塞①；会议纪要最重且需长时间录音、说话人分离转写、录音存储与隐私留存，放最后风险最低。
+- T014 设备模型与通道接口（服务端）：已完成。2026-10-14 用户代跑 `npm run check`：typecheck 通过、7 文件 31 项测试通过（含 device 7 项）、构建通过。实现为 migrations/0004_devices.sql 与 server/device-routes.ts；密钥仅签发时返回一次、库内只存哈希与掩码；`/api/device/*` 按路径从来源校验与会话鉴权中间件放行，改由设备密钥与独立限流保护。
+- T015 控制台设备页面：已完成。2026-10-14 用户实测设备页可用（含绑定、状态与指令下发）；移动端／平板／桌面均无异常。设备列表、绑定（一次性密钥）、重命名、解绑、在线状态、表情／动作／音量／播报指令与指令记录均已实现。
+- T016 固件设备通道：已完成。2026-10-14 编译烧录成功，真机日志出现 `device channel online`，表情、动作、音量指令均被执行并正确回报。新增 Hardware/esp32/components/robot_cloud（robot_cloud.c/.h、CMakeLists、Kconfig），轮询 /api/device/commands 并执行表情／动作／音量／播报／重启，回报 ack 与状态；main 组件增加 robot_cloud 依赖，robot_app 在 NETWORK_GOT_IP 时启动该通道（不依赖 AIUI／ESP-SR 初始化成功，设备管理因此与语音栈解耦），默认关闭以保证既有语音行为不变。已知限制：播报依赖已建立的 AIUI 会话，未配置语音服务时回报"未配置语音服务"，待机时回报"请先唤醒"；设备密钥经 menuconfig 编译进固件，尚未接入配网页面。
+- T017 设备端到端联调与验收：已完成（真机）。2026-10-14 在实机上验证：绑定与短码鉴权、在线判定、表情／动作／音量指令下发与回报状态全部通过；"播报"按设计回报"设备未配置语音服务"，待 T018 接入语音后复验。scripts/device-sim.mjs 作为无硬件替代仍保留。
+- 舵机供电约束（运维注意）：仅用烧录口（USB）供电带不动舵机，需接独立电源口；排查舵机问题时先确认供电，再查引脚与固件。
+- T018 语音对话闭环：服务端、网页端与**固件侧音频通道**均已编码完成。供应商为**火山引擎豆包**：ASR 端点 `https://openspeech.bytedance.com/api/v3/plan/sauc/bigmodel_async`（双向流式，自定义二进制帧：4 字节头 + int32 序号 + uint32 长度 + gzip(JSON)，音频 16 kHz/16 bit/单声道，与机器人采集一致），TTS 端点 `https://openspeech.bytedance.com/api/v3/plan/tts/unidirectional`（HTTP 分块返回 JSON 行、音频 base64）。鉴权仅需 `X-Api-Key` 与 `X-Api-Resource-Id`，无需换 token 或签名。注意 ASR 走 Workers 的 `fetch()` + `Upgrade: websocket` 头建连，**URL 必须是 `https://` 而非 `wss://`**（详见 LEARNINGS）。对话大脑仍用用户自配的 OpenAI 兼容模型。
+  - 已交付：migrations/0005_voice.sql（voice_settings 表；devices 增加 role_id、conversation_id）；server/voice/{frames,stream,pipeline,volc,routes}.ts；server/device-auth.ts（设备鉴权与限流从 device-routes 抽出，供两条设备通道共用）；控制台新增「语音设置」页与设备页的语音角色选择、「查看对话」入口。
+  - 关键设计：机器人**只上传一段 PCM、只下载一段带分帧的 PCM**，不需要 WebSocket，也不需要理解模型协议。分帧为 `[类型 1 字节][长度 4 字节小端][负载]`，0x01=JSON 事件、0x02=PCM 片。服务端把模型输出按句切分，**一句合成完立刻下发**，因此首字延迟≈识别 + 模型首句 + TTS 首块，而不是三者之和。
+  - 凭据归属：按账号加密存储，未配置时回落到平台环境变量（表单里明确标注来源）；设备用哪个角色对话由控制台的「语音角色」决定，对话记录写入该设备专属会话，可在「对话工作台」直接查看。
+  - 已执行验证：`npm run typecheck` 通过；`npm test` 8 文件 61 项通过（新增 tests/voice-frames.test.ts 6 项、tests/voice-turn.test.ts 25 项）；`vite build` 通过；本地 D1 迁移 0005 已应用；浏览器中在 390/768/1440 三档宽度实测语音设置页与设备页无横向溢出；真机前以 HTTP 探针向 `/api/device/voice` 实发 16 kHz 单声道 PCM，收到分帧应答 `{"type":"error","message":"语音识别失败：语音识别建连失败：HTTP 401"}` —— 证明设备鉴权、角色解析、会话建立、WebSocket 握手到火山、分帧下发与错误回传整条链路连通（401 为占位密钥所致）。
+  - 尚未验证：**用真实密钥跑完一轮**（识别→模型→合成→播放）尚未执行；**固件侧音频通道未编译、未烧录**（本会话无 ESP-IDF 环境），机器人端到端仍未打通；生产路径（Worker→火山）延迟未测。
+  - 固件侧（2026-10-14 编码完成）：新增 `Hardware/esp32/components/robot_cloud/robot_voice.c`／`robot_voice.h`——独立任务，等唤醒提示音播完后挂麦克风旁路录音（能量 VAD），把整段 PCM POST 到 `/api/device/voice`，再增量解析分帧、边收边播 PCM。`robot_audio` 因此新增 `robot_audio_add_pcm_tap`（此前只有一个 consumer 槽位，被唤醒词引擎占用，直接注册会顶掉它）。robot_app 新增 `CLOUD_VOICE_ACTIVE` 状态（该状态下麦克风既不喂唤醒词也不喂 AIUI），唤醒路径在 `CONFIG_ROBOT_CLOUD_VOICE` 打开时改为触发云端一轮、失败自动回落原有 AIUI 路径。robot_cloud 新增 `listen` 指令（控制台可一键触发收音）与 URL／密钥访问器。Kconfig 新增 `ROBOT_CLOUD_VOICE`（默认 n）等四项。
+  - 下一步：`idf.py build` 编译固件 → 在控制台「语音设置」填入真实火山密钥 → 给设备选好语音角色 → 打开 `ROBOT_CLOUD_VOICE` 烧录 → 先按控制台「和它说句话」验证音频通道，再验证唤醒词路径。
+- T019 会议纪要：见文末"进行中 · 需求确认中"条目（2026-10-15）。
+
+
+
+## T007–T010（2026-10-13 用户批准连续执行）
+- T007 本地多设备访问：已完成。服务端新增精确可信来源配置（server/origins.ts、tests/trust.test.ts），生产环境不采用开发来源；用户在 http://10.34.20.209:5173 实际完成登录与对话，来源校验未被关闭或通配。手机/平板专项未单独记录，仅由局域网实测间接覆盖。
+- T008 聊天可靠性：已完成。上下文取最近100条并按时间正序；生成状态持久化、lease 15s 失联由 reconcile 收敛；原“只断流”的停止方式由暂停/继续取代。相关测试在 2026-10-14 的 `npm run check`（5 文件 18 项）中通过。
+- T009 完整响应式与交互验收：已完成（用户实测）。2026-10-14 用户在实际使用中确认登录、模型与角色表单、弹窗、聊天各状态及设备页在手机、平板、电脑上均正常，无遮挡或横向溢出。未保留逐宽度的截图记录，如需可后续补齐；本安装未启用附加浏览器预览，故未做自动化扫宽。
+- T010 上线前安全检查：已完成（含保留项）。provider 出站仅允许管理员审批的精确域名并拒绝重定向、聊天限流、错误脱敏均已实现并在同一轮测试中通过；保留项为 DNS 解析后的私网／重绑定防护未实现，改以精确域名白名单替代，上线前须逐域名审批。
+
+- T020 配网页面 Wi-Fi 与设备码互不影响：已完成编码与编译验证，真机未验证。2026-10-14 用户要求"Wi-Fi 和设备码互相不影响：进入配网页面时改设备码不动 Wi-Fi，改 Wi-Fi 不动设备码"。根因是配网页原先只有**一个**表单、且 Wi-Fi 名必填：想改设备码就必须重选 Wi-Fi，而空的密码框会把已存密码覆盖成空，设备随即连不上并退回配网，看起来就像"改设备码把 Wi-Fi 弄坏了"。改为**填了就写、留空就不写**的逐字段保存（初版拆成三段表单 + `section` 分派，同日按用户反馈并入单表单，见下条修订）；Wi-Fi 名不变且密码留空时沿用已存密码。实现集中在 `Hardware/esp32/components/robot_network/robot_network.c`（`PROVISION_PAGE_HEAD`／`PROVISION_PAGE_TAIL`、`root_handler`、`save_handler` 及三个 section 函数），NVS 命名空间与键名未变、回落次序未变。验证：按 `build/compile_commands.json` 的真实命令用项目自带 xtensa 编译器编译该文件通过（退出码 0、无警告）；页面 HTML 与其中唯一的 `<script>` 抽出后 `node --check` 通过；页面结构已核对（最终形态见下条修订）。未验证：真机烧录后的填写与保存、以及"改设备码不动 Wi-Fi"的真机表现。
+  - 2026-10-14 修订（按用户反馈）：用户要求配网页**不要每段一个按钮**——"就一个按钮保存信息，填了就存，没填就保持原来的值"。据此去掉 `section` 分派与三个 section 函数，页面改回**一个表单 + 一个「保存并重启」按钮**，`save_handler` 改为逐字段写入（`write_wifi`／`write_aiui`／`write_cloud`）；Wi-Fi 名留空＝Wi-Fi 完全不动，同名且密码留空＝沿用已存密码，换网络且密码留空＝按开放网络；AIUI 三项仍需同时填（唯一例外，缺一项整段拒写）；全部留空＝回「没有改动」且不重启；回执页写明这次实际保存了哪几项。改动后重新编译 `robot_network.c`（退出码 0），页面抽出后为 1 个表单／1 个提交按钮、无 `section` 字段，页面 JS 经 `node --check` 通过；预览页已更新至同一路径。
+
+- T021 BOOT 长按进入配网（已配网也能进）：已完成编码与编译验证，真机未验证。2026-10-14 用户确认要求："如果设备已配网，想要更改，长按按钮进入配网"。原先唯一的入口是"开机后连接窗口内短按 BOOT"（`robot_network_request_reprovision()` 只在 CONNECTING 状态接受，见 `robot_network.c`），设备一旦联网就只能靠让 Wi-Fi 连不上（等 60 秒超时）才能进页面——对"设备已经在线、想改设备码"这个最常见的场景等于没有入口。改动：`robot_app.cpp` 的 BOOT 轮询由 `long_press_ms=0` 改为 `kProvisionLongPressMs=800`，长按（≥800 ms）投递新的 `EventType::PROVISION_REQUEST`，由 worker 处理——若在会话中先 `StopSession("provisioning requested from BOOT long press")`（AIUI 运行时与播放栈只归该任务所有），再 `robot_network_enter_provisioning()`；**已在配网状态时同一手势改为 `esp_restart()`**（页面只会写配置、没有"返回"，重启即用已存配置重新联网，省去手动断电）。短按语义完全不变（连接窗口内＝重新配网，否则＝唤醒/停止播放），因为 `poll_button` 在长按触发后不会再补发短按。验证：用 `build/compile_commands.json` 的真实命令编译 `main/robot_app.cpp`、`main/app_main.cpp`（均含改动后的 `robot_app.h`）与 `robot_network.c`，三个文件退出码全部为 0。未验证：真机长按进入配网、配网中长按重启、以及会话/播放中长按的实际表现。
+
+  - 2026-10-14 修订（用户反馈"这回长按按钮咋不进入配网功能了"）：把"配网中再长按＝重启"改成**长按总是（重新）进入配网**。原因是 `robot_app` 的状态与 `robot_network` 的状态可能不一致（app 可能因迟到事件离开 `PROVISIONING`，而 AP 仍在服务），此时"重启"看起来就是"长按没反应"或莫名重启；改成重申后，无论哪一侧脱节，长按都会把屏幕、提示音与 app 状态同步回配网。配套改动：`robot_network_enter_provisioning()` 在已开页时不再静默返回，而是重新调用 provisioning 回调；手势力加分层日志 `BOOT long press detected` → `provisioning requested from BOOT long press` → `provisioning: SSID=… URL=192.168.4.1`，使"什么都没发生"可定位到按键层／事件层／网络层。**退出配网**改为：保存任一项后自动重启联网，或断电重启。验证：`main/robot_app.cpp` 与 `robot_network.c` 编译均通过（退出码 0）。仍未真机验证。
+  - 2026-10-14 追加：定位"点按也能进配网"＝**设备未联网的告警**（短按只在 `CONNECTION_CONNECTING` 被接受，短按逻辑未改；能点按进配网说明设备长期停在连接窗口，最可能是旧固件把 Wi-Fi 密码写成空串的遗留）。页面状态卡新增"密码是否已保存"提示（`robot_network.c` 的 `root_handler`，读完即清空缓冲），编译通过。用户下一步：在配网页选 Wi-Fi 并**手动填一次密码**保存。
+- 配网页服务器地址规范化（2026-10-14 追加，属 T016/T020 范围）：保存时若地址不含 `://` 自动补 `http://`（真机曾因缺 scheme 报 `Error parse url 192.168.137.1:5173/api/device/hello`），超长给中文提示页；页面提示写明"填控制台 Worker 地址（本地 8787），不是前端页面的 5173"。上线后域名固定可改由 Kconfig `ROBOT_CLOUD_URL` 提供，配网页留空即可。编译通过，真机未验证。
+
+- T022 设备页与对话页自动刷新：已完成编码、typecheck、测试与构建验证；真实浏览器未实测。2026-10-14 用户要求"把网页写成热加载，我每次还要刷新网页才能看到新数据"。根因：`web/src/main.tsx` 里设备列表与指令记录只在进入页面／手动操作时各取一次，设备约 3 秒执行完指令后页面不会自己更新（在线状态同理）；对话页也只在生成中才有轮询。实现：①停留在「设备」页时每 3 秒 `GET /api/devices`，若展开了某台设备再 `GET /api/devices/:id/commands`；②停留在「对话」页且空闲时每 3 秒 `open(active)` 刷新当前会话（生成中仍由既有 1.5 秒轮询负责，两者互斥）；③两处均以 `document.visibilityState==='visible'` 为前提，切走或后台即跳过；④确认所用 GET 端点（`/api/devices`、`/api/devices/:id/commands`、`/api/conversations/:id`、`/generation`）在服务端均无限流，3 秒轮询不会触发 429。验证：`npm run typecheck` 通过；`npm test` 9 文件 78 项全部通过；`npm run build` 通过（1578 模块）。未验证：浏览器里实际观察到的自动更新；侧栏「最近的对话」列表有意不轮询，机器人新建会话后仍需手动刷新一次。
+  - 2026-10-14 追加（二）：地址规范化改为**两端都做**。上一版只在配网页写入端补 `http://`，但设备 NVS 里的旧值不会因为换固件而改变，用户重烧后同样的 `Error parse url` 复现。现于 `robot_cloud_init()` 使用地址前再规范化一次（IP 字面量/无点主机名→`http://`，其它→`https://`，已带 scheme 原样保留），旧值因此自愈；`robot_cloud.c`、`robot_voice.c` 编译通过。用户侧也可立即在配网页重新保存一次完整地址 `http://192.168.137.1:8787` 解决。
+
+- T023 云端语音"断断续续"的可观测性与阈值修正：已完成编码与编译，待真机复测。用户真机已跑通完整语音闭环（`robot_voice: answer: …`），但转写为"你。能听见。我说话。吗？"。判断：句号可能来自①真实停顿②识别服务分句③采集丢帧，不能凭转写判断。改动：①`robot_voice.c` 每轮结束打印 `capture report`（`audio/wall`、`voiced ms`、`longest mid-speech gap`、`gaps >= 400 ms` 计数，后者只统计其后仍有语音的静音）；②`Hardware/esp32/sdkconfig` 的 `ROBOT_CLOUD_VOICE_THRESHOLD` 由过时的 320 改为 700（Kconfig 改 default 不会覆盖已存在的 sdkconfig，这是本次发现的配置陷阱）。复测方式：把 `capture report:` 那行发出来，按三种读数分别定位。未验证：真机读数与阈值修正效果。
+  - 2026-10-14 追加（三）：真机日志（`capture report: 5840 ms of audio over 5870 ms wall ... gaps >= 400 ms: 2`）证明①采集没丢帧②音频里确有长静音，断句正确；并按时间戳定位到**唤醒提示音被录进录音**（播放起点与录音起点仅差 10 ms，提示音出现竞态未等住）。修法：`robot_voice.c` 在麦克风旁路丢弃"提示音还在播"的帧，并在录音结束时裁掉首尾静音（150/250 ms 余量），日志新增 `trimmed`；编译通过。未验证：真机复测。
+  - 2026-10-14 追加（四）：真机复测两轮均 `audio ≈ wall`（4800/4799、4840/4839）→ 无丢帧无暂停，提示音爆点消失；剩余断句对应音频中真实存在的 760/580 ms 静音。据此新增**长内部静音压缩**（`voice_compact_silence()`：≥400 ms 的内部静音压到 300 ms，短静音不动），日志新增 `squeezed %u ms`；编译通过。另记待评估项：`enable_itn: true` 会把"一下"写成"1下"，关闭与否需真机验证。未验证：真机复测结果。
+
+- T024 一键取消云端回答：已完成编码与编译，待真机验证。用户反馈"生成的文字过长时按一次取消不好使，会跳过一段继续说，要按好几遍才能停"。根因：云端回复边收边播，按键只执行 `robot_audio_abort_playback()`（丢已缓冲音频），HTTP 流仍在继续 → "跳一段、接着说"。改动：`robot_voice.c` 新增 `robot_voice_cancel()`（同时置 `stop_requested`／`cancel_requested`；读取循环据此截断流、丢弃队列、恢复采集，`last_result` 置"已取消"；录音阶段同样可取消且不上传），`robot_app.cpp` 的按键路径在云端一轮进行中优先取消并立即静音（助手函数在无云端语音构建下恒为 false）。三个文件编译通过。未验证：真机按键体验。
+
+- T019 会议纪要：**进行中 · 需求确认中（2026-10-15）**。任务在批准序列内（①设备管理 → ②语音对话闭环 → ③会议纪要 的第三项），但 **PRD 里没有它的 REQ/AC**（需求列表止于 REQ9 设备绑定），TASKS 里也只有方向性描述；以下四项直接决定实现形状，按项目规则"影响实现的关键问题未决时继续商讨、不把未知条件当已确认事实"，**确认后再写代码**：
+  1. **录音由谁触发**：推荐控制台按钮（开会时人在电脑前；BOOT 长按已被配网占用、唤醒词容易误触）。
+  2. **最长时长与音频留存**：推荐最长 60 分钟；转写成功后**默认不保留原始音频**（可配置保留 N 天），录音只归属该账号。
+  3. **转写供应商**：推荐 Moss（用户此前指定用于说话人分离），但其**接口文档此前从未读取成功、当前也没有可用密钥**；未拿到前只能先做"适配层 + 假实现 + 单元测试"。
+  4. **声纹换姓名**：确认放在第二步；第一步只做"说话人 1/2/3 + 手动改名"。
+  - 推荐流程：控制台「开始记录」→ 设备进入录音模式（暂停唤醒／AIUI 采集）→ Opus 边录边传 → 服务端落盘 → 「停止」→ 文件转写（说话人分离）→ 现有模型生成纪要 → 控制台查看／导出／删除。
+  - 施工顺序（确认后一次一项）：①D1 数据模型与迁移（meetings／turns／minutes）→ ②服务端接口与转写适配层（含假实现与测试）→ ③控制台「会议」页 → ④固件侧长录音（Opus 边录边传，真机验证）。
+  - 风险与约束：单远场麦克风的说话人分离准确率有限（纪要保留说话人编号，不硬猜姓名）；边录边传依赖网络（推荐"仅联网时允许开始"）；长录音需要对象存储（R2），而**项目规则禁止创建云资源**，因此只写绑定与代码、本地用 Wrangler 本地模拟验证，建桶待用户许可后再做。
+
+- T025 部署上线（2026-10-15 用户要求）：**已部署，但线上地址对本机与机器人当前都不可达**。执行与结果：①`wrangler d1 create aidesk` → `19747cfe-3ef1-44ec-8ece-ea564ac01b40`（区域 WNAM），真 ID 已写入 `wrangler.jsonc`；②`wrangler d1 migrations apply DB --remote` → 0001–0005 全部 ✅，云端 12 张业务表（users/sessions/models/roles/conversations/messages/chat_generations/chat_locks/devices/device_commands/voice_settings/rate_limits）；③沿用本地 `.dev.vars` 的 `ENCRYPTION_KEY`（44 字符 base64，不重建、不打印），经 stdin 写入 `wrangler secret put`，`wrangler secret list` 可见 `ENCRYPTION_KEY`；④`npm run build` + `npx wrangler deploy` → Worker `aidesk-console`，版本 `d92ab0b5-520e-497b-9289-07c066e777ad`，绑定 `env.DB(aidesk)`／`env.ASSETS`／`APP_ENV=production`，地址 `https://aidesk-console.1763584993.workers.dev`。账号 `1763584993@qq.com`（Account ID `50c97dd7965ce5c1abc69ad20c3ce5dd`）。
+  - **阻塞项（未验证即不得记为"已上线可用"）**：本机 `curl` 该地址失败——`workers.dev` 的 DNS 在本网络被污染（解析到 Facebook 的 `31.13.85.34`／`2a03:2880:...:face:b00c:...`），而同一时刻 `https://www.cloudflare.com/` 返回 200，属针对性阻断；账号内 **zone 数量为 0**，无法立刻用自定义域名绕开。因此"控制台线上可访问"与"机器人指向线上地址"**均不成立**。
+  - 待用户决定的三条路：a) 把域名接入 Cloudflare 并给 Worker 绑 custom domain（推荐，机器人与手机都能直连）；b) 用代理／VPN 访问（只有人能访问，机器人不行）；c) 换国内可达的托管（改动最大，需重新确认技术栈）。

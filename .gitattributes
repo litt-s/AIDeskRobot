@@ -1,0 +1,7 @@
+# 统一换行：仓库内存 LF，检出时按平台处理，避免 Windows/macOS 反复改动
+* text=auto
+*.wav binary
+*.mp3 binary
+*.png binary
+*.jpg binary
+*.zip binary

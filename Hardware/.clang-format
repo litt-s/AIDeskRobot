@@ -1,0 +1,74 @@
+---
+Language: Cpp
+
+# 基于 Google 编码风格，但有以下修改
+BasedOnStyle: Google
+
+# 使缩进为4个空格
+IndentWidth: 4
+
+TabWidth: 4
+
+# 使用Tab字符进行缩进（false表示使用空格）
+UseTab: Never
+
+# 每行最大字符数
+ColumnLimit: 100
+
+# 对 include 文件进行排序
+SortIncludes: Never
+
+# 在二元运算符前后添加空格
+SpaceBeforeAssignmentOperators: true
+SpaceAroundPointerQualifiers: Before
+
+# 在一元运算符后不添加空格
+SpaceBeforeParens: ControlStatements
+
+# 控制模板声明和定义中<符号前是否有空格
+SpacesInAngles: false
+
+# 是否将连续的空行合并成一行
+AllowAllParametersOfDeclarationOnNextLine: true
+
+# 指定是否总是将类成员初始化器放在其自己的行上。
+AlwaysBreakAfterDefinitionReturnType: None
+
+# 指定是否总是将返回类型放在函数声明/定义的下一行。
+AlwaysBreakAfterReturnType: None
+
+# BreakBeforeBraces 可选值：Attach, Linux, Mozilla, Stroustrup, Allman, Whitman, GNU, WebKit, Strobe, Horstmann
+BreakBeforeBraces: Allman
+
+# 控制是否在花括号内换行
+AllowShortBlocksOnASingleLine: Empty
+
+# 允许短的if语句在一行
+AllowShortIfStatementsOnASingleLine: false
+
+# 允许简短的循环在一行
+AllowShortLoopsOnASingleLine: false
+
+AllowShortFunctionsOnASingleLine: Empty
+
+AccessModifierOffset: -2
+AlignAfterOpenBracket: Align
+AlignOperands:  true
+IndentCaseLabels: true
+IndentPPDirectives: AfterHash
+NamespaceIndentation: All
+# C 和 C++ 特定配置（根据文件类型手动指定语言）
+Standard: c++20
+PointerAlignment: Left
+DerivePointerAlignment: false
+SpacesInContainerLiterals: false
+BinPackArguments: false
+AlignConsecutiveMacros: true
+
+
+
+
+# 如果你想让 clang-format 忽略某些部分的代码，可以使用特殊的注释：
+# // clang-format off
+# ... code you don't want to be reformatted ...
+# // clang-format on

@@ -1,0 +1,11 @@
+build/
+managed_components/
+dependencies.lock
+README.local-paths.md
+sdkconfig
+sdkconfig.old
+.artifacts/
+secrets/
+.env
+.env.*
+*.local

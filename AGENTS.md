@@ -1,0 +1,3 @@
+# AIDesk 项目协作规则
+
+memory_bank/ 是权威记忆；任务开始阅读九文档。无需重复确认。一次执行一项，验收及文档同步后进入下一项。实质范围变化才重新确认。仅修改根工程、web、server、shared 等新控制台文件。2026-10-14 用户确认进入"设备接入闭环"阶段，据此允许在工作根工程与 Hardware/esp32 中新增设备通道相关组件：允许新增 files/components（如 robot_cloud）与必要的注册改动，仍不修改 Android/MiniProgram/Design，不改动机器人既有语音链路（aiui_*、robot_audio、robot_wakeup）的既有行为。部署与云资源：2026-10-15 用户要求部署控制台，已执行并创建 Cloudflare Worker `aidesk-console` 与 D1 数据库 `aidesk`（含 5 个迁移与 `ENCRYPTION_KEY` secret）；GitHub 推送仍未授权，除上述已创建资源之外的云资源（R2、域名、新账号等）仍须逐项确认。密钥不写源码、文档或前端，所有资源服务端租户授权。文档同步按 PRD/TECH_STACK/DESIGN/DATA_MODEL/ARCHITECTURE/TASKS/PROGRESS/LEARNINGS/DEPLOY 对应职责；未验证明确记录。

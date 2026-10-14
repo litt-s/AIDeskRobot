@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e ' *)",
+      "Bash(node .probe-mbedtls.mjs)",
+      "Bash(node .check-build.mjs \"main/robot_app.cpp\")",
+      "Bash(rm -f .check-build.mjs build/*.check.o build/*.rsp 2>/dev/null; ls .check-build.mjs 2>/dev/null || echo \"scratch removed\")"
+    ]
+  }
+}

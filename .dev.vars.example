@@ -1,0 +1,15 @@
+# PUBLIC development-only example. Never use in production.
+APP_ENV=development
+ENCRYPTION_KEY=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+# Optional. Origins allowed to call the API in development only, exact matches,
+# comma separated. Example: http://192.168.1.20:5173
+DEV_ALLOWED_ORIGINS=
+# Optional. OpenAI-compatible hosts the model proxy may reach, comma separated.
+# Defaults to api.deepseek.com,api.openai.com when empty.
+PROVIDER_ALLOWED_HOSTS=
+# Optional. Platform-wide voice credentials, used only for accounts that have
+# not saved their own in the console. Leave empty to require per-account keys.
+VOLC_API_KEY=
+VOLC_ASR_RESOURCE=
+VOLC_TTS_RESOURCE=
+VOLC_TTS_SPEAKER=

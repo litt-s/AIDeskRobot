@@ -1,0 +1,23 @@
+name: Verify console
+on: [push, pull_request]
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run build
+      - run: npm run setup:local && npm run db:migrate
+      - run: |
+          npm run dev:worker > worker.log 2>&1 &
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://localhost:8787/api/health; then break; fi
+            sleep 1
+          done
+          npm test
+      - run: npm audit --audit-level=high
