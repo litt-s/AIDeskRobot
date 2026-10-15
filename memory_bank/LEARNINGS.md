@@ -213,6 +213,7 @@ URL附加模式preview_start返回本安装不支持，未据此声称T009全状
 - 真因：`memory_bank/TASKS.md` 是**混合换行**（90 个 CRLF + 11 个裸 LF）。按 CRLF 切分时，裸 LF 处不会断行，几行被并成一个"行"，于是条目藏在超大字符串里。
 - 改法：不要按某一种换行切分。用 `i = t.index(marker)` 定位子串，再 `j = t.find("\n", i)` 找行尾，看 `t[j-1]` 是不是 `\r` 决定该行的换行样式，然后只在该处插入——**不动其它行的换行**，`git diff` 才干净。
 - 顺带一条纪律：这类插入脚本要先断言「锚点出现且仅出现一次」再写盘；断言失败发生在写盘之前，文件不会被改坏（本轮踩坑时正是如此）。
+- 更隐蔽的一层（同一轮查到）：`memory_bank/PROGRESS.md` 曾被 git 判成**非文本**（`git ls-files --eol` 显示 `i/-text w/-text`），于是 **`text=auto` 的行尾规范化对它不生效**——工作区里 373 个 CRLF 被原样带进暂存区，`git diff --cached` 显示 732 行改动，而 `--ignore-cr-at-eol` 过滤后只有 14 行是真实新增。**规矩：写 `memory_bank` 的文档一律用 LF**；遇到假 diff，先用 `git diff --cached --ignore-cr-at-eol --numstat` 判断是不是纯行尾问题，再用 `git ls-files --eol <path>` 看 git 怎么分类。已把 PROGRESS/TASKS/LEARNINGS/DEPLOY 四份文档统一为 LF（PROGRESS.md 里 2 个孤立的 CR 属内容，保留）。
 
 ## 改了 `sdkconfig.defaults` 之后，`idf.py build` 不会验证它（2026-10-15）
 - `sdkconfig.defaults` 不在 ninja 的依赖图里。改完直接 `idf.py build`，ninja 判定"无事可做"，**CMake 根本不会重新加载 defaults**，Kconfig 的 `unknown kconfig symbol` 警告也就不会打印——于是"0 警告"看起来像通过，其实那次什么都没检查（本轮真踩到：第一次构建只跑了 5 个任务、用时 3 秒）。
