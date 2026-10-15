@@ -112,3 +112,4 @@
     - **回滚路径**：Cloudflare 版（`aideskrobot.xin`）保持在线；两边数据库互不相通。
 
   - T025 追加（2026-10-15）：**改 `wrangler.jsonc` 的 `database_id` 会切换本地 D1 文件**——把占位 ID 换成云端真实 ID 后，`wrangler dev` 去读一个空的本地库，导致所有 `/api/*` 返回 500（连 `/api/auth/me` 也不例外）。已把旧库文件（含 `-wal`／`-shm`）复制到新 ID 对应的文件名下，本地开发数据完整恢复（14 表；users 58／models 2／roles 2／devices 1／voice_settings 1）。本地 D1 文件位于 `.wrangler/state/v3/d1/miniflare-D1DatabaseObject/<hash>.sqlite`（已 gitignore）。
+- T035 通用应用图标资产：已完成（网页端已接线，`npm run build` 通过）。新增 `assets/icons/`、`scripts/generate-icons.py`、`web/public/` favicon 与 `web/index.html` 引用；小程序可直接上传 PNG，Android/PC/macOS 资源已产出但打包接线与真机效果未验证。

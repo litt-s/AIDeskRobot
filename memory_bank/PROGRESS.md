@@ -577,3 +577,8 @@ T001–T017 与 T009 已完成（依据见各任务条目）。**T018 语音对�
 ；②CloudBase 默认域名的境内可达性实测；③机器人指向新地址后的端到端链路（含真 key 的 Node 版语音识别）；④CFS 挂载后的 SQLite 持久化。
 - **需要用户操作（阻塞外部部署）**：腾讯云 → 云开发 CloudBase → 新建环境 → 开通云托管 → 上传代码包（或把环境 ID 给我）；步骤见 DEPLOY「腾讯云 CloudBase 云托管」。**代码包**已生成在 `data/cloudbase-source.zip`（用 `git archive` 从已提交的版本导出，不含 `Hardware/`、`.dev.vars`、`sdkconfig`）。
 - **今晚的兜底**：Cloudflare 版与隧道仍在（隧道地址在电脑重启后会变），局域网 `192.168.137.1:8787` 实测最稳；CloudBase 若当晚走不通，演示按 DEPLOY「上线状态」的建议走"局域网 + 隧道"。
+
+### 2026-10-15 — T035 通用应用图标
+- 新增 SVG 源文件、多尺寸 PNG、Windows `.ico`、macOS `.icns`、Android adaptive background/foreground，以及 `scripts/generate-icons.py` 再生成脚本。
+- 网页端已把 `favicon.svg`、`favicon.ico`、`apple-touch-icon.png` 放入 `web/public/` 并在 `web/index.html` 引用；`npm run build` 已复跑通过，构建产物中能看到这些 favicon 文件。
+- 未验证/未接线：微信小程序上传效果、Android adaptive icon 真机效果、Electron/PC 打包安装图标均未接线或未实测。

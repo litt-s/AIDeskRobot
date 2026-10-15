@@ -28,3 +28,6 @@
 避免通用 SaaS 指标布局；工作台直接呈现任务与会话，减少装饰。
 ## 验收
 五个目标宽度，检查 scrollWidth 与遮挡、实际操作。
+
+## 应用图标
+青蓝圆角渐变背景配白色机器人脸；眼睛和嘴用青蓝，天线信号点用珊瑚色，保持极简几何。源文件在 `assets/icons/aidesk-icon.svg`，多尺寸 PNG、Windows `.ico`、macOS `.icns` 与 Android adaptive foreground/background 同目录生成。网页 favicon 已放到 `web/public/` 并在 `web/index.html` 引用；生成脚本为 `scripts/generate-icons.py`。
