@@ -2,7 +2,7 @@
 
 状态：已确认；更新2026-10-15。用户批准连续执行，一次完成一项后同步文档；2026-10-15 已明确授权 T036 新增 Android 端，Hardware/MiniProgram/Design 仍不改。
 
-当前任务：T036 Android 端——**编码完成，待 GitHub Actions Android 构建验证**。实现为原生 WebView 控制台壳：完全加载网页端响应式 SPA，共用同源 Cookie、账户、模型、角色、聊天、设备与语音设置；首次启动可选择 Cloudflare/CloudBase/局域网地址。后续只有 Android 真机安装与登录验收未做。
+当前任务：T036 Android 端——**编码完成，GitHub Actions Android 构建通过**（Run #45 `38739826306`，`gradle assembleDebug` 与 APK 上传均 success）。实现为原生 WebView 控制台壳：完全加载网页端响应式 SPA，共用同源 Cookie、账户、模型、角色、聊天、设备与语音设置；首次启动可选择 Cloudflare/CloudBase/局域网地址。后续仅剩 Android 真机安装与登录验收未做。
 
 - T001 基础工程与记忆：已完成。九文档、协作规则、依赖锁、Wrangler/Vite配置、本地D1迁移通过；audit 0漏洞。
 - T002 认证：已完成。公开注册登录退出、PBKDF2、随机hashed session、origin、限流；隔离集成测试通过。
@@ -116,4 +116,6 @@
 
 
 - T036 Android 端完全移植网页端（2026-10-15 用户要求「帮我完成android端的开发，完全移植网页端就行」）：**编码完成**。新增 `Android/` Gradle 工程（Java 17/AGP 8.7.2/Gradle 8.9/compileSdk 35/minSdk 26/targetSdk 35），单 Activity 原生 WebView 壳加载用户配置的控制台地址；保留同源 HttpOnly Cookie、DOM Storage、SPA 路由、SSE 聊天、暂停续写、撤销/重新生成、设备与语音设置等网页端全部能力。首次启动支持 Cloudflare/CloudBase/局域网地址，底部提供重新加载/更换服务器；允许局域网 HTTP；返回键优先 WebView 历史；退出/切后台 flush Cookie。复用 T035 adaptive 图标（mdpi–xxxhdpi）。新增 GitHub Actions `android` job（Temurin 17 + Gradle 8.9 + `assembleDebug` 并上传 APK）。
-  - **未验证**：本机没有 JDK/Android SDK，官方与镜像下载被网络重置，无法本地 `assembleDebug`；GitHub Android 构建和真机安装/登录/聊天/设备页尚未验证。也不做正式签名发布。
+  - **CI 通过**：`assembleDebug` 在 GitHub Actions Ubuntu runner 上成功并上传 artifact `aidesk-android-debug`（commit `736a5e0`、Run #45）。**未验证**：本机未装 JDK/SDK，无法本地构建；真机安装/登录/聊天/设备页与正式签名发布均待用户实跑。
+
+- T036 收尾（2026-10-15）：推送 `736a5e0` 后 GitHub Actions Run #45（`38739826306`）`android` job **success**；`gradle --no-daemon assembleDebug` 通过，`actions/upload-artifact@v4` 已生成 `aidesk-android-debug`。Node `verify` job 也 success（typecheck/build/test/audit）。仍待真机安装与端到端登录/聊天/设备页验证；正式签名发布未做。

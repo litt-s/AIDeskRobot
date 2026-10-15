@@ -588,4 +588,8 @@ T001–T017 与 T009 已完成（依据见各任务条目）。**T018 语音对�
 - 按用户要求新增 Android 工程，策略是“原生壳 + 完整网页端”：不复制 API/UI/流式解析，避免第二套业务状态。`MainActivity` 先从 SharedPreferences 读服务器地址；无地址显示原生设置页，有地址创建 WebView 并加载同一 SPA。
 - WebView 打开 JavaScript/DOM Storage/Database；CookieManager 启用并在暂停/更换服务器时 flush；允许局域网 HTTP；只允许当前控制台 origin 内部导航。底部原生条仅提供重新加载与更换服务器。Manifest 使用 AIDesk adaptive 图标、`adjustResize`、`singleTask` 与配置变化不重建。
 - 工程资源、主题、菜单、Gradle/AGP/SDK 版本、`.gitignore` 和 GitHub Actions Android job 已就位。
-- **未验证**：本机缺 JDK/SDK，尝试官方与腾讯镜像下载均被网络重置，无法本地构建；已改为 GitHub Actions `assembleDebug` 验证，结果待查。真机首次启动、地址输入、登录、SSE 流、设备在线与语音设置均待安装后复验。
+- **CI 通过**：commit `736a5e0` 触发 Run #45（`38739826306`），`android` job 全 success：`setup-java` (Temurin 17) + `setup-gradle` (Gradle 8.9) + `gradle --no-daemon assembleDebug` + `upload-artifact` (`aidesk-android-debug`)。**未验证**：本机缺 JDK/SDK、无法本地构建；真机首次启动、地址输入、登录、SSE 流、设备在线与语音设置均待安装后复验。
+
+### 2026-10-15 — T036 CI 收尾
+- 提交 `736a5e0` 推送后，GitHub Actions Run #45（`38739826306`）完成：`android` job **success**，`gradle assembleDebug` success，`upload-artifact` 已上传 `aidesk-android-debug`；同 run 的 Node `verify` job 也 success（typecheck、build、migrate、test、audit）。
+- 可从 GitHub Actions 该 run 的 Artifacts 下载 `aidesk-android-debug` 安装调试包。真机端到端验收仍未做。
