@@ -405,6 +405,11 @@ static esp_err_t cloud_hello(void)
         return ESP_ERR_NO_MEM;
     }
     cJSON_AddStringToObject(body, "firmware", description != NULL ? description->version : "unknown");
+#if CONFIG_ROBOT_ENABLE_ESP_SR
+    /* 回报当前生效的唤醒词：控制台据此显示「设备当前」，并对账是否需要补发
+     * （换固件、清 NVS 之后两边的值会不一致）。 */
+    cJSON_AddStringToObject(body, "wake", robot_wakeup_phrase());
+#endif
     char *serialized = cJSON_PrintUnformatted(body);
     cJSON_Delete(body);
     if (serialized == NULL) {

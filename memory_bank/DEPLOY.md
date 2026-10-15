@@ -183,3 +183,10 @@ VOLC_API_KEY=你的key npm run volc:smoke
 - `npm run build`（1578 模块；`dist/index.html` + `index-*.css` + `index-*.js`）→ `wrangler deploy`：上传 3 个资源、总上传 149.67 KiB（gzip 37.03 KiB），Worker 启动 4 ms；绑定 `env.DB (aidesk)`、`env.ASSETS`、`env.APP_ENV ("production")`；地址 `https://aidesk-console.1763584993.workers.dev`，版本 `d92ab0b5-520e-497b-9289-07c066e777ad`。
 - **可达性验证（负面结论，重要）**：`curl -sS --max-time 25` → `http=000`、`Could not connect ... after 21036 ms`；`Resolve-DnsName` 把该域名解析到 `31.13.85.34` 与 `2a03:2880:f10c:283:face:b00c:0:25de`（均为 Facebook 的地址，DNS 污染特征）；同一时刻 `https://www.cloudflare.com/` 返回 **200**。`GET /client/v4/zones` → 账号 zone 数 **0**，无自定义域名可用。**结论：部署成功，但产品在目标网络不可用。**
 - 后续可选路径：①把域名接入 Cloudflare 并给 Worker 绑 custom domain（推荐，手机与机器人都能直连）；②用代理/VPN 访问（仅人能访问，机器人不行）；③换国内可达的托管（改动最大，需重新确认技术栈）。
+## 唤醒词拼音表与自定义唤醒词（2026-10-15）
+- **为什么需要转换**：设备侧的讯飞无关——是 ESP-SR 的 MultiNet7 中文模型**只接受拼音音节串**（空格分隔、不带声调），汉字会被模型自己拒绝（真机日志 `MN_COMMAND: invalid command, please check format, 你好小智`）。所以控制台让用户填中文，服务端转拼音再下发。详见 LEARNINGS「文档说收 grapheme」。
+- **`server/pinyin-data.ts` 是生成物**：音节表直接取自设备模型词表（`Hardware/esp32/build/srmodels/mn7_cn/vocab`，405 个音节 ⇒ 服务端校验过的音节设备一定认识）；汉字读音取自 **mozillazg/pinyin-data v0.15.0（MIT 许可）**，规则是"每个字取第一个模型认识的读音、去声调、ü→v"，只覆盖基本区 U+4E00–U+9FFF（20,919 字，45 KB 文本）。**注意 ü→v 必须在对读音做 NFD 去附加符号之前替换**，否则"女"会变成 `nu`（= 努）而不是 `nv`。
+- **重新生成的方式**：`curl` 下载 `https://raw.githubusercontent.com/mozillazg/pinyin-data/master/pinyin.txt` → 按上述规则重跑生成脚本 → 覆盖 `server/pinyin-data.ts`（生成脚本随本轮 commit 记录在 PROGRESS 里，需要时按同样步骤重来即可）。
+- **接口**：`POST /api/devices/:id/wake`，body `{"text":"你好小智"}`（也接受直接写拼音）；服务端转换+校验后写入 `devices.wake_label`/`wake_phrase` 并入队一条 `wake` 指令；设备在 `/api/device/hello` 里回报当前生效的词，存到 `devices.wake_applied`。**若设备回报值与目标不一致**（换固件、清 NVS），服务端会在 hello 时补发一次（有在途 `wake` 指令时不重复补）。
+- **迁移**：`migrations/0006_wake.sql`（devices 加 `wake_label`／`wake_phrase`／`wake_applied`）**本地已应用**；**线上（Cloudflare D1 `aidesk`）尚未应用**——部署前必须跑 `npx wrangler d1 migrations apply DB --remote`，否则线上设备页的唤醒词接口会 500。
+- **未验证（真机/浏览器）**：控制台点「下发」→ 设备 3 秒内执行 → 「设备当前」显示回报值；以及喊新词能唤醒、旧词失效、断电重启后保留。

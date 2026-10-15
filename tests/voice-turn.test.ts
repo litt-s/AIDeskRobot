@@ -1,5 +1,5 @@
 import {DatabaseSync} from 'node:sqlite';
-import {readFileSync} from 'node:fs';
+import {applyMigrations} from './migrations';
 import {afterEach,beforeEach,describe,it,expect,vi} from 'vitest';
 import {Hono} from 'hono';
 import {HTTPException} from 'hono/http-exception';
@@ -7,7 +7,7 @@ import {encrypt,hash} from '../server/security';
 import {SentenceSplitter,plainTextForSpeech,runVoiceTurn,withDeadline,VoiceEvent} from '../server/voice/pipeline';
 import {StreamDemuxer,encodeJsonEvent,encodePcmChunk,STREAM_TYPE} from '../server/voice/stream';
 
-const MIGRATIONS=['0001_initial.sql','0002_limits.sql','0003_generations.sql','0004_devices.sql','0005_voice.sql'];
+
 const ENCRYPTION_KEY='AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=';
 
 /* 语音服务是外部依赖，用假实现替换掉，测试只关心编排与分帧。 */
@@ -22,7 +22,7 @@ const {deviceRoutes}=await import('../server/device-routes');
 
 function fixture(){
  const sqlite=new DatabaseSync(':memory:');
- for(const file of MIGRATIONS)sqlite.exec(readFileSync(new URL('../migrations/'+file,import.meta.url),'utf8'));
+ applyMigrations(sqlite);
  sqlite.exec("INSERT INTO users VALUES ('u','owner','x','x','t');INSERT INTO users VALUES ('v','other','x','x','t');");
  const wrap=(sql:string,params:any[]=[])=>({bind(...values:any[]){return wrap(sql,values);},async first(){return sqlite.prepare(sql).get(...params)||null;},async all(){return {results:sqlite.prepare(sql).all(...params)};},async run(){const r=sqlite.prepare(sql).run(...params);return {meta:{changes:Number(r.changes)}};}});
  const db={prepare:wrap,async batch(stmts:any[]){sqlite.exec('BEGIN');try{const out=[];for(const s of stmts)out.push(await s.run());sqlite.exec('COMMIT');return out;}catch(e){sqlite.exec('ROLLBACK');throw e;}}} as unknown as D1Database;
@@ -41,7 +41,7 @@ async function seed(ctx:ReturnType<typeof fixture>,user='u'){
  sqlite.exec(`INSERT INTO models VALUES ('m','${user}','deepseek','https://api.deepseek.com','deepseek-chat','${await encrypt('sk-secret',ENCRYPTION_KEY)}','••••cret','t','t');`);
  sqlite.exec(`INSERT INTO roles VALUES ('r','${user}','桌面助手','你是桌面机器人，回答简短口语化。','陪聊','m','t','t');`);
  sqlite.exec(`INSERT INTO voice_settings VALUES ('${user}','${await encrypt('volc-secret',ENCRYPTION_KEY)}','••••${user}','volc.seedasr.sauc.duration','seed-tts-2.0','zh_female_vv_uranus_bigtts','t','t');`);
- sqlite.exec(`INSERT INTO devices VALUES ('d','${user}','客厅机器人','${await hash('123456789ABC')}','••••-••••-9ABC',null,null,'offline',null,'t','t','r',NULL);`);
+ sqlite.exec(`INSERT INTO devices (id,user_id,name,key_hash,key_mask,firmware,battery,status,last_seen_at,created_at,updated_at,role_id,conversation_id) VALUES ('d','${user}','客厅机器人','${await hash('123456789ABC')}','••••-••••-9ABC',null,null,'offline',null,'t','t','r',NULL);`);
  return {key:'1234-5678-9ABC',sqlite};
 }
 

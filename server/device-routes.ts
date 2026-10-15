@@ -1,4 +1,5 @@
 import {hash,generateDeviceKey,formatDeviceKey,maskDeviceKey} from './security';
+import {toWakePhrase} from './pinyin';
 import {deviceAuth,fail,limit} from './device-auth';
 export {deviceAuth} from './device-auth';
 
@@ -21,7 +22,7 @@ function payloadInput(type:string,payload:unknown){
 }
 
 export function deviceRoutes(app:any){
- const view=(row:any)=>({id:row.id,name:row.name,key_mask:row.key_mask,status:row.status,firmware:row.firmware,battery:row.battery,last_seen_at:row.last_seen_at,role_id:row.role_id??null,conversation_id:row.conversation_id??null,online:!!row.last_seen_at&&Date.now()-Date.parse(row.last_seen_at)<ONLINE_MS});
+ const view=(row:any)=>({id:row.id,name:row.name,key_mask:row.key_mask,status:row.status,firmware:row.firmware,battery:row.battery,last_seen_at:row.last_seen_at,role_id:row.role_id??null,conversation_id:row.conversation_id??null,wake_label:row.wake_label??null,wake_phrase:row.wake_phrase??null,wake_applied:row.wake_applied??null,online:!!row.last_seen_at&&Date.now()-Date.parse(row.last_seen_at)<ONLINE_MS});
  async function owned(c:any,id:string){const row=await c.env.DB.prepare('SELECT * FROM devices WHERE id=? AND user_id=?').bind(id,c.get('user').id).first() as any;if(!row)fail('设备不存在',404);return row;}
  async function touch(db:D1Database,id:string,status='online'){await db.prepare('UPDATE devices SET status=?,last_seen_at=?,updated_at=? WHERE id=?').bind(status,now(),now(),id).run();}
 
@@ -42,7 +43,26 @@ export function deviceRoutes(app:any){
  app.get('/api/devices/:id/commands',async(c:any)=>{const row=await owned(c,c.req.param('id'));const rows=(await c.env.DB.prepare('SELECT id,type,payload,status,result,created_at,acked_at FROM device_commands WHERE device_id=? AND user_id=? ORDER BY created_at DESC,rowid DESC LIMIT 30').bind(row.id,row.user_id).all()).results;return c.json({device:view(row),commands:rows});});
  app.post('/api/devices/:id/commands',async(c:any)=>{const row=await owned(c,c.req.param('id')),b=await c.req.json(),uid=c.get('user').id;await limit(c.env.DB,'device-command:'+uid,60);const type=token(b.type,'指令类型',20);if(!COMMAND_TYPES.includes(type))fail('不支持的指令类型');const payload=payloadInput(type,b.payload);const id=crypto.randomUUID(),t=now();await c.env.DB.prepare('INSERT INTO device_commands VALUES (?,?,?,?,?,?,?,?,?,?)').bind(id,row.id,uid,type,JSON.stringify(payload),'pending',null,t,t,null).run();return c.json({command:{id,type,payload,status:'pending',created_at:t}},201);});
 
- app.post('/api/device/hello',async(c:any)=>{const d=await deviceAuth(c);await limit(c.env.DB,'device-hello:'+d.id,60);const b=await c.req.json().catch(()=>({}));await c.env.DB.prepare('UPDATE devices SET firmware=?,status=?,last_seen_at=?,updated_at=? WHERE id=?').bind(typeof b.firmware==='string'?b.firmware.slice(0,60):null,'online',now(),now(),d.id).run();return c.json({device:{id:d.id,name:d.name},server_time:now()});});
+ /* 唤醒词：中文→拼音转换 + 音节校验 + 存目标值 + 入队一条 wake 指令。
+  * 刻意不并入 /commands（那里是白名单类型），避免绕过转换直接塞拼音串。 */
+ app.post('/api/devices/:id/wake',async(c:any)=>{const row=await owned(c,c.req.param('id')),b=await c.req.json(),uid=c.get('user').id;await limit(c.env.DB,'device-wake:'+uid,30);const wake=toWakePhrase(typeof b.text==='string'?b.text:'');if(!wake.ok)fail(wake.error,400);
+  const t=now(),id=crypto.randomUUID();
+  await c.env.DB.batch([
+   c.env.DB.prepare('UPDATE devices SET wake_label=?,wake_phrase=?,updated_at=? WHERE id=? AND user_id=?').bind(wake.label,wake.phrase,t,row.id,uid),
+   c.env.DB.prepare('INSERT INTO device_commands (id,device_id,user_id,type,payload,status,result,created_at,updated_at,acked_at) VALUES (?,?,?,?,?,?,?,?,?,?)').bind(id,row.id,uid,'wake',JSON.stringify({text:wake.phrase}),'pending',null,t,t,null),
+  ]);
+  return c.json({wake:{label:wake.label,phrase:wake.phrase},command:{id,type:'wake',status:'pending',created_at:t}},201);});
+
+ app.post('/api/device/hello',async(c:any)=>{const d=await deviceAuth(c);await limit(c.env.DB,'device-hello:'+d.id,60);const b=await c.req.json().catch(()=>({}));const reported=typeof b.wake==='string'&&b.wake.trim()?b.wake.trim().slice(0,64):null;
+  await c.env.DB.prepare('UPDATE devices SET firmware=?,status=?,last_seen_at=?,updated_at=?,wake_applied=COALESCE(?,wake_applied) WHERE id=?').bind(typeof b.firmware==='string'?b.firmware.slice(0,60):null,'online',now(),now(),reported,d.id).run();
+  /* 设备报的当前词与控制台存的目标不一致（换固件、清了 NVS、换了模型）时补发一次；
+   * 只在没有在途 wake 指令时补，避免每 60 秒刷一条。 */
+  const row=await c.env.DB.prepare('SELECT wake_phrase FROM devices WHERE id=?').bind(d.id).first() as any;
+  if(row&&row.wake_phrase&&reported&&row.wake_phrase!==reported){
+   const inflight=await c.env.DB.prepare("SELECT id FROM device_commands WHERE device_id=? AND type='wake' AND status IN ('pending','sent')").bind(d.id).first();
+   if(!inflight){const t=now();await c.env.DB.prepare('INSERT INTO device_commands (id,device_id,user_id,type,payload,status,result,created_at,updated_at,acked_at) VALUES (?,?,?,?,?,?,?,?,?,?)').bind(crypto.randomUUID(),d.id,d.user_id,'wake',JSON.stringify({text:row.wake_phrase}),'pending',null,t,t,null).run();}
+  }
+  return c.json({device:{id:d.id,name:d.name},server_time:now()});});
  app.post('/api/device/status',async(c:any)=>{const d=await deviceAuth(c);await limit(c.env.DB,'device-status:'+d.id,120);const b=await c.req.json().catch(()=>({}));const battery=Number.isInteger(b.battery)&&b.battery>=0&&b.battery<=100?b.battery:null;await c.env.DB.prepare('UPDATE devices SET battery=COALESCE(?,battery),firmware=COALESCE(?,firmware),status=?,last_seen_at=?,updated_at=? WHERE id=?').bind(battery,typeof b.firmware==='string'?b.firmware.slice(0,60):null,'online',now(),now(),d.id).run();return c.json({ok:true});});
  app.get('/api/device/commands',async(c:any)=>{const d=await deviceAuth(c);await limit(c.env.DB,'device-poll:'+d.id,120);await touch(c.env.DB,d.id);const pending=(await c.env.DB.prepare("SELECT id,type,payload,created_at FROM device_commands WHERE device_id=? AND status='pending' ORDER BY created_at,rowid LIMIT 10").bind(d.id).all()).results as any[];if(pending.length)await c.env.DB.batch(pending.map(row=>c.env.DB.prepare("UPDATE device_commands SET status='sent',updated_at=? WHERE id=? AND status='pending'").bind(now(),row.id)));return c.json({commands:pending});});
  app.post('/api/device/commands/:id/ack',async(c:any)=>{const d=await deviceAuth(c);await limit(c.env.DB,'device-ack:'+d.id,120);const b=await c.req.json().catch(()=>({}));const status=b.status==='failed'?'failed':'done';const result=typeof b.result==='string'?b.result.slice(0,300):null;const r=await c.env.DB.prepare("UPDATE device_commands SET status=?,result=?,acked_at=?,updated_at=? WHERE id=? AND device_id=? AND status IN ('pending','sent')").bind(status,result,now(),now(),c.req.param('id'),d.id).run();if(!r.meta.changes)fail('指令不存在或已处理',404);return c.json({ok:true});});

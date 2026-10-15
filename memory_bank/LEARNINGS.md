@@ -278,3 +278,9 @@ URL附加模式preview_start返回本安装不支持，未据此声称T009全状
 - ESP-SR 文档写 "MultiNet6 and MultiNet7 only accepts grapheme inputs to API calls"，很容易读成"中文可以直接写汉字"。**实测相反**：`esp_mn_commands_add(1, "你好小智")` 会让模型自己报 `E MN_COMMAND: invalid command, please check format, 你好小智`，而 `ni hao xiao zhi` 立刻成功。也就是说中文模型的"grapheme"就是**拼音音节串**（空格分隔、不带声调）。
 - 教训：**第三方模型/服务的输入格式，文档只作为假设，必须用一次真机（或最小样例）验证后再据此设计上层**。这条结论花的成本是一次烧录 + 两条指令，收益是避免了"控制台做中文输入、用户发现全都失败"。
 - 另一个可复用的模式：把"设备级配置"的下发做成**能回报失败原因**的指令（本次 `wake` 指令 ack 里带上了模型的原话），于是"哪个词能用"不需要猜，也不需要联调——一条指令就能试出来。
+## 测试夹具里"手写迁移清单 / 裸 INSERT"会随 schema 漂移（2026-10-15 T032 加迁移时爆掉）
+- 现象：加了 `migrations/0006_wake.sql`（给 devices 加 3 列）之后，`npm test` 有两条用例从 200 变 **500**，错误是 `ERR_SQLITE_ERROR: SQL logic error`。根因不在服务端：4 个测试文件各自**手写了一份迁移文件名清单**（`['0001_initial.sql',…,'0005_voice.sql']`），新迁移根本没进内存库 → `wake_applied` 列不存在 → hello 的 UPDATE 直接报错。
+- 修法（消类而非消例）：新增 `tests/migrations.ts`，夹具**读 `migrations/` 目录、按文件名排序全量执行**。清单式写法要求"加迁移的人记得改 N 处"，迟早漏；目录式写法天然同步。
+- 紧接着暴露**第二种同源漂移**：`voice-turn.test.ts` 的 seed 用裸 `INSERT INTO devices VALUES (…)`（13 个值），表变成 16 列后报 "table devices has 16 columns but 13 values were supplied"。修法同服务器代码早就写过的那条注释——**显式列出列名**。
+- 规律：**凡是"结构会变"的东西，不要在别处复制一份它当前的样子**（迁移清单、列名顺序、字段个数）。复制的那一刻就注定了以后某次改动只改了一处。
+- 顺带一条：服务端改 schema 后，**三处数据库都要想到**——本地 `wrangler d1 execute --local`/dev 库、测试的内存库、以及**线上 D1**（本次 `0006` 线上尚未应用，已记入 DEPLOY 的部署前清单）。

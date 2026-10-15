@@ -1,12 +1,12 @@
 import {DatabaseSync} from 'node:sqlite';
-import {readFileSync} from 'node:fs';
+import {applyMigrations} from './migrations';
 import {describe,it,expect} from 'vitest';
 import {Hono} from 'hono';
 import {deviceRoutes} from '../server/device-routes';
 
 function fixture(){
  const sqlite=new DatabaseSync(':memory:');
- for(const file of ['0001_initial.sql','0002_limits.sql','0003_generations.sql','0004_devices.sql','0005_voice.sql'])sqlite.exec(readFileSync(new URL('../migrations/'+file,import.meta.url),'utf8'));
+ applyMigrations(sqlite);
  sqlite.exec("INSERT INTO users VALUES ('u','owner','x','x','t');INSERT INTO users VALUES ('v','other','x','x','t');");
  const wrap=(sql:string,params:any[]=[])=>({bind(...values:any[]){return wrap(sql,values);},async first(){return sqlite.prepare(sql).get(...params)||null;},async all(){return {results:sqlite.prepare(sql).all(...params)};},async run(){const r=sqlite.prepare(sql).run(...params);return {meta:{changes:Number(r.changes)}};}});
  const db={prepare:wrap,async batch(stmts:any[]){sqlite.exec('BEGIN');try{const out=[];for(const s of stmts)out.push(await s.run());sqlite.exec('COMMIT');return out;}catch(e){sqlite.exec('ROLLBACK');throw e;}}} as unknown as D1Database;

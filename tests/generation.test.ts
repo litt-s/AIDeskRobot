@@ -1,5 +1,5 @@
 import {DatabaseSync} from 'node:sqlite';
-import {readFileSync} from 'node:fs';
+import {applyMigrations} from './migrations';
 import {describe,it,expect,vi} from 'vitest';
 import {checkpoint,generationStream,reconcile,SSELines,type GenerationRow} from '../server/generation';
 import {encrypt} from '../server/security';
@@ -7,7 +7,7 @@ import {Hono} from 'hono';
 import {chatRoutes} from '../server/chat-routes';
 const key='AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=';
 function fixture(){
- const sqlite=new DatabaseSync(':memory:');for(const file of ['0001_initial.sql','0002_limits.sql','0003_generations.sql'])sqlite.exec(readFileSync(new URL('../migrations/'+file,import.meta.url),'utf8'));
+ const sqlite=new DatabaseSync(':memory:');applyMigrations(sqlite);
  sqlite.exec("INSERT INTO users VALUES ('u','user','x','x','t');INSERT INTO conversations VALUES ('c','u',NULL,'title','t','t');INSERT INTO messages VALUES ('a','c','u','assistant','','generating','t');");
  const wrap=(sql:string,params:any[]=[])=>({bind(...values:any[]){return wrap(sql,values);},async first(){return sqlite.prepare(sql).get(...params)||null;},async all(){return {results:sqlite.prepare(sql).all(...params)};},async run(){const r=sqlite.prepare(sql).run(...params);return {meta:{changes:Number(r.changes)}};}});
  const db={prepare:wrap,async batch(stmts:any[]){sqlite.exec('BEGIN');try{const out=[];for(const s of stmts)out.push(await s.run());sqlite.exec('COMMIT');return out;}catch(e){sqlite.exec('ROLLBACK');throw e;}}} as unknown as D1Database;

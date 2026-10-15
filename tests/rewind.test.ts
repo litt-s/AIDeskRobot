@@ -1,12 +1,12 @@
 import {DatabaseSync} from 'node:sqlite';
-import {readFileSync} from 'node:fs';
+import {applyMigrations} from './migrations';
 import {describe,it,expect} from 'vitest';
 import {Hono} from 'hono';
 import {chatRoutes} from '../server/chat-routes';
 
 function fixture(){
  const sqlite=new DatabaseSync(':memory:');
- for(const file of ['0001_initial.sql','0002_limits.sql','0003_generations.sql'])sqlite.exec(readFileSync(new URL('../migrations/'+file,import.meta.url),'utf8'));
+ applyMigrations(sqlite);
  sqlite.exec("INSERT INTO users VALUES ('u','user','x','x','t');INSERT INTO conversations VALUES ('c','u',NULL,'title','t','t');INSERT INTO messages VALUES ('m1','c','u','user','first question','complete','2026-10-14T00:00:00.000Z');INSERT INTO messages VALUES ('m2','c','u','assistant','first answer','complete','2026-10-14T00:00:01.000Z');INSERT INTO messages VALUES ('m3','c','u','user','second question','complete','2026-10-14T00:00:02.000Z');INSERT INTO messages VALUES ('m4','c','u','assistant','partial answer','interrupted','2026-10-14T00:00:03.000Z');INSERT INTO models VALUES ('m','u','fixture','https://api.openai.com/v1','fixture','cipher','masked','t','t');INSERT INTO roles VALUES ('r','u','fixture','sys','','m','t','t');UPDATE conversations SET role_id='r';");
  const wrap=(sql:string,params:any[]=[])=>({bind(...values:any[]){return wrap(sql,values);},async first(){return sqlite.prepare(sql).get(...params)||null;},async all(){return {results:sqlite.prepare(sql).all(...params)};},async run(){const r=sqlite.prepare(sql).run(...params);return {meta:{changes:Number(r.changes)}};}});
  const db={prepare:wrap,async batch(stmts:any[]){sqlite.exec('BEGIN');try{const out=[];for(const s of stmts)out.push(await s.run());sqlite.exec('COMMIT');return out;}catch(e){sqlite.exec('ROLLBACK');throw e;}}} as unknown as D1Database;
