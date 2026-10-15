@@ -20,3 +20,6 @@ Hardware/esp32/dependencies.lock
 tmp-*
 # ---- 线上 D1 快照：含用户口令哈希/设备密钥/模型密钥密文，禁止入库 ----
 backups/
+
+# ---- 烟测脚本的产物（scripts/volc-voice-smoke.mjs 每次都写到仓库根目录）----
+volc-tts-smoke.mp3
