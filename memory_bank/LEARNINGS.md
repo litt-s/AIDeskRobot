@@ -416,3 +416,10 @@ Electron 39 二进制、7zip、NSIS 缓存都在时，`electron-builder --win --
 ## 第三方客户端会悄悄丢掉 Content-Type：校验要按"有没有 body"，不是"是不是 POST"（2026-10-16 T038）
 小程序里"测试模型"按钮稳定 400，服务端日志写着"请求必须使用 JSON"——而客户端代码明明设了 `'Content-Type': 'application/json'`。原因是 **`wx.request` 在 `data` 为 `undefined` 时会把 Content-Type 一起丢掉**（没有 body 就没有实体头），于是"无 body 的 POST"被内容类型校验拦下。**正确写法是按"这次请求有没有 body"判断**（`Content-Length>0` 或 `Transfer-Encoding` 存在），而不是"方法是 POST 就要求 JSON"；空 body 不带载荷，CSRF 那条风险本来就不成立。
 **配套的排查手法值得复用**：把"400 到底谁给的"拆成三个探针——①带 Content-Type、无 body ②不带 Content-Type、无 body ③带 Content-Type + `{}`，分别打到同一个"会返回 404 的路由"上；①③ 404、② 400 就能一口咬定是中间件，而不是去猜上游。
+
+## 微信小程序的 onChunkReceived：分片在 res.data，且必须按流式解码（2026-10-16 T038）
+小程序接 SSE（`wx.request({enableChunked:true})`）时踩了两个坑，报错刷满一屏但其实是同一个错：
+1. **分片字段是 `res.data`（ArrayBuffer），不是 `res.arrayBuffer`**。写成 `decoder.decode(res.arrayBuffer || '')` 时取不到就退化成空串 `''`，`TextDecoder.decode('')` 直接抛 `Failed to execute 'decode' on 'TextDecoder': parameter 1 is not of type 'ArrayBuffer'`（开发者工具里 15 次重复就是这个）。
+2. **必须带 `{stream:true}` 解码**（并保留未完成的字节到下一片），否则一个汉字正好被切在分片边界上会解出乱码：流式场景下"一次 decode 全部 buffer"是错的写法。
+3. 收尾还要 **flush 解码器**并处理"最后一行不带换行"的尾巴，否则最后那个 `data: {...}` 事件可能整条丢掉。
+**验证手法**：小程序代码在本机跑不起来，但可以**在 Node 里伪造 `wx`**（`request()` 返回一个带 `onChunkReceived` 的 task，再把预先算好的分片喂进去）——用真实 SSE 文本 + 故意切在汉字中间/行中间，就能把解析逻辑测干净（本次三组断言：分片与多字节、非 2xx 带服务端原因、无换行尾行）。

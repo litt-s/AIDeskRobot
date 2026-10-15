@@ -109,6 +109,17 @@ function stream(path, data, handlers = {}) {
     header: Object.assign(headers(true), { Accept: 'text/event-stream' }),
     success(res) {
       if (res.statusCode >= 200 && res.statusCode < 300) {
+        /* 收尾：把解码器里残留的半个字符吐出来，并处理可能没有换行的最后一行。 */
+        buffer += decoder.decode();
+        if (buffer.startsWith('data:')) {
+          try {
+            const event = JSON.parse(buffer.slice(5).trim());
+            if (handlers.event) handlers.event(event);
+          } catch (_) {
+            // 半个事件，忽略
+          }
+        }
+        buffer = '';
         if (handlers.done) handlers.done();
         return;
       }
@@ -124,7 +135,13 @@ function stream(path, data, handlers = {}) {
 
   if (task && task.onChunkReceived) {
     task.onChunkReceived(res => {
-      buffer += decoder.decode(res.arrayBuffer || '');
+      /* 分片在 res.data（ArrayBuffer），不是 res.arrayBuffer —— 之前取不到就退化成空串，
+         于是 TextDecoder 抛 'parameter 1 is not of type ArrayBuffer'（错误刷屏就是这个）。
+         另外必须带 {stream:true}：一个汉字可能被切在分片边界上。 */
+      const chunk = res && (res.data || res.arrayBuffer);
+      if (!chunk) return;
+      const bytes = chunk instanceof ArrayBuffer ? new Uint8Array(chunk) : chunk;
+      buffer += decoder.decode(bytes, {stream: true});
       const lines = buffer.split(/\r\n|\n/);
       buffer = lines.pop() || '';
       lines.forEach(line => {
