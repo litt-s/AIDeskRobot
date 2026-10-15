@@ -403,3 +403,9 @@ Electron 39 二进制、7zip、NSIS 缓存都在时，`electron-builder --win --
 3. **改法**（已写入 `sdkconfig.defaults`，新检出自动生效；本机 `sdkconfig` 同步）：`TCP_WND_DEFAULT=20000`、`TCP_SND_BUF_DEFAULT=20000`、`TCP_RECVMBOX_SIZE=16`、`SPIRAM_TRY_ALLOCATE_WIFI_LWIP=y`。
 4. **验证指标**：串口 `robot_voice: stream done: pcm=N bytes in M ms = X KB/s (need 32)` 要 **≥32**；上行看 `sending N bytes of audio` 到 `heard` 的时间差（320 KB 应从 18 s 降到 4~6 s）。
 5. **还没动的旋钮**：`CONFIG_ROBOT_CLOUD_VOICE_MAX_RECORD_MS`（现 10 s，降下来直接砍掉最坏情况的上行时间）、`CONFIG_ROBOT_CLOUD_VOICE_THRESHOLD`（现 700，调高可减少"把环境噪声当说话"而录满 10 秒）、窗口继续放大到 64 KB（更吃内存）。
+
+## `esp_http_client` 的分块上传：头是它加的，框架是你自己写的（2026-10-15 T039）
+想边录边传就得用 `Transfer-Encoding: chunked`（长度未知）。查 IDF 源码（`components/esp_http_client/esp_http_client.c`）可以确认：`esp_http_client_open(client, -1)` 只做两件事——加 `Transfer-Encoding: chunked` 头、删掉 `Content-Length`；`esp_http_client_write()` 则是一次**裸 transport 写**，组件里**没有任何**"自动写分块长度前缀"或"自动写结尾 0 块"的代码。⇒ 分块框架必须调用方自己写：每块 `"%x\r\n" + data + "\r\n"`，最后 `"0\r\n\r\n"`。别指望 API 帮你收尾，否则服务端会一直等一个永远不来的结束块。
+
+## 怎么便宜地验证"网关收不收分块请求体"（2026-10-15 T039）
+设备侧改成分块上传后，真正的未知数不是自家服务端（Node 原生支持），而是**云托管网关会不会规规矩矩转发 chunked 请求体**。不用拿真设备去试：挑一个**不需要鉴权**的接口、发一个**故意非法**的请求体（例如 `POST /api/auth/register` 传 1 个字符的用户名），能拿回自家的校验错误（400 用户名无效）就说明请求体被完整解析了——既验证了网关，又不会创建任何数据。相比之下，往需要鉴权的接口发（`/api/device/voice`）只会拿到 401，那是"鉴权失败"还是"body 被吞"根本分不清。

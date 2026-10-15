@@ -64,6 +64,9 @@
 /* How much of a long internal pause survives the compressor. */
 #define VOICE_SILENCE_KEEP_MS 300
 
+/* 边录边传：每攒够这么多采样（100 ms @16 kHz）就写一个分块上去。 */
+#define VOICE_STREAM_FLUSH_SAMPLES 1600
+
 /* Server -> device framing. Kept in step with server/voice/stream.ts. */
 #define VOICE_FRAME_JSON 0x01
 #define VOICE_FRAME_PCM 0x02
@@ -95,6 +98,14 @@ typedef struct {
     size_t recorded_samples;
     size_t record_capacity_samples;
     int16_t *record_buffer;
+    /*
+     * 边录边传：录制期间就把采到的音频按分块编码写上去，录完只剩"读回复"。
+     * 建连或写入失败时置 stream_failed，退回"整段一次上传"，行为不退化。
+     */
+    esp_http_client_handle_t stream_client;
+    size_t streamed_samples;
+    bool stream_failed;
+    int64_t stream_started_us;
     SemaphoreHandle_t trigger;
     SemaphoreHandle_t idle;
     TaskHandle_t task;
@@ -271,6 +282,36 @@ static esp_err_t voice_write_all(esp_http_client_handle_t client, const void *da
     return ESP_OK;
 }
 
+/*
+ * 分块上传（Transfer-Encoding: chunked）的框架。
+ *
+ * esp_http_client 在 write_len = -1 时只会加上 "Transfer-Encoding: chunked" 头：
+ * 每个分块的"长度 + CRLF"前缀、以及结尾的 0 块，都要调用方自己写（IDF 的
+ * esp_http_client.c 里 prepare_first_line() 之后所有写都是裸字节，组件本身没有
+ * 任何自动加分块头/结束块的代码）。服务端按标准解析，两边不需要额外约定。
+ */
+static esp_err_t voice_chunk_write(esp_http_client_handle_t client,
+                                   const uint8_t *data, size_t size)
+{
+    char header[16];
+    int header_len = snprintf(header, sizeof(header), "%x\r\n", (unsigned)size);
+    if (header_len <= 0 || header_len >= (int)sizeof(header)) {
+        return ESP_FAIL;
+    }
+    if (voice_write_all(client, header, (size_t)header_len) != ESP_OK) {
+        return ESP_FAIL;
+    }
+    if (size > 0 && voice_write_all(client, data, size) != ESP_OK) {
+        return ESP_FAIL;
+    }
+    return voice_write_all(client, "\r\n", 2);
+}
+
+static esp_err_t voice_chunk_finish(esp_http_client_handle_t client)
+{
+    return voice_write_all(client, "0\r\n\r\n", 5);
+}
+
 static void voice_handle_pcm(const uint8_t *payload, size_t size, bool *playback_open)
 {
     if (size < sizeof(int16_t)) {
@@ -417,7 +458,7 @@ static esp_err_t voice_read_response(esp_http_client_handle_t client)
 
 /* Opens a POST to `path` with the device credentials, writing `body` first. */
 static esp_err_t voice_open_request(const char *path, const char *content_type,
-                                    const void *body, size_t body_bytes,
+                                    const void *body, ssize_t body_bytes,
                                     bool report_capture_rate,
                                     esp_http_client_handle_t *out)
 {
@@ -471,6 +512,15 @@ static esp_err_t voice_open_request(const char *path, const char *content_type,
      * synthesised at the fixed playback rate, so the header would not apply. */
     if (report_capture_rate) {
         esp_http_client_set_header(client, "X-Sample-Rate", sample_rate);
+    }
+
+    /*
+     * 长度未知（body_bytes < 0）时会走分块编码：esp_http_client_open 自动加
+     * Transfer-Encoding: chunked，而后面的分块框架由调用方写（见 voice_chunk_write）。
+     * 这里顺手留一个标记，服务端日志里一眼能看出这轮是"边录边传"来的。
+     */
+    if (body_bytes < 0) {
+        esp_http_client_set_header(client, "X-Audio-Stream", "1");
     }
 
     esp_err_t err = esp_http_client_open(client, (int)body_bytes);
@@ -533,6 +583,96 @@ static esp_err_t voice_turn(void)
     } else {
         s_voice.last_outcome =
             err == ESP_OK ? VOICE_OUTCOME_DONE : VOICE_OUTCOME_ERROR;
+    }
+    return err;
+}
+
+/*
+ * 边录边传。
+ *
+ * 原来的流程是"录满一整段 → 再整段上传"，上传那几秒完全落在用户等待里，
+ * 公网 RTT 放大后尤其明显。改成录制期间就把音频按分块写上去，服务端一边收
+ * 一边攒，录完之后只剩"识别 + 模型 + 合成"。任何一步失败都退回整段上传。
+ */
+static void voice_stream_start(void)
+{
+    esp_http_client_handle_t client = NULL;
+    /* body_bytes = -1：长度未知，用分块编码边录边写。 */
+    if (voice_open_request("/api/device/voice", "application/octet-stream",
+                           NULL, -1, true, &client) != ESP_OK) {
+        s_voice.stream_failed = true;
+        ESP_LOGW(TAG, "streaming upload unavailable; will send the recording in one piece");
+        return;
+    }
+    s_voice.stream_client = client;
+    s_voice.streamed_samples = 0;
+    s_voice.stream_started_us = esp_timer_get_time();
+}
+
+static void voice_stream_abort(void)
+{
+    if (s_voice.stream_client != NULL) {
+        esp_http_client_close(s_voice.stream_client);
+        esp_http_client_cleanup(s_voice.stream_client);
+        s_voice.stream_client = NULL;
+    }
+    s_voice.stream_failed = true;
+}
+static void voice_stream_flush(void)
+{
+    if (s_voice.stream_client == NULL || !s_voice.speech_seen) {
+        return;
+    }
+    const size_t captured = s_voice.recorded_samples;
+    if (captured <= s_voice.streamed_samples) {
+        return;
+    }
+    const size_t offset = s_voice.streamed_samples;
+    const size_t samples = captured - offset;
+    if (voice_chunk_write(s_voice.stream_client,
+                          (const uint8_t *)(s_voice.record_buffer + offset),
+                          samples * sizeof(int16_t)) != ESP_OK) {
+        ESP_LOGW(TAG, "streaming upload failed after %u bytes; falling back to one shot",
+                 (unsigned)(offset * sizeof(int16_t)));
+        voice_stream_abort();
+    } else {
+        s_voice.streamed_samples = captured;
+    }
+}
+
+
+/* 写完剩下的音频、收尾分块体，然后读回复（复用整段上传那条读流代码）。 */
+static esp_err_t voice_stream_finish(void)
+{
+    esp_http_client_handle_t client = s_voice.stream_client;
+    s_voice.stream_client = NULL;
+    if (client == NULL) {
+        return ESP_FAIL;
+    }
+    if (voice_chunk_finish(client) != ESP_OK || esp_http_client_fetch_headers(client) < 0) {
+        esp_http_client_close(client);
+        esp_http_client_cleanup(client);
+        return ESP_FAIL;
+    }
+    const int status = esp_http_client_get_status_code(client);
+    if (status != 200) {
+        char body_text[256];
+        int got = esp_http_client_read(client, body_text, sizeof(body_text) - 1);
+        body_text[got > 0 ? got : 0] = '\0';
+        snprintf(s_voice.last_result, sizeof(s_voice.last_result),
+                 got > 0 ? "服务端返回 HTTP %d：%.100s" : "服务端返回 HTTP %d",
+                 status, body_text);
+        ESP_LOGW(TAG, "%s", s_voice.last_result);
+        esp_http_client_close(client);
+        esp_http_client_cleanup(client);
+        return ESP_ERR_INVALID_RESPONSE;
+    }
+    snprintf(s_voice.last_result, sizeof(s_voice.last_result), "对话完成");
+    const esp_err_t err = voice_read_response(client);
+    esp_http_client_close(client);
+    esp_http_client_cleanup(client);
+    if (err == ESP_ERR_INVALID_STATE) {
+        snprintf(s_voice.last_result, sizeof(s_voice.last_result), "已取消");
     }
     return err;
 }
@@ -789,6 +929,9 @@ static void voice_perform_turn(void)
     s_voice.trailing_silence_ms = 0;
     s_voice.stop_requested = false;
     s_voice.recording = true;
+    s_voice.stream_client = NULL;
+    s_voice.streamed_samples = 0;
+    s_voice.stream_failed = false;
 
     int64_t started_us = esp_timer_get_time();
     while (s_voice.running && !s_voice.stop_requested) {
@@ -807,6 +950,19 @@ static void voice_perform_turn(void)
             break;
         }
         vTaskDelay(pdMS_TO_TICKS(VOICE_POLL_INTERVAL_MS));
+
+        /*
+         * 边录边传：确认有人说话之后才建连（含 TLS 握手，一两百毫秒），之后每
+         * 攒够 100 ms 写一个分块。这样"录完"的时候音频基本已经传完，用户少等
+         * 一整段上传的时间；没人说话时连都不连，不白花一次往返。
+         */
+        if (s_voice.speech_seen && s_voice.stream_client == NULL && !s_voice.stream_failed) {
+            voice_stream_start();
+        }
+        if (s_voice.stream_client != NULL &&
+            s_voice.recorded_samples >= s_voice.streamed_samples + VOICE_STREAM_FLUSH_SAMPLES) {
+            voice_stream_flush();
+        }
     }
 
     uint64_t wall_ms = (uint64_t)((esp_timer_get_time() - started_us) / 1000);
@@ -814,7 +970,9 @@ static void voice_perform_turn(void)
     robot_audio_remove_pcm_tap(voice_pcm_tap);
     voice_finalise_capture(wall_ms);
     if (s_voice.cancel_requested) {
-        /* Pressed while the robot was still listening: nothing worth sending. */
+        /* Pressed while the robot was still listening: nothing worth sending.
+         * Abort the half-open chunked request so nothing is left on the wire. */
+        voice_stream_abort();
         snprintf(s_voice.last_result, sizeof(s_voice.last_result), "已取消");
         s_voice.last_outcome = VOICE_OUTCOME_CANCELLED;
         return;
@@ -824,6 +982,7 @@ static void voice_perform_turn(void)
         /* The window expired without a word: report it and upload nothing. */
         ESP_LOGI(TAG, "no speech within %u ms; nothing uploaded",
                  (unsigned)s_voice.options.follow_up_ms);
+        voice_stream_abort();
         snprintf(s_voice.last_result, sizeof(s_voice.last_result), "没有听到声音");
         s_voice.last_outcome = VOICE_OUTCOME_NO_SPEECH;
         return;
@@ -834,6 +993,25 @@ static void voice_perform_turn(void)
          * Sending it would only buy a round trip and an empty transcript. */
         snprintf(s_voice.last_result, sizeof(s_voice.last_result), "没有听到声音");
         s_voice.last_outcome = VOICE_OUTCOME_NO_SPEECH;
+        voice_stream_abort();
+        return;
+    }
+
+    if (s_voice.stream_client != NULL) {
+        /* 录完了：把尾巴写完、收尾分块体，剩下的就是把回复读回来。 */
+        voice_stream_flush();
+    }
+    if (s_voice.stream_client != NULL) {
+        const uint32_t streamed_bytes =
+            (uint32_t)(s_voice.streamed_samples * sizeof(int16_t));
+        const uint32_t stream_ms =
+            (uint32_t)((esp_timer_get_time() - s_voice.stream_started_us) / 1000);
+        ESP_LOGI(TAG, "streamed %u bytes while recording (%u ms); no separate upload",
+                 (unsigned)streamed_bytes, (unsigned)stream_ms);
+        const esp_err_t err = voice_stream_finish();
+        s_voice.last_outcome = err == ESP_ERR_INVALID_STATE ? VOICE_OUTCOME_CANCELLED
+                             : err == ESP_OK               ? VOICE_OUTCOME_DONE
+                                                           : VOICE_OUTCOME_ERROR;
         return;
     }
 
