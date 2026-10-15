@@ -526,3 +526,8 @@ T001–T017 与 T009 已完成（依据见各任务条目）。**T018 语音对�
   5. 再查设备：`wake_applied` = **`ni hao xiao zhi`** ✓ 立即更新。
   测试账号与设备随后清理。
 - 仍未验证：喊「你好小智」能唤醒、喊「小飞小飞」不响应（语音行为层，只差用户喊一句）。
+### 2026-10-15 — 上线推进：线上迁移 0006 已应用、Worker 重新部署（T028–T032 全部上线）
+- 用户确认 T032 验收通过（「可以，完活了」），并告知**域名已到手**，要求部署上线。
+- 已完成：①`wrangler d1 migrations apply DB --remote` → `0006_wake.sql` ✅（唤醒词三列，上线前最后一步）；②`wrangler deploy` → 版本 `3fab4406-bcd9-49a5-9802-2065a32fb0c1`，上传 198.57 KiB／gzip 65.62 KiB，绑定 `env.DB`／`env.ASSETS`／`APP_ENV=production`；③查 Cloudflare 账号 zone：**0 个**。
+- 阻塞点：账号里没有 zone ⇒ `custom_domain` 绑不了。需要用户先在 Cloudflare「Add a site」把域名加进来、再到阿里云把 NS 改成 Cloudflare 的两台并等待 zone 变 Active（几分钟～24 h）。
+- 期间的小插曲：直接用配置文件里的 OAuth token 调 Cloudflare API 会报 `Invalid access token (9109)`（它不负责刷新），而 `npx wrangler whoami` 会顺手把 token 刷新掉——**查线上状态一律走 wrangler 自带命令或先 whoami**。
