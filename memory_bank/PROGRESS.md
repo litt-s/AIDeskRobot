@@ -442,3 +442,10 @@ T001–T017 与 T009 已完成（依据见各任务条目）。**T018 语音对�
 - 修法：①判定换成 `voice_playback_pending() = robot_audio_is_playing() || robot_audio_playback_buffered_samples() > 0`，把"入队未开播"也算在内；②等待上限放到 180 s（长回复）并在等待中响应打断（取消则 `robot_audio_abort_playback()` 立即静音，再走 restart 开新一轮）；③"没人说话"的退出除采集回调外，**在录音循环里也按时间兜底**（采集停摆时不再录满 10 s）。
 - 验证：`idf.py build` exit 0、`deskemoji_robot.bin` 0x148cc0（84% 空闲）。**未验证：真机**（要重新烧录验证"回复播完才开始听下一句""长回复期间不再被 4 秒超时打断对话"）。
 - **待用户决定（打断的路线）**：真打断需要 ESP-SR 的 AFE（`aec_init`，用播放 PCM 当参考信号把喇叭漏音从麦克风里扣掉）——这是唯一能让"边听边说"稳定工作的办法，属中等改造（`robot_wakeup` 从"裸 PCM → MultiNet"改成 AFE 流程 + 播放参考接入）。备选是退回"只有按键能打断"或只保留"播完接着说"。
+### 2026-10-15 — T030 决策：关闭唤醒词打断（用户选 B），只保留按键打断
+- 用户在三条路线里选 **B**：「只保留按键打断」。据此把 `ROBOT_CLOUD_VOICE_BARGE_IN` 的 Kconfig 默认由 **y 改为 n**，本机 `sdkconfig` 同步置 `# ... is not set`；**连续对话（`ROBOT_CLOUD_VOICE_FOLLOW_UP`/`_MS`）保留**，它与打断无关，"播完接着说"照常可用。
+- 关掉之后回到半双工：播放期间 `robot_audio_set_capture_paused(true)`、开一轮时 `robot_wakeup_stop()`、`PcmConsumer` 只在待机喂唤醒引擎——即不会再出现"机器人听见自己说话"的自激风险；相应代码由开关编译掉（`deskemoji_robot.bin` 0x148cc0 → **0x148c20**）。
+- 打断语义保持 T024 已验证过的行为：**BOOT 短按 = 取消这一轮并结束这段对话**（不是"取消后继续听"）。
+- 决策依据（同时写进 Kconfig help 与 README §13，便于日后回看）：单麦无 AEC 时，播放期间麦克风电平被喇叭漏音推到 **9k–26k**，唤醒短语被淹没、整段播放零检出（安静环境下的检出 prob 也只有 0.300／0.653）；降低阈值只会制造误触发。真打断的前置条件是 AEC（ESP-SR AFE，用播放 PCM 当参考信号），已作为将来可选项记录。
+- 验证：`idf.py reconfigure` + `build` exit 0、0 个 unknown symbol；`sdkconfig` 中 `BARGE_IN is not set`、`FOLLOW_UP=y`、`FOLLOW_UP_MS=4000`。
+- 未验证：真机（烧录后验：回答播完后接着说不必再喊唤醒词；BOOT 短按仍能打断并结束对话；待机时唤醒词正常）。

@@ -103,7 +103,7 @@ menu "DeskEmoji cloud device channel"
     config ROBOT_CLOUD_VOICE_BARGE_IN
         bool "Let the wake word interrupt a reply"
         depends on ROBOT_CLOUD_VOICE
-        default y
+        default n
         help
             With this on the microphone keeps running while the robot speaks, so
             saying the wake word again cuts the reply short and starts listening
@@ -111,8 +111,15 @@ menu "DeskEmoji cloud device channel"
 
             The price is self-listening: one microphone and no echo cancellation
             means the robot can hear its own voice, so a wake phrase inside its
-            own answer could interrupt it.  Turning this off restores the
-            half-duplex behaviour where only the button interrupts.
+            own answer could interrupt it.
+
+            Off by default.  Measured on the DeskEmoji board (2026-10-15): while
+            the reply plays, the microphone sees 9k-26k peaks from the speaker
+            alone, the wake phrase is buried in that, and the engine detected
+            nothing at all across a whole reply.  Without AEC this cannot be made
+            reliable, so the button stays the interrupt: a short BOOT press cuts
+            the reply (and ends the conversation).  Turning this on only helps if
+            an echo canceller is added in front of the wake engine.
 
     config ROBOT_CLOUD_VOICE_FOLLOW_UP
         bool "Keep listening after each reply (continuous conversation)"
