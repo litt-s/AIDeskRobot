@@ -45,6 +45,11 @@ const warning = message => {
 };
 
 const saveKey = value('save-key');
+/* 只保存凭据（没带 --kind）时就到此为止：不该再顺带抱怨「事件类型不对」。 */
+if (saveKey && !value('kind')) {
+  console.log('[aidesk] 凭据已保存。发事件这样写：node scripts/report-agent-event.mjs --kind needs_confirmation --source Codex --title "..."');
+  process.exit(0);
+}
 if (saveKey) {
   mkdirSync(dirname(keyFile), { recursive: true });
   writeFileSync(keyFile, `${saveKey.trim()}\n`, { encoding: 'utf8', mode: 0o600 });
