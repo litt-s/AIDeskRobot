@@ -364,3 +364,9 @@ T001–T017 与 T009 已完成（依据见各任务条目）。**T018 语音对�
 - 验证（本轮新增的真实证据）：用本机 EIM 环境跑**完整 `idf.py build`**（含链接）——exit code **0**、无 error、无 unused-function 警告；`Successfully created esp32s3 image`、`Generated ...\build\deskemoji_robot.bin`（0x148640 字节，app 分区 84% 空闲）。
 - 环境笔记（供下次复用）：这台机器是 EIM 布局，IDF 在 `D:\esp\v5.5.5\esp-idf`，工具在 `C:\Espressif\tools`，Python 环境在 `C:\Espressif\tools\python\v5.5.5\venv`（**没有** `python_env\idf5.5_py3.12_env`，所以 `export.bat` 会失败）。可用的命令拼法：`set PATH=<tools>\cmake\3.30.2\bin;<tools>\ninja\1.12.1;<tools>\xtensa-esp-elf\esp-14.2.0_20260121\xtensa-esp-elf\bin;%PATH%` + `set IDF_TOOLS_PATH=C:\Espressif\tools` + `set IDF_PYTHON_ENV_PATH=<venv>` + 用该 venv 的 python 跑 `idf.py -C <项目> build`。
 - 未验证：真机未烧录（用户下一步）。
+### 2026-10-15 — 本地开发 500 的根因：database_id 变化导致本地 D1 指向空库
+- 现象：用户启动 `npm run dev:worker` + 前端后，**所有 `/api/*` 都返回 500**（`POST /api/device/hello`、`GET /api/auth/me` 都是），机器人设备通道随之失败。
+- 根因（不是代码坏了）：为了让云端部署可用，我把 `wrangler.jsonc` 的 `database_id` 从全零占位改成了云端真实 ID；而 **`wrangler dev` 的本地 D1 是按 database_id 分文件存放的**（`.wrangler/state/v3/d1/miniflare-D1DatabaseObject/<hash>.sqlite`）。ID 一变，本机就去读**另一个（空的）库文件**：目录里同时存在 0:12 的旧库（278 KB + 2.9 MB WAL，含全部开发数据）和 0:17:21 新建的空库（4 KB、WAL 为 0，创建时间正好是 `wrangler.jsonc` 被修改的 0:17:19 之后）。空库没有表 → 每条查询都抛错 → 500。
+- 修法：**保留真实 ID（云端部署需要它），把旧库搬到新 ID 对应的文件名**。先停 `wrangler dev`（否则目标文件被 workerd 占用），把旧库的 `.sqlite`／`-wal`／`-shm` 三个文件复制成新库的对应名字；核对结果：14 表、users 58、models 2、roles 2、devices 1、voice_settings 1 —— 与旧库一致，开发数据完整恢复。随后删除临时的空库备份。
+- 教训（已写入 LEARNINGS）：`wrangler.jsonc` 里的 `database_id` 属于"**会改变数据落点**"的配置，不是普通常量；修改它之前要么先停服务、要么准备好把本地库文件一并搬过去。看到"所有接口 500、连最简接口也 500"时，优先怀疑**基础设施/绑定层面的整体失效**（库为空、密钥缺失、绑定不对），而不是逐个接口去查代码。
+- 未验证：用户重启 `wrangler dev` 后的实际表现（预期 401/正常，而不是 500）。

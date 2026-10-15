@@ -186,7 +186,13 @@
 - 规则：**验证一个子系统被"删干净"，必须包含一次完整构建（含链接）**，而不能只跑单文件编译。单文件编译适合快速迭代，但它对"定义缺失""未使用的死代码""依赖残留"这三类问题一律不报。
 - 顺带一条工程习惯：删除接口时，**声明、注册点、调用点、依赖声明（CMake/idf_component.yml/Kconfig）要同批删**。本轮就是漏了"注册点仍在引用已删定义"，导致用户在烧录时才发现——修复成本从"本地一条命令"变成了"用户中断一次烧录"。
 - 记录一个可复用的环境拼法：这台机器是 EIM 布局（IDF 在 `D:\esp\v5.5.5\esp-idf`、工具在 `C:\Espressif\tools`、Python 环境在 `C:\Espressif\tools\python\v5.5.5\venv`），`export.bat` 会因为找不到 `python_env\idf5.5_py3.12_env` 而失败；可以直接拼 PATH（cmake/ninja/xtensa）+ `IDF_TOOLS_PATH=C:\Espressif\tools` + `IDF_PYTHON_ENV_PATH=<venv>`，用 venv 的 python 跑 `idf.py -C <项目> build`。
-## 待调查
+## 改 `wrangler.jsonc` 的 `database_id` 会换掉本地 D1 文件（2026-10-15）
+- 现象：为了让云端部署可用，把 D1 的占位 ID 换成真实 ID 之后，本机 `wrangler dev` 的**所有接口都 500**——连 `GET /api/auth/me` 这种不查库的业务都在中间件阶段失败。
+- 根因：**本地 D1 是按 `database_id` 分文件存放的**（`.wrangler/state/v3/d1/miniflare-D1DatabaseObject/<hash>.sqlite`）。ID 一改，`wrangler dev` 打开的就是另一个文件；而那个文件是新建的**空库**（没表）→ 每条 SQL 都报"no such table" → 500。旧库文件还在原地，数据一条没丢——只是没人再去读它。
+- 处理：①先停 `wrangler dev`（目标文件被 `workerd` 占用，写不进去）；②把旧库的 `.sqlite`／`-wal`／`-shm` **三个文件**复制成新 ID 对应的文件名（只拷主文件会丢掉 WAL 里未 checkpoint 的写入）；③重启后在库文件里核对表与行数，确认数据在。
+- 教训一：`database_id` 属于"**会改变数据落点**"的配置。改它之前先停服务；改完如果发现数据"消失"，先去看 D1 状态目录里有几个 `.sqlite` 文件、各多大、什么时间创建——**数据几乎总还在旧文件里**。
+- 教训二：**"所有接口都 500、连最简接口也 500"指向基础设施层**（库为空、密钥缺失、绑定不对），而不是某个接口的业务代码。这种"全灭"模式应当先去查绑定与环境，别逐个接口读代码。
+- 教训三：本地 D1 的目录是 gitignore 的（`.wrangler/`），所以**它不会被提交、也不会被备份**；凡是"本地开发数据"都应当视为可丢弃——需要留存就用 `wrangler d1 export --local` 导一份。## 待调查
 其他供应商兼容性、真实浏览器暂停续写整链路、Cloudflare 远程 migration 与生产部署仍待验证。server/index.ts 仍保留 `if(false)` 的旧 chat-legacy 死代码与 chat_locks 过期检查，属待清理项；这不构成可路由漏洞，但会增加维护成本。
 
 URL附加模式preview_start返回本安装不支持，未据此声称T009全状态验证通过。代理续传消息被自动审批判定Instruction Poisoning而拒绝，已改由主会话实施本地代码。
