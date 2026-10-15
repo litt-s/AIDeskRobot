@@ -282,10 +282,10 @@ npm run desktop:pack     # build + build:node + electron-builder --win --x64 --d
 
 ### 实际执行记录（2026-10-15 晚，CloudBase 云托管已上线）
 - **环境**：`my-base01-d0gacogbi5e4deac3`（体验版 `baas_trial`、`ap-shanghai`）。`tcbr DescribeEnvBaseInfo` 返回 `Status=normal`、`EnvType=baas`、`PackageType=Trial` ⇒ **云托管已开通**（无需再调 `CreateCloudRunEnv`；也确认走的是大租户路径 —— 部署记录里 `RunId` 是 `multi_tenant_*`）。
-- **服务**：`aidesk-console`，容器型（Dockerfile 云端构建）。版本 `aidesk-console-001`（首次部署，BuildId `2608726626`）→ `002`（配置变更滚动，BuildId `0`）。镜像在 `ccr.ccs.tencentyun.com/tcb-100052796287-zlwy/…`。配置：`Port=80`、`OpenAccessTypes=[PUBLIC]`、`PublicNetStatus=ENABLE`、`CustomLogs=stdout`。
+- **服务**：`aidesk-console`，容器型（Dockerfile 云端构建）。版本 `aidesk-console-001`（首次部署，BuildId `2608726626`）→ `002`（配置变更滚动，BuildId `0`）→ **`003`（403 修复后重发，BuildId `2608736249`，100% 流量）**。镜像在 `ccr.ccs.tencentyun.com/tcb-100052796287-zlwy/…`。配置：`Port=80`、`OpenAccessTypes=[PUBLIC]`、`PublicNetStatus=ENABLE`、`CustomLogs=stdout`。
 - **默认域名（免备案、境内直连）**：`https://aidesk-console-312359-12-1485927190.sh.run.tcloudbase.com`。
 - **实测（本机不走代理直连）**：`/` → **200**（SPA，首字节 3.5 s 冷启动）；注入环境变量前 `/api/health` → **503**（`服务端未配置有效加密密钥`，属预期）；用 `SubmitServerConfigChangeDiff` 注入 `EnvParams` 后 → `/api/health` **200**、`/api/auth/me` **401 JSON**；`/assets/index-*.js|css` → **200** 且 content-type 正确；TLS 由平台证书签发，`Invoke-WebRequest` 默认校验证书即通过 ⇒ 固件的 CA 证书包可用。
-- **踩到的坑（已修）：反向代理下所有写请求 403**。容器只收到 http（TLS 在网关终止），而浏览器 `Origin` 是 `https://…`，`trustedOrigin()` 逐字节比较 origin 时把**同源**写请求判成跨源 —— 实测 `Origin: http://<域名>` 注册 → **201**、`Origin: https://<域名>` → **403**，即"读能用、写全挂"。修法见 LEARNINGS「同一台主机换了协议不算跨源」：同主机（忽略协议）即视为同源，`server/origins.ts` 已改，`tests/trust.test.ts` 增加 7 条断言。
+- **踩到的坑（已修）：反向代理下所有写请求 403**。容器只收到 http（TLS 在网关终止），而浏览器 `Origin` 是 `https://…`，`trustedOrigin()` 逐字节比较 origin 时把**同源**写请求判成跨源 —— 实测 `Origin: http://<域名>` 注册 → **201**、`Origin: https://<域名>` → **403**，即"读能用、写全挂"。修法见 LEARNINGS「同一台主机换了协议不算跨源」：同主机（忽略协议）即视为同源，`server/origins.ts` 已改，`tests/trust.test.ts` 增加 7 条断言。**修复后复验（版本 003）**：带 `Origin: https://<域名>` 的 `POST /api/auth/login` → **401**（凭据错误，不再是 403）；**不带 `Origin` 依然 403**（CSRF 该拦的还拦得住）；`/api/health` → **200**；`/` 与 `/assets/*.js|css` → 200。另有一个值得记住的行为：**用 `tcb cloudrun deploy` 重新部署不会清掉已经设好的 `EnvParams`**（重发后健康检查仍是 200，说明 `ENCRYPTION_KEY` 还在）。
 - **数据持久化**：当前**未挂载存储卷**，容器文件系统随发布重置 ⇒ 每次发布都会回到"播种后的初始状态"（账号/设备/模型/语音凭据在，但发布后新增的内容会丢）。要持久化就把 CFS 挂到 `/app/data`（`DB_PATH` 已指向那里）。
 
 ### 命令速查（都走已登录的 `tcb`）
