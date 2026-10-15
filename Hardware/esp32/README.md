@@ -233,6 +233,12 @@ robot_voice: interrupted by the wake word: listening again
 robot_voice: conversation ended after 3 turns: 对话完成
 ```
 
+开机提示音排空后应出现这一行（**它是"麦克风真的开始工作"的证据**；没有这行而唤醒词又不灵，就是采集还停在暂停状态）：
+
+```text
+robot_app: ready prompt drained; microphone resumed for offline wake
+```
+
 唤醒引擎起不来时会明确报错，不再照打"就绪"：
 
 ```text
@@ -253,7 +259,8 @@ provisioning requested from BOOT long press
 | --- | --- |
 | `Error parse url 192.168.x.x:8787/api/device/hello` | 服务器地址缺 scheme。配网页会自动补 `http://`，但**旧 NVS 里的值不会自己变**——重开配网页保存一次即可。同时确认填的是控制台地址（本地 `:8787`），**不是**前端页面的 `:5173` |
 | `Failed to set URL`、设备通道一直不在线 | 地址不可达或设备码不对。先在同一 Wi-Fi 下用手机／电脑打开该地址，再确认设备已绑定 |
-| 唤醒没反应 | 看有没有 `offline wake ready`；一轮对话进行中麦克风被独占，唤醒词是关闭的，属正常 |
+| 唤醒没反应 | 先看 `offline wake ready`（引擎已就绪）与 `ready prompt drained; microphone resumed for offline wake`（麦克风真的在采集）。**若"只有重启后第一次不灵、按一次 BOOT 就好"，那是 T031 已修的老 bug**；若一直不灵，看有没有 `offline wake UNAVAILABLE`／`no wake model`（模型分区没烧全） |
+| 待机时看不到 `microphone peak=` | 说明采集被暂停（`robot_audio_set_capture_paused(true)` 之后没人恢复），唤醒引擎同样拿不到数据 |
 | 识别断断续续 | 先看 `capture report`：`audio ≈ wall` 且有 `gaps >= 400 ms` → 是音频里真实的停顿；`audio` 明显小于 `wall` → 采集丢帧 |
 | 识别不到／听不清 | 看 `microphone peak`：长期只有几十 → 麦克风没接或 `ROBOT_MIC_SHIFT` 不对；长期钉在 32768、RMS 过半 → 增益过大，语音被钳成方波 |
 | 长回答按一次停不下来 | 已修（`robot_voice_cancel`）。若复现，请保留 `robot_voice:` 前后的完整日志 |

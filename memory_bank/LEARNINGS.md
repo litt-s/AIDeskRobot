@@ -246,3 +246,14 @@ URL附加模式preview_start返回本安装不支持，未据此声称T009全状
 - 新增 `config ROBOT_CLOUD_VOICE_BARGE_IN` 后直接 `idf.py build`：构建**成功**、`error 0`、`unknown symbol 0`，但 **`Re-running CMake: 0`** —— CMake 没重跑，新符号没进 `sdkconfig`，`#if CONFIG_ROBOT_CLOUD_VOICE_BARGE_IN` 于是全按 0 编译：**代码看着编译过了，功能根本没打开**。
 - 判据：构建日志里必须有 `Re-running CMake` 和 `Loading defaults file`，并且 `sdkconfig` 里能 grep 到新符号（`CONFIG_...=y`）。缺任何一条，就该 `idf.py reconfigure` 再 build。
 - 这已经是同一类陷阱的第二次（上次是 `sdkconfig.defaults`）：**改了任何影响配置的文件，都要用"配置是否真的进了 sdkconfig"来判定，而不是"构建是否成功"。**
+## "恢复动作写在错误分支里"：成功路径反而没人收拾（2026-10-15 T031）
+- 典型形状：先 `pause()`，再做一个可能失败的操作，然后**只在失败时 `resume()`**：
+  ```c
+  robot_audio_set_capture_paused(true);
+  err = play_prompt();
+  if (err != ESP_OK) { robot_audio_set_capture_paused(false); }   // ← 成功时没人恢复
+  ```
+  于是**正常路径**留下一个永久生效的副作用。本次后果：重启后麦克风一直停摆，唤醒引擎 armed 却没数据，必须先按一次 BOOT（那条路径里有人调 `set_capture_paused(false)`）才恢复——一个"只有重启后第一次不灵"的诡异现象。
+- 审这类代码只要问一句：**"成功路径上，谁来把状态恢复回去？"** 若答不上来，就是 bug。写入端与恢复端要成对出现，且恢复端通常在 finally / 函数末尾**无条件**执行。
+- 这类 bug 的日志特征：**什么都看不出来**。相关模块的"就绪"日志照常打印（因为就绪条件确实满足），坏掉的是数据流（没有帧进来）。所以排查"某功能一动不动"时，除了看状态标志，还要看**数据是否真的在流动**（本次的判据就是"待机时串口有没有 `microphone peak=`"）。
+- 用户描述里"必须先按一次 X 才生效"几乎是这类 bug 的签名：说明有一处初始化只存在于 X 的路径里。

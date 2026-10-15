@@ -419,3 +419,18 @@ T001–T017 与 T009 已完成（依据见各任务条目）。**T018 语音对�
 - 验证：`idf.py reconfigure` + `build` exit 0、无 error、无 unknown symbol；`sdkconfig` 里 `BARGE_IN=y`、`FOLLOW_UP=y`、`FOLLOW_UP_MS=4000`；`deskemoji_robot.bin` 0x148bb0（84% 空闲）。
 - **再次踩到同一个坑**：改完**组件目录下的 Kconfig** 直接 `idf.py build`，CMake **不会重跑**（`Re-running CMake: 0`），新符号没进 sdkconfig，于是 `#if CONFIG_ROBOT_CLOUD_VOICE_BARGE_IN` 全被当成 0——编译"成功"，但打不开断。必须显式 `idf.py reconfigure`（日志里要能看到 `Loading defaults file`）。上次是 `sdkconfig.defaults`，这次是组件 Kconfig，**同一类陷阱**。
 - 未验证：真机（需重新烧录）。要验三条：安静 4 秒是否退出、回答播完能否接着说、说到一半喊唤醒词能否打断。
+### 2026-10-15 — T031 修复「重启后必须先按一次 BOOT，唤醒词才好使」
+- 用户报告：「还有我每次重启后需要按一次 boot 激活一下语音之后唤醒词才好使」。这句话把范围缩得很小——**只有重启后的第一次无效**，按键之后一直正常，说明唤醒引擎与检测逻辑都没问题，缺的是"开机那次"的某一步初始化。
+- 根因（老 bug，与 T030 无关）：`robot_app.cpp: ready_prompt_task()` 里恢复采集的调用被放进了**错误分支**：
+  ```c
+  esp_err_t err = robot_audio_play_wav_file("/assets/network_ready.wav");
+  if (err != ESP_OK) {
+      ESP_LOGW(TAG, "ready prompt failed: %s", esp_err_to_name(err));
+      robot_audio_set_capture_paused(false);   // ← 只有失败才恢复
+  }
+  ```
+  而 `SetupOnlineServices()` 在放提示音前会 `robot_audio_set_capture_paused(true)`。于是**播放成功**（正常路径）时 `capture_paused` 永远是 true：`robot_audio` 采集回调里 `if (!s_audio.capture_paused && consumer)` 不再分发 → `PcmConsumer` 不跑 → `robot_wakeup_feed_pcm` 一帧都收不到 → 唤醒引擎 armed 但被饿死。按一次 BOOT 触发一轮对话时，语音模块在 `voice_perform_turn()` 里 `robot_audio_set_capture_paused(false)`，麦克风从此恢复，所以"按一次就好"，直到下次重启。
+- 为什么日志骗人：`wake_ready_` 的确是 true（模型加载、引擎 start 都成功了），所以 `offline wake ready: 小飞小飞 or BOOT short press` 照常打印——问题是"armed 但没数据"，日志里没有任何一行反映它。（这正是 T030 里那条诊断改动（按 `wake_ready_` 区分就绪/不可用）覆盖不到的情形；那条仍然有价值，只是不够。）
+- 修法：提示音**排空后无条件恢复采集**，并打印证据行。等待用有界循环（`kPromptDrainWaitSteps = 500` × `kPromptDrainPollMs = 20` = 最多 10 s），避免播放状态异常时把提示音任务挂死。
+- 验证：完整 `idf.py build` exit 0、无新 warning；`deskemoji_robot.bin` 0x148c30（84% 空闲）。**未验证：真机**（重启后直接喊唤醒词、不按任何键；开机日志应出现 `ready prompt drained; microphone resumed for offline wake`）。
+- 方法学（已写入 LEARNINGS）：**"恢复/清理动作写在错误分支里"是很隐蔽的一类 bug**——正常路径反而没人收拾。审这类代码只需问一句："成功路径上，谁来把状态恢复回去？"

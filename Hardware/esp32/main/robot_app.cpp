@@ -52,6 +52,13 @@ constexpr size_t kEventQueueDepth = 20;
 constexpr uint32_t kBootTaskStackBytes = 4096;
 constexpr uint32_t kProvisioningPromptStackBytes = 16 * 1024;
 constexpr uint32_t kReadyPromptStackBytes = 16 * 1024;
+/*
+ * The ready prompt mutes the microphone, and the mute has to be lifted by hand
+ * once the prompt has drained.  Poll it, but keep the wait bounded in case
+ * playback never reports idle.
+ */
+constexpr uint32_t kPromptDrainPollMs = 20;
+constexpr int kPromptDrainWaitSteps = 500;
 const char *TAG = "robot_app";
 std::atomic<bool> s_provisioning_prompt_running{false};
 std::atomic<bool> s_ready_prompt_running{false};
@@ -228,8 +235,22 @@ void ready_prompt_task(void *arg)
     esp_err_t err = robot_audio_play_wav_file("/assets/network_ready.wav");
     if (err != ESP_OK) {
         ESP_LOGW(TAG, "ready prompt failed: %s", esp_err_to_name(err));
-        robot_audio_set_capture_paused(false);
     }
+    /*
+     * The microphone was muted for this prompt and nothing else lifts that:
+     * resuming capture used to live in the error branch above, so a prompt that
+     * played fine left the microphone paused until the first button-triggered
+     * turn.  The wake engine was armed the whole time but starved of frames, so
+     * the wake word stayed deaf after every reboot until BOOT was pressed once.
+     *
+     * Wait for the prompt to drain before resuming: unmuting straight away
+     * would feed the tail of the prompt into recognition.
+     */
+    for (int step = 0; step < kPromptDrainWaitSteps && robot_audio_is_playing(); ++step) {
+        vTaskDelay(pdMS_TO_TICKS(kPromptDrainPollMs));
+    }
+    robot_audio_set_capture_paused(false);
+    ESP_LOGI(TAG, "ready prompt drained; microphone resumed for offline wake");
     s_ready_prompt_running.store(false);
     vTaskDelete(nullptr);
 }
