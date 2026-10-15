@@ -31,6 +31,8 @@
 #define VOICE_DEFAULT_SAMPLE_RATE 16000
 #define VOICE_DEFAULT_SILENCE_STOP_MS 900
 #define VOICE_DEFAULT_MIN_RECORD_MS 400
+/* Safety net so a noisy room cannot keep a conversation alive forever. */
+#define VOICE_MAX_TURNS_PER_CONVERSATION 30
 #define VOICE_DEFAULT_SILENCE_THRESHOLD 700
 #define VOICE_DEFAULT_TIMEOUT_MS 45000
 /* Ceiling on waiting for the wake chime to finish before recording starts. */
@@ -55,6 +57,16 @@
 #define VOICE_FRAME_PCM 0x02
 #define VOICE_FRAME_HEADER_BYTES 5
 
+/* Why a turn ended.  The follow-up loop keys off this instead of comparing the
+ * human-readable result string, which is meant for the console's command log. */
+typedef enum {
+    VOICE_OUTCOME_NONE = 0,
+    VOICE_OUTCOME_DONE,
+    VOICE_OUTCOME_NO_SPEECH,
+    VOICE_OUTCOME_CANCELLED,
+    VOICE_OUTCOME_ERROR,
+} voice_outcome_t;
+
 typedef struct {
     bool running;
     bool busy;
@@ -63,6 +75,9 @@ typedef struct {
     /* Set by robot_voice_cancel() from the button handler: ends the recording
      * and cuts the reply stream short. */
     volatile bool cancel_requested;
+    /* Set by robot_voice_interrupt_listen(): the wake word cut a reply short,
+     * so start another listening turn instead of ending the conversation. */
+    volatile bool restart_requested;
     bool speech_seen;
     uint32_t trailing_silence_ms;
     size_t recorded_samples;
@@ -75,6 +90,7 @@ typedef struct {
     robot_voice_state_fn state_callback;
     void *state_ctx;
     char last_result[160];
+    voice_outcome_t last_outcome;
 } voice_state_t;
 
 static voice_state_t s_voice;
@@ -204,7 +220,20 @@ static void voice_pcm_tap(void *ctx, const int16_t *samples, size_t sample_count
         s_voice.trailing_silence_ms = 0;
         return;
     }
-    if (!s_voice.speech_seen || recorded_ms < s_voice.options.min_record_ms) {
+    if (!s_voice.speech_seen) {
+        /*
+         * Nobody has spoken yet on this turn.  With a follow-up window the wait
+         * is bounded here: otherwise a silent turn runs to max_record_ms and
+         * uploads ten seconds of room tone, and every time the window expires
+         * the robot would pay for a recognition round trip it cannot use.
+         */
+        if (s_voice.options.follow_up_ms > 0 &&
+            recorded_ms >= s_voice.options.follow_up_ms) {
+            s_voice.stop_requested = true;
+        }
+        return;
+    }
+    if (recorded_ms < s_voice.options.min_record_ms) {
         return;
     }
     s_voice.trailing_silence_ms += frame_ms;
@@ -236,9 +265,17 @@ static void voice_handle_pcm(const uint8_t *payload, size_t size, bool *playback
         return;
     }
     if (!*playback_open) {
+#if CONFIG_ROBOT_CLOUD_VOICE_BARGE_IN
+        /*
+         * Barge-in: keep capturing while the robot speaks so the wake word can
+         * be heard over its own reply.  The recording buffer stays clean anyway
+         * - the tap drops every frame that arrives while audio is playing.
+         */
+#else
         /* Mute the microphone while the robot speaks, and stop the wake word
          * engine from hearing the reply as a command. */
         robot_audio_set_capture_paused(true);
+#endif
         robot_audio_start_playback_stream();
         *playback_open = true;
     }
@@ -442,6 +479,7 @@ static esp_err_t voice_turn(void)
         if (!s_voice.last_result[0]) {
             snprintf(s_voice.last_result, sizeof(s_voice.last_result), "音频上传失败");
         }
+        s_voice.last_outcome = VOICE_OUTCOME_ERROR;
         return err;
     }
 
@@ -453,6 +491,10 @@ static esp_err_t voice_turn(void)
         /* Cancelled by a button press; the console's command log should say so
          * rather than keep "对话完成". */
         snprintf(s_voice.last_result, sizeof(s_voice.last_result), "已取消");
+        s_voice.last_outcome = VOICE_OUTCOME_CANCELLED;
+    } else {
+        s_voice.last_outcome =
+            err == ESP_OK ? VOICE_OUTCOME_DONE : VOICE_OUTCOME_ERROR;
     }
     return err;
 }
@@ -675,6 +717,7 @@ static void voice_perform_turn(void)
     }
 
     s_voice.recorded_samples = 0;
+    s_voice.last_outcome = VOICE_OUTCOME_NONE;
     s_voice.speech_seen = false;
     s_voice.trailing_silence_ms = 0;
     s_voice.stop_requested = false;
@@ -695,6 +738,16 @@ static void voice_perform_turn(void)
     if (s_voice.cancel_requested) {
         /* Pressed while the robot was still listening: nothing worth sending. */
         snprintf(s_voice.last_result, sizeof(s_voice.last_result), "已取消");
+        s_voice.last_outcome = VOICE_OUTCOME_CANCELLED;
+        return;
+    }
+
+    if (!s_voice.speech_seen) {
+        /* The window expired without a word: report it and upload nothing. */
+        ESP_LOGI(TAG, "no speech within %u ms; nothing uploaded",
+                 (unsigned)s_voice.options.follow_up_ms);
+        snprintf(s_voice.last_result, sizeof(s_voice.last_result), "没有听到声音");
+        s_voice.last_outcome = VOICE_OUTCOME_NO_SPEECH;
         return;
     }
 
@@ -702,6 +755,7 @@ static void voice_perform_turn(void)
         /* Under 100 ms of audio: almost certainly a stray trigger, not speech.
          * Sending it would only buy a round trip and an empty transcript. */
         snprintf(s_voice.last_result, sizeof(s_voice.last_result), "没有听到声音");
+        s_voice.last_outcome = VOICE_OUTCOME_NO_SPEECH;
         return;
     }
 
@@ -717,11 +771,54 @@ static void voice_perform_turn(void)
  */
 static void voice_run_turn(void)
 {
-    /* A cancel belongs to the turn it was pressed during: clear it here so a
-     * press landing just after the previous turn ended cannot kill this one. */
-    s_voice.cancel_requested = false;
     voice_publish_state(true);
-    voice_perform_turn();
+
+    uint32_t turns = 0;
+    for (;;) {
+        /* A cancel belongs to the turn it was pressed during: clear it here so a
+         * press landing just after the previous turn ended cannot kill this
+         * one. */
+        s_voice.cancel_requested = false;
+        voice_perform_turn();
+        ++turns;
+
+        if (s_voice.restart_requested) {
+            s_voice.restart_requested = false;
+            if (!s_voice.running) {
+                break;
+            }
+            /* The wake word cut the reply short on purpose: listen for the new
+             * question instead of going back to the wake word or ending here.
+             * The turn ceiling starts over because this was the user asking. */
+            ESP_LOGI(TAG, "interrupted by the wake word: listening again");
+            turns = 0;
+            continue;
+        }
+        /*
+         * Continuous conversation: after a reply that finished normally, listen
+         * again without going back to the wake word.  Every other outcome -
+         * silence, a cancelled turn, an error - ends the conversation here, so
+         * the robot cannot sit in a listening loop that nobody is talking to.
+         */
+        if (s_voice.options.follow_up_ms == 0 ||
+            s_voice.last_outcome != VOICE_OUTCOME_DONE) {
+            break;
+        }
+        if (turns >= VOICE_MAX_TURNS_PER_CONVERSATION) {
+            ESP_LOGW(TAG, "conversation hit the %u turn ceiling",
+                     (unsigned)turns);
+            break;
+        }
+        if (!s_voice.running) {
+            break;
+        }
+        ESP_LOGI(TAG, "listening again: conversation turn %u",
+                 (unsigned)(turns + 1));
+    }
+    if (turns > 1) {
+        ESP_LOGI(TAG, "conversation ended after %u turns: %s", (unsigned)turns,
+                 s_voice.last_result);
+    }
     voice_publish_state(false);
 }
 
@@ -875,6 +972,21 @@ esp_err_t robot_voice_trigger(void)
     xSemaphoreTake(s_voice.idle, 0);
     xSemaphoreGive(s_voice.trigger);
     return ESP_OK;
+}
+
+void robot_voice_interrupt_listen(void)
+{
+    if (!s_voice.busy) {
+        return;
+    }
+    /*
+     * The same stop/cancel pair the button uses, plus a request to keep the
+     * conversation going: the phrase that cut the reply short is the beginning
+     * of the next question.
+     */
+    s_voice.stop_requested = true;
+    s_voice.cancel_requested = true;
+    s_voice.restart_requested = true;
 }
 
 void robot_voice_cancel(void)

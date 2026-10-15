@@ -102,6 +102,11 @@ esp_err_t robot_wakeup_init(robot_wakeup_fn callback, void *ctx)
     s_wakeup.callback_ctx = ctx;
     s_wakeup.models = esp_srmodel_init("model");
     if (!s_wakeup.models || s_wakeup.models->num <= 0) {
+        /* Silence here used to be the whole story: the wake word simply never
+         * fired, while the app still logged "offline wake ready".  Say it. */
+        ESP_LOGE(TAG,
+                 "no wake model in the \"model\" partition - was "
+                 "build/srmodels/srmodels.bin flashed?");
         robot_wakeup_deinit();
         return ESP_ERR_NOT_FOUND;
     }
@@ -112,6 +117,10 @@ esp_err_t robot_wakeup_init(robot_wakeup_fn callback, void *ctx)
         model_name = esp_srmodel_filter(s_wakeup.models, ESP_MN_PREFIX, NULL);
     }
     if (!model_name) {
+        ESP_LOGE(TAG,
+                 "the model partition holds no MultiNet model (%s*), so the "
+                 "wake word cannot be recognised",
+                 ESP_MN_PREFIX);
         robot_wakeup_deinit();
         return ESP_ERR_NOT_FOUND;
     }
@@ -119,12 +128,15 @@ esp_err_t robot_wakeup_init(robot_wakeup_fn callback, void *ctx)
 
     s_wakeup.multinet = esp_mn_handle_from_name(model_name);
     if (!s_wakeup.multinet) {
+        ESP_LOGE(TAG, "no MultiNet handle for model %s", model_name);
         robot_wakeup_deinit();
         return ESP_ERR_NOT_FOUND;
     }
     s_wakeup.model_data =
         s_wakeup.multinet->create(model_name, WAKE_DETECT_DURATION_MS);
     if (!s_wakeup.model_data) {
+        ESP_LOGE(TAG, "unable to allocate wake model %s (out of PSRAM?)",
+                 model_name);
         robot_wakeup_deinit();
         return ESP_ERR_NO_MEM;
     }

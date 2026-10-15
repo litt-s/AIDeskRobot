@@ -487,7 +487,18 @@ esp_err_t RobotApp::SetupOnlineServices()
     }
     state_.store(RobotAppState::OFFLINE_WAKE_READY);
     robot_ui_set_idle_animation(true);
-    ESP_LOGI(TAG, "offline wake ready: 小飞小飞 or BOOT short press");
+    if (wake_ready_) {
+        ESP_LOGI(TAG, "offline wake ready: 小飞小飞 or BOOT short press");
+    } else {
+        /*
+         * Without this the log looked healthy while the wake word could never
+         * fire, and only the button appeared to work.
+         */
+        ESP_LOGW(TAG,
+                 "offline wake UNAVAILABLE: only BOOT can start a turn "
+                 "(wake engine failed to initialise - see robot_wakeup errors "
+                 "above)");
+    }
     if (ui_ready_) {
         robot_action_t action = {};
         action.type = ROBOT_ACTION_EXPRESSION;
@@ -527,6 +538,21 @@ void RobotApp::HandleEvent(const Event &event)
             robot_network_enter_provisioning();
             break;
         case EventType::WAKE_TRIGGER:
+#if CONFIG_ROBOT_CLOUD_VOICE && CONFIG_ROBOT_CLOUD_VOICE_BARGE_IN
+            /*
+             * Barge-in: the wake word is also the interrupt.  Only a reply that
+             * is actually playing needs interrupting - while the robot is
+             * listening, everything said is already being recorded, and a
+             * second trigger would only restart that recording.
+             */
+            if (state_.load() == RobotAppState::CLOUD_VOICE_ACTIVE) {
+                if (robot_voice_busy() && robot_audio_is_playing()) {
+                    ESP_LOGI(TAG, "wake word while speaking: interrupting");
+                    robot_voice_interrupt_listen();
+                }
+                break;
+            }
+#endif
             if (state_.load() == RobotAppState::OFFLINE_WAKE_READY &&
                 robot_network_time_ready()) {
 #if CONFIG_ROBOT_CLOUD_VOICE
@@ -539,7 +565,11 @@ void RobotApp::HandleEvent(const Event &event)
                     break;
                 }
 #endif
+#if !(CONFIG_ROBOT_CLOUD_VOICE && CONFIG_ROBOT_CLOUD_VOICE_BARGE_IN)
+                /* With barge-in the engine stays armed: that is what lets the
+                 * next wake word interrupt the reply. */
                 robot_wakeup_stop();
+#endif
                 robot_ui_set_idle_animation(false);
                 robot_action_t wake_action = {};
                 wake_action.type = ROBOT_ACTION_WAKEUP;
@@ -644,6 +674,16 @@ void RobotApp::HandleEvent(const Event &event)
                 voice_options.max_record_ms = (uint32_t)CONFIG_ROBOT_CLOUD_VOICE_MAX_RECORD_MS;
                 voice_options.silence_stop_ms = (uint32_t)CONFIG_ROBOT_CLOUD_VOICE_SILENCE_MS;
                 voice_options.silence_threshold = (uint32_t)CONFIG_ROBOT_CLOUD_VOICE_THRESHOLD;
+#if CONFIG_ROBOT_CLOUD_VOICE_FOLLOW_UP
+                /*
+                 * Say the wake word once, then keep asking questions: after each
+                 * reply the robot listens again instead of arming the wake word.
+                 * The same number decides how long it waits for the first word
+                 * of a turn, which is also what ends the conversation.
+                 */
+                voice_options.follow_up_ms =
+                    (uint32_t)CONFIG_ROBOT_CLOUD_VOICE_FOLLOW_UP_MS;
+#endif
                 if (robot_voice_init(&voice_options) == ESP_OK) {
                     robot_voice_set_state_callback(CloudVoiceState, this);
                     robot_voice_start();
@@ -838,7 +878,13 @@ void RobotApp::PcmConsumer(void *ctx, const int16_t *samples,
 {
     auto *self = static_cast<RobotApp *>(ctx);
     RobotAppState state = self->state_.load();
-    if (state == RobotAppState::OFFLINE_WAKE_READY) {
+    bool wake_feed = state == RobotAppState::OFFLINE_WAKE_READY;
+#if CONFIG_ROBOT_CLOUD_VOICE && CONFIG_ROBOT_CLOUD_VOICE_BARGE_IN
+    /* The wake word doubles as the interrupt, so the engine keeps receiving the
+     * microphone while a turn runs - it has to hear the phrase over the reply. */
+    wake_feed = wake_feed || state == RobotAppState::CLOUD_VOICE_ACTIVE;
+#endif
+    if (wake_feed) {
         log_microphone_level(samples, sample_count);
         robot_wakeup_feed_pcm(samples, sample_count, capture_ms);
     } else {

@@ -36,6 +36,17 @@ typedef struct {
     uint32_t min_record_ms;
     /* Level below which a frame counts as silence (16-bit PCM RMS). */
     uint32_t silence_threshold;
+    /*
+     * How long a turn waits for speech before giving up, in milliseconds.
+     *
+     * 0 keeps the old behaviour: record until max_record_ms and upload whatever
+     * was captured.  With a non-zero value a turn that never hears a word ends
+     * early and uploads nothing, and a turn that finished normally is followed
+     * by another listening turn - which is what makes "say the wake word once,
+     * then keep talking" work instead of returning to the wake word after every
+     * reply.
+     */
+    uint32_t follow_up_ms;
     /* Ceiling for the upload plus the streamed answer. */
     uint32_t request_timeout_ms;
 } robot_voice_options_t;
@@ -62,6 +73,13 @@ esp_err_t robot_voice_trigger(void);
  * to call from the button handler on any task; does nothing when idle.
  */
 void robot_voice_cancel(void);
+/*
+ * The wake word arrived while the robot was speaking.  Cuts the reply short and
+ * starts listening again inside the same conversation, so the phrase that
+ * interrupted the answer is also the beginning of the next question.  Safe to
+ * call from any task; does nothing when idle.
+ */
+void robot_voice_interrupt_listen(void);
 bool robot_voice_busy(void);
 /* Result of the last turn, for the command acknowledgement. */
 const char *robot_voice_last_result(void);

@@ -412,3 +412,10 @@ T001–T017 与 T009 已完成（依据见各任务条目）。**T018 语音对�
 - 验证：`npm run typecheck` exit 0；`vite build` exit 0（1578 模块，`dist/assets/index-BIHMzdBi.js`）。
 - **设备页四条指令真机验收完成**：表情（2026-10-14 验证）、动作（2026-10-14 验证）、**播报**（2026-10-15，5 条 `speak` 全 `done`／`已播报`）、**音量**（2026-10-15，8 条 `volume` 全 `done`／`音量已设为 50/84/89/91/19/61/59/60`）。T028 移除 AIUI 之后遗留的复验缺口至此全部清零。
 - 未验证：松手单发的实际手感（等用户复测确认不再刷条）。
+### 2026-10-15 — T030 语音交互改造：唤醒即连续对话 + 唤醒词打断回复 + 唤醒引擎诊断
+- 需求（用户原话）：「我需要我喊特定的唤醒词就能与我对话，并且，我再次喊唤醒词是能打断他之前的对话」。用户随后确认「唤醒词好使」——所以触发本身没问题，缺的是**打断**。
+- 先查清"为什么现在打断不了"（都是当年为单麦无 AEC 防自激特意做的半双工）：播放开始时 `robot_voice.c` 调 `robot_audio_set_capture_paused(true)` 把麦克风关了；每次开一轮 `robot_app.cpp` 调 `robot_wakeup_stop()` 把唤醒引擎也停了；`PcmConsumer` 只在 `OFFLINE_WAKE_READY` 时喂引擎。三处叠加 = 机器人说话时它自己听不见。
+- 改动：①`ROBOT_CLOUD_VOICE_BARGE_IN`（默认 y）——播放期间不静音麦克风、不关唤醒引擎、`PcmConsumer` 在 `CLOUD_VOICE_ACTIVE` 时也喂帧；`WAKE_TRIGGER` 增加"正在播放→`robot_voice_interrupt_listen()`"分支（**只在播放中**打断：若机器人本就在聆听，用户说的话正在被录制，再打断只会重开录音）。②`robot_voice_interrupt_listen()` = stop+cancel+restart，`voice_run_turn()` 的循环见到 restart 就继续听下一句（轮数清零，因为这是用户主动的）。③`ROBOT_CLOUD_VOICE_FOLLOW_UP`/`_MS`（默认 y／4000）实现连续对话，并顺带修掉"没人说话也录满 10 秒再把静音上传"。④唤醒引擎的四个失败分支补 `ESP_LOGE`，app 端按 `wake_ready_` 打印就绪或 `offline wake UNAVAILABLE`——此前这两行日志会一起骗人（引擎没起来也照打"就绪"，而 BOOT 照样能用，正好对应"以为唤醒词坏了"的情形）。
+- 验证：`idf.py reconfigure` + `build` exit 0、无 error、无 unknown symbol；`sdkconfig` 里 `BARGE_IN=y`、`FOLLOW_UP=y`、`FOLLOW_UP_MS=4000`；`deskemoji_robot.bin` 0x148bb0（84% 空闲）。
+- **再次踩到同一个坑**：改完**组件目录下的 Kconfig** 直接 `idf.py build`，CMake **不会重跑**（`Re-running CMake: 0`），新符号没进 sdkconfig，于是 `#if CONFIG_ROBOT_CLOUD_VOICE_BARGE_IN` 全被当成 0——编译"成功"，但打不开断。必须显式 `idf.py reconfigure`（日志里要能看到 `Loading defaults file`）。上次是 `sdkconfig.defaults`，这次是组件 Kconfig，**同一类陷阱**。
+- 未验证：真机（需重新烧录）。要验三条：安静 4 秒是否退出、回答播完能否接着说、说到一半喊唤醒词能否打断。

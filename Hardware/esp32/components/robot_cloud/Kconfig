@@ -100,4 +100,43 @@ menu "DeskEmoji cloud device channel"
             the DeskEmoji board with the gain corrected: 700 ends the utterance
             about a second after you stop talking.
 
+    config ROBOT_CLOUD_VOICE_BARGE_IN
+        bool "Let the wake word interrupt a reply"
+        depends on ROBOT_CLOUD_VOICE
+        default y
+        help
+            With this on the microphone keeps running while the robot speaks, so
+            saying the wake word again cuts the reply short and starts listening
+            for a new question inside the same conversation.
+
+            The price is self-listening: one microphone and no echo cancellation
+            means the robot can hear its own voice, so a wake phrase inside its
+            own answer could interrupt it.  Turning this off restores the
+            half-duplex behaviour where only the button interrupts.
+
+    config ROBOT_CLOUD_VOICE_FOLLOW_UP
+        bool "Keep listening after each reply (continuous conversation)"
+        depends on ROBOT_CLOUD_VOICE
+        default y
+        help
+            With this on, saying the wake word once opens a conversation: after
+            every reply the robot listens again for the next question instead of
+            returning to the wake word.  The conversation ends when the window
+            below expires without a word, when a turn fails, or when a button
+            cancels the turn.
+
+            Turning it off restores one-wake-one-turn, and also restores
+            recording (and uploading) a silent turn instead of ending it early.
+
+    config ROBOT_CLOUD_VOICE_FOLLOW_UP_MS
+        int "Wait for speech before ending a turn (ms)"
+        depends on ROBOT_CLOUD_VOICE_FOLLOW_UP
+        default 4000
+        range 1000 15000
+        help
+            How long the robot waits for speech before deciding nobody is going
+            to talk.  It bounds both the wait after the wake word and the gap
+            between two questions in a conversation.  Lower feels snappier but
+            cuts off people who think before they speak.
+
 endmenu

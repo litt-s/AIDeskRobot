@@ -12,7 +12,9 @@
 - 首次启动，或已保存的 Wi-Fi 在 60 秒内连不上，自动进入 SoftAP 配网。
 - 配网页扫描附近 2.4 GHz Wi-Fi，也可手动输入 SSID；**Wi-Fi、服务器地址、设备码三项互相独立，填哪项写哪项，留空保持原值**。
 - ESP-SR MultiNet7 单麦离线唤醒，当前唤醒词“小飞小飞”。
-- 唤醒词、BOOT 短按、待机时前推手势都能开一轮云端语音；一轮结束后自动回到离线待机并重新武装唤醒词。
+- 唤醒词、BOOT 短按、待机时前推手势都能开一轮云端语音。
+- **唤醒一次就能连着聊**：一轮回答播完自动继续听下一句（`ROBOT_CLOUD_VOICE_FOLLOW_UP`，默认开）；窗口内没人说话就结束这段对话、回到离线待机。
+- **再说一次唤醒词可以打断**正在播放的回答（`ROBOT_CLOUD_VOICE_BARGE_IN`，默认开），打断后直接听下一句；BOOT 短按也能打断，但它的语义是"结束这段对话"。
 - 云端语音：设备录一句 16 kHz／16 bit／单声道 PCM 上传，服务端做 ASR、模型对话与 TTS，把 PCM 流回来边收边播；说完约 900 ms 自动成句。
 - 一轮进行中再按一次 BOOT 可**立即取消**：正在录就停止录音，正在播就截断回复流，不会“跳一段接着说”。
 - 控制台设备通道：轮询并执行**表情、动作、音量、播报**指令，回报 ack 与状态；控制台的“播报”走 `/api/device/say`，不经唤醒词。
@@ -118,6 +120,9 @@ NVS 落点：
 | `ROBOT_CLOUD_VOICE_MAX_RECORD_MS` | 10000 | 单句录音上限 |
 | `ROBOT_CLOUD_VOICE_SILENCE_MS` | 900 | 说完多久算一句结束 |
 | `ROBOT_CLOUD_VOICE_THRESHOLD` | 700 | 静音判定阈值，**与 `ROBOT_MIC_SHIFT` 联动**：改增益要同步改它 |
+| `ROBOT_CLOUD_VOICE_FOLLOW_UP` | y | 回答播完继续听下一句（连续对话）；关掉即恢复"一次唤醒一轮" |
+| `ROBOT_CLOUD_VOICE_FOLLOW_UP_MS` | 4000 | 等不到人说话多久就结束这一轮／这段对话 |
+| `ROBOT_CLOUD_VOICE_BARGE_IN` | y | 说话期间保持麦克风与唤醒引擎工作，让唤醒词能打断回答 |
 
 优先级是「**配网页填了用配网页，没填才用固件里的 `ROBOT_CLOUD_URL` / `ROBOT_CLOUD_KEY`**」。上线后域名固定，写进 Kconfig 更省事（量产不必逐台填）；开发期建议留空、在配网页填。
 
@@ -130,6 +135,9 @@ NVS 落点：
 - 每轮结束打印 `capture report`：音频时长、占用墙钟、有声时长、最长停顿、≥400 ms 停顿个数。**先看这份报告再猜**：`audio ≈ wall` 说明没有丢帧，剩下的停顿是音频里真实存在的。
 - 播放是半双工：播放期间暂停采集，避免单麦、无 AEC 的自激。
 - 取消：`robot_voice_cancel()` 同时置停止与取消标志，读取循环据此截断流、丢弃队列、恢复采集——这是“长回答按一次停不下来”的修法。
+- **连续对话**：`follow_up_ms > 0` 时，一轮正常结束后自动开下一轮聆听（不回唤醒词、不播提示音）；没人说话、被取消或出错就结束整段对话。上限 30 轮兜底（`VOICE_MAX_TURNS_PER_CONVERSATION`）。
+- **起始静音超时**：一轮里还没听到人声时，`follow_up_ms` 到点即结束且**不上传**（旧行为是录满 `MAX_RECORD_MS` 再把 10 秒静音传上去）。
+- **打断（barge-in）**：回答播放期间麦克风与唤醒引擎都保持工作，唤醒词被听到就切断回复流并立刻进入下一轮聆听（`robot_voice_interrupt_listen()`）。代价是单麦无 AEC 会听见自己的声音——关掉 `ROBOT_CLOUD_VOICE_BARGE_IN` 即回到原来的半双工（只有按键能打断）。
 
 ## 8. 表情、动作与手势
 
@@ -219,6 +227,17 @@ robot_voice: heard: ...
 robot_audio: playback stream start: buffered=... ms waited=... ms
 robot_voice: answer: ...
 robot_voice: cloud voice turn finished: 对话完成
+robot_voice: no speech within 4000 ms; nothing uploaded
+robot_voice: listening again: conversation turn 2
+robot_voice: interrupted by the wake word: listening again
+robot_voice: conversation ended after 3 turns: 对话完成
+```
+
+唤醒引擎起不来时会明确报错，不再照打"就绪"：
+
+```text
+robot_wakeup: no wake model in the "model" partition - was build/srmodels/srmodels.bin flashed?
+robot_app: offline wake UNAVAILABLE: only BOOT can start a turn (wake engine failed to initialise)
 ```
 
 两条按键路径会额外打印：
@@ -275,6 +294,8 @@ esp32/
 - [ ] **只填设备码保存：Wi-Fi 仍然连得上**（密码没被清空）；**只填 Wi-Fi：设备码不变**。
 - [ ] 已联网状态下**长按 BOOT 约 800 ms 进入配网**；配网中长按可重启离开。
 - [ ] “小飞小飞”、BOOT 短按、待机时前推手势都能开一轮对话。
+- [ ] 说完一句、回答播完后**不喊唤醒词**直接说下一句，仍能继续对话；安静约 4 秒后结束回到待机。
+- [ ] 回答播到一半时喊“小飞小飞”，回答被切断并立刻开始听下一句。
 - [ ] 一轮识别—回复—播放完整；播完自动回待机并重新武装唤醒词。
 - [ ] 长回答播到一半按一次 BOOT 就能停（不“跳一段接着说”）。
 - [ ] 音量加减、长按最大／静音与重启持久化正常。

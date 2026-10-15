@@ -237,3 +237,12 @@ URL附加模式preview_start返回本安装不支持，未据此声称T009全状
 - 追加一段文字时把 `t += entry` 写成了 `t += t`，PROGRESS.md 当场从 56 KB 变 113 KB（整份复制）。
 - 补救（值得记住）：这种错误是**逐字符对称的**，可以先用断言验证再回退——`len(t) % 2 == 0 and t[:len(t)//2] == t[len(t)//2:]`，成立就只写前半段；同时用 `t.count("新标题") == 2` 交叉确认确实是复制而不是内容巧合。再复核"每节标题出现次数 ≤ 1"即可确认文件干净。
 - 预防：**写完文档立刻复读**（标题计数、行数、grep 关键句），不要等提交时才发现；把"追加"与"写回"分开成两步也更不容易手误。
+## 单麦无 AEC 的机器人要不要"边听边说"（2026-10-15 T030 打断）
+- 半双工（说话时关麦）不是疏忽，是**单麦无回声消除**下的保守选择：机器人听到自己的声音就可能把自己"唤醒"，形成自激。代价是**用户喊什么都打断不了它**，只能按键。
+- 打开打断要同时动三处，缺一处都无效：①播放期间不 `set_capture_paused(true)`；②开一轮时不再 `robot_wakeup_stop()`；③`PcmConsumer` 在对话态也喂唤醒引擎。任一处保持原样，结果都是"喊了没反应"，而日志上完全看不出来。
+- 打断的语义要分清：**唤醒词打断 = 切断回复并继续听下一句**（restart），**按键打断 = 取消并结束这段对话**（cancel）。实现上是同一对 stop/cancel 标志再加一个 restart 标志，`voice_run_turn()` 的循环据 restart 决定 continue 还是 break。
+- 只在"机器人正在说话"时才接受唤醒词打断：它正在聆听时，用户说的话本来就在录，再打断只会把录音重开一次。
+## 组件 Kconfig 改了也必须 `idf.py reconfigure`（2026-10-15，与 sdkconfig.defaults 同源）
+- 新增 `config ROBOT_CLOUD_VOICE_BARGE_IN` 后直接 `idf.py build`：构建**成功**、`error 0`、`unknown symbol 0`，但 **`Re-running CMake: 0`** —— CMake 没重跑，新符号没进 `sdkconfig`，`#if CONFIG_ROBOT_CLOUD_VOICE_BARGE_IN` 于是全按 0 编译：**代码看着编译过了，功能根本没打开**。
+- 判据：构建日志里必须有 `Re-running CMake` 和 `Loading defaults file`，并且 `sdkconfig` 里能 grep 到新符号（`CONFIG_...=y`）。缺任何一条，就该 `idf.py reconfigure` 再 build。
+- 这已经是同一类陷阱的第二次（上次是 `sdkconfig.defaults`）：**改了任何影响配置的文件，都要用"配置是否真的进了 sdkconfig"来判定，而不是"构建是否成功"。**
