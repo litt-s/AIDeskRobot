@@ -1,6 +1,7 @@
 #include "robot_wakeup.h"
 
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -13,10 +14,21 @@
 #include "freertos/queue.h"
 #include "freertos/task.h"
 #include "model_path.h"
+#include "nvs.h"
+#include "nvs_flash.h"
 
 #define DETECT_TASK_EXIT_BIT BIT0
 #define WAKE_COMMAND_ID 1
-#define WAKE_COMMAND_PINYIN "xiao fei xiao fei"
+/*
+ * MultiNet7 takes the phrase as written: hanzi goes through the model's own
+ * grapheme-to-phoneme step, and the pinyin form below is what this firmware has
+ * always shipped with.  Either way it is only the *default* - NVS (set from the
+ * console or the setup page) can replace it at runtime.
+ */
+#define WAKE_PHRASE_DEFAULT "xiao fei xiao fei"
+#define WAKE_PHRASE_MAX 64
+#define WAKE_NVS_NAMESPACE "wake_cfg"
+#define WAKE_NVS_KEY "phrase"
 #define WAKE_DETECT_DURATION_MS 3000
 #define WAKE_DETECT_THRESHOLD 0.20f
 #define WAKE_FRAME_QUEUE_DEPTH 8
@@ -27,6 +39,8 @@ typedef struct {
     model_iface_data_t *model_data;
     robot_wakeup_fn callback;
     void *callback_ctx;
+    /* Current phrase, as handed to MultiNet.  Empty only before init. */
+    char phrase[WAKE_PHRASE_MAX];
     int16_t *feed_buffer;
     int16_t *detect_buffer;
     size_t feed_size;
@@ -68,8 +82,9 @@ static void detect_task(void *arg)
                 for (int i = 0; i < results->num; ++i) {
                     if (results->command_id[i] == WAKE_COMMAND_ID) {
                         ESP_LOGI(TAG,
-                                 "offline wake word detected: 小飞小飞 "
+                                 "offline wake word detected: %s "
                                  "(prob=%.3f)",
+                                 s_wakeup.phrase,
                                  (double)results->prob[i]);
                         wake_detected = true;
                         break;
@@ -90,6 +105,66 @@ static void detect_task(void *arg)
     }
     xEventGroupSetBits(s_wakeup.events, DETECT_TASK_EXIT_BIT);
     vTaskDelete(NULL);
+}
+
+/* ---------- wake phrase ---------- */
+
+static void wake_load_phrase(char *out, size_t size)
+{
+    out[0] = '\0';
+    nvs_handle_t nvs = 0;
+    if (nvs_open(WAKE_NVS_NAMESPACE, NVS_READONLY, &nvs) != ESP_OK) {
+        return;
+    }
+    size_t length = size;
+    if (nvs_get_str(nvs, WAKE_NVS_KEY, out, &length) != ESP_OK) {
+        out[0] = '\0';
+    }
+    nvs_close(nvs);
+}
+
+static void wake_store_phrase(const char *phrase)
+{
+    nvs_handle_t nvs = 0;
+    if (nvs_open(WAKE_NVS_NAMESPACE, NVS_READWRITE, &nvs) != ESP_OK) {
+        ESP_LOGW(TAG, "unable to store the wake phrase: NVS unavailable");
+        return;
+    }
+    esp_err_t err = nvs_set_str(nvs, WAKE_NVS_KEY, phrase);
+    if (err == ESP_OK) {
+        err = nvs_commit(nvs);
+    }
+    if (err != ESP_OK) {
+        ESP_LOGW(TAG, "unable to store the wake phrase: %s",
+                 esp_err_to_name(err));
+    }
+    nvs_close(nvs);
+}
+
+/*
+ * Install one phrase as the only command.  MultiNet does not fail on a phrase it
+ * cannot parse - it reports it back - so this error list is what decides whether
+ * the phrase is usable at all.
+ */
+static esp_err_t wake_apply_phrase(const char *phrase)
+{
+    if (esp_mn_commands_clear() != ESP_OK) {
+        return ESP_FAIL;
+    }
+    esp_err_t err = esp_mn_commands_add(WAKE_COMMAND_ID, phrase);
+    if (err != ESP_OK) {
+        return err;
+    }
+    esp_mn_error_t *errors = esp_mn_commands_update();
+    if (errors != NULL && errors->num > 0) {
+        ESP_LOGW(TAG, "the model cannot use this phrase: %s",
+                 (errors->phrases != NULL && errors->phrases[0] != NULL &&
+                  errors->phrases[0]->string != NULL)
+                     ? errors->phrases[0]->string
+                     : phrase);
+        return ESP_ERR_INVALID_ARG;
+    }
+    return ESP_OK;
 }
 
 esp_err_t robot_wakeup_init(robot_wakeup_fn callback, void *ctx)
@@ -145,15 +220,28 @@ esp_err_t robot_wakeup_init(robot_wakeup_fn callback, void *ctx)
 
     esp_err_t err =
         esp_mn_commands_alloc(s_wakeup.multinet, s_wakeup.model_data);
-    if (err == ESP_OK) {
-        err = esp_mn_commands_add(WAKE_COMMAND_ID, WAKE_COMMAND_PINYIN);
-    }
-    if (err != ESP_OK || esp_mn_commands_update() != NULL) {
-        ESP_LOGE(TAG, "unable to activate wake phrase: %s",
-                 WAKE_COMMAND_PINYIN);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "unable to prepare the wake phrase list: %s",
+                 esp_err_to_name(err));
         robot_wakeup_deinit();
-        return err != ESP_OK ? err : ESP_ERR_INVALID_ARG;
+        return err;
     }
+    /* A stored phrase wins; the built-in one is the fallback both for a fresh
+     * device and for a stored phrase the current model cannot parse. */
+    char stored[WAKE_PHRASE_MAX];
+    wake_load_phrase(stored, sizeof(stored));
+    const char *phrase = stored[0] != '\0' ? stored : WAKE_PHRASE_DEFAULT;
+    if (wake_apply_phrase(phrase) != ESP_OK) {
+        ESP_LOGW(TAG, "stored wake phrase rejected (%.32s); using the default",
+                 phrase);
+        phrase = WAKE_PHRASE_DEFAULT;
+        if (wake_apply_phrase(phrase) != ESP_OK) {
+            ESP_LOGE(TAG, "unable to activate wake phrase: %s", phrase);
+            robot_wakeup_deinit();
+            return ESP_ERR_INVALID_ARG;
+        }
+    }
+    strlcpy(s_wakeup.phrase, phrase, sizeof(s_wakeup.phrase));
     s_wakeup.multinet->print_active_speech_commands(s_wakeup.model_data);
 
     s_wakeup.feed_size =
@@ -180,7 +268,7 @@ esp_err_t robot_wakeup_init(robot_wakeup_fn callback, void *ctx)
         robot_wakeup_deinit();
         return ESP_ERR_NO_MEM;
     }
-    ESP_LOGI(TAG, "custom wake phrase ready: 小飞小飞");
+    ESP_LOGI(TAG, "custom wake phrase ready: %s", s_wakeup.phrase);
     return ESP_OK;
 }
 
@@ -264,3 +352,75 @@ esp_err_t robot_wakeup_feed_pcm(const int16_t *samples,
     }
     return ESP_OK;
 }
+
+esp_err_t robot_wakeup_set_phrase(const char *phrase, char *error,
+                                  size_t error_size)
+{
+    if (error != NULL && error_size > 0) {
+        error[0] = '\0';
+    }
+    if (phrase == NULL || phrase[0] == '\0') {
+        if (error) {
+            snprintf(error, error_size, "唤醒词不能为空");
+        }
+        return ESP_ERR_INVALID_ARG;
+    }
+    if (strlen(phrase) >= WAKE_PHRASE_MAX) {
+        if (error) {
+            snprintf(error, error_size, "唤醒词太长（最多 %d 字节）",
+                     WAKE_PHRASE_MAX - 1);
+        }
+        return ESP_ERR_INVALID_ARG;
+    }
+    if (s_wakeup.model_data == NULL) {
+        if (error) {
+            snprintf(error, error_size, "唤醒引擎未就绪");
+        }
+        return ESP_ERR_INVALID_STATE;
+    }
+    if (strcmp(phrase, s_wakeup.phrase) == 0) {
+        return ESP_OK;
+    }
+
+    char previous[WAKE_PHRASE_MAX];
+    strlcpy(previous, s_wakeup.phrase, sizeof(previous));
+    const bool was_armed = s_wakeup.armed;
+    /* Disarm while the command list is rebuilt: a detection racing the update
+     * would call back into the app with a phrase that is on its way out. */
+    s_wakeup.armed = false;
+
+    esp_err_t err = wake_apply_phrase(phrase);
+    if (err == ESP_OK) {
+        strlcpy(s_wakeup.phrase, phrase, sizeof(s_wakeup.phrase));
+        wake_store_phrase(phrase);
+        ESP_LOGI(TAG, "wake phrase set to: %s", s_wakeup.phrase);
+    } else {
+        /* Never leave the robot deaf: put the previous phrase back. */
+        if (wake_apply_phrase(previous) != ESP_OK) {
+            ESP_LOGE(TAG, "unable to restore the previous wake phrase: %s",
+                     previous);
+        }
+        if (error) {
+            snprintf(error, error_size, "模型不认识「%.40s」", phrase);
+        }
+    }
+
+    s_wakeup.buffered = 0;
+    if (s_wakeup.frame_queue) {
+        xQueueReset(s_wakeup.frame_queue);
+    }
+    if (s_wakeup.model_data) {
+        s_wakeup.multinet->clean(s_wakeup.model_data);
+    }
+    s_wakeup.armed = was_armed;
+    return err;
+}
+
+const char *robot_wakeup_phrase(void)
+{
+    return s_wakeup.phrase[0] != '\0' ? s_wakeup.phrase : WAKE_PHRASE_DEFAULT;
+}
+
+#ifdef __cplusplus
+}
+#endif

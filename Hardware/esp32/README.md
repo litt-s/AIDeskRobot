@@ -14,6 +14,7 @@
 - ESP-SR MultiNet7 单麦离线唤醒，当前唤醒词“小飞小飞”。
 - 唤醒词、BOOT 短按、待机时前推手势都能开一轮云端语音。
 - **唤醒一次就能连着聊**：一轮回答播完自动继续听下一句（`ROBOT_CLOUD_VOICE_FOLLOW_UP`，默认开）；窗口内没人说话就结束这段对话、回到离线待机。
+- **唤醒词可自定义**：控制台下发 `wake` 指令即可换词（MultiNet7 支持运行时增删命令），新词写入 NVS、重启后保留；模型不认识的词会被拒绝并**保留原词**，原因回报控制台。默认词是固件里的 `WAKE_PHRASE_DEFAULT`（拼音 `xiao fei xiao fei`）。
 - **打断用 BOOT 短按**：取消这一轮并结束这段对话。唤醒词打断（`ROBOT_CLOUD_VOICE_BARGE_IN`）**默认关闭**——2026-10-15 实测单麦无 AEC 时喇叭漏音把用户语音压住（麦克风 9k–26k），唤醒短语检不出；要做真打断必须先加 AEC（见 §13 与 Kconfig help）。
 - 云端语音：设备录一句 16 kHz／16 bit／单声道 PCM 上传，服务端做 ASR、模型对话与 TTS，把 PCM 流回来边收边播；说完约 900 ms 自动成句。
 - 一轮进行中再按一次 BOOT 可**立即取消**：正在录就停止录音，正在播就截断回复流，不会“跳一段接着说”。
@@ -115,6 +116,7 @@ NVS 落点：
 | `ROBOT_CLOUD_URL` | 空 | 服务器地址的**编译期兜底**；配网页填了就用配网页的 |
 | `ROBOT_CLOUD_KEY` | 空 | 设备码的编译期兜底；同上。**建议留空**，让固件镜像不带任何凭据 |
 | `ROBOT_CLOUD_POLL_INTERVAL_S` | 3 | 指令轮询间隔 |
+| 唤醒词 | `xiao fei xiao fei` | 不是 Kconfig，而是代码里的 `WAKE_PHRASE_DEFAULT`（`robot_wakeup.c`）；运行时由 NVS（`wake_cfg`/`phrase`）覆盖，控制台或设置页下发即可换词 |
 | `ROBOT_CLOUD_STATUS_INTERVAL_S` | 60 | 状态上报间隔 |
 | `ROBOT_CLOUD_VOICE` | n | 打开云端语音对话 |
 | `ROBOT_CLOUD_VOICE_MAX_RECORD_MS` | 10000 | 单句录音上限 |
@@ -169,7 +171,7 @@ PAJ7620U2 手势映射：
 ## 9. 控制台设备通道（T016/T018）
 
 - 周期性 `POST /api/device/hello` 与 `GET /api/device/commands`，用设备码鉴权（库内只存哈希）。
-- 支持指令：表情、动作、音量、播报、重启；每条回报 ack。
+- 支持指令：表情、动作、音量、播报、**唤醒词（`wake`，payload `{"text":"你好小智"}` 或拼音）**、重启；每条回报 ack。
 - 在线判定与状态上报（固件版本、音量）默认每 60 秒一次。
 - 播报与对话共用同一条云端语音通道，所以“正在对话中”时下发播报会被拒绝，并把原因如实回报给控制台。
 - 语音能力需要控制台侧配置（语音设置里的供应商凭据 + 该设备选定语音角色），否则服务端返回 409，设备在**不录音**的情况下回报原因。
@@ -229,6 +231,9 @@ robot_voice: heard: ...
 robot_audio: playback stream start: buffered=... ms waited=... ms
 robot_voice: answer: ...
 robot_voice: cloud voice turn finished: 对话完成
+robot_wakeup: wake phrase set to: 你好小智
+robot_wakeup: the model cannot use this phrase: ...
+robot_wakeup: stored wake phrase rejected (…); using the default
 robot_voice: no speech within 4000 ms; nothing uploaded
 robot_voice: listening again: conversation turn 2
 robot_voice: interrupted by the wake word: listening again
@@ -307,6 +312,7 @@ esp32/
 - [ ] “小飞小飞”、BOOT 短按、待机时前推手势都能开一轮对话。
 - [ ] 说完一句、回答播完后**不喊唤醒词**直接说下一句，仍能继续对话；安静约 4 秒后结束回到待机。
 - [ ] 回答播到一半时**按一下 BOOT**，回答被切断并结束这段对话（唤醒词打断已按 2026-10-15 决策关闭；开启它需先加 AEC）。
+- [ ] 下发一个新唤醒词后：**喊新词能唤醒、喊旧词不再唤醒**，且断电重启后仍是新词。
 - [ ] 一轮识别—回复—播放完整；播完自动回待机并重新武装唤醒词。
 - [ ] 长回答播到一半按一次 BOOT 就能停（不“跳一段接着说”）。
 - [ ] 音量加减、长按最大／静音与重启持久化正常。

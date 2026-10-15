@@ -12,4 +12,5 @@ idf_component_register(
         robot_audio
         robot_motion
         robot_ui
+        robot_wakeup
 )

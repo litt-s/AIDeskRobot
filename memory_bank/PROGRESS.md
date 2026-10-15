@@ -449,3 +449,9 @@ T001–T017 与 T009 已完成（依据见各任务条目）。**T018 语音对�
 - 决策依据（同时写进 Kconfig help 与 README §13，便于日后回看）：单麦无 AEC 时，播放期间麦克风电平被喇叭漏音推到 **9k–26k**，唤醒短语被淹没、整段播放零检出（安静环境下的检出 prob 也只有 0.300／0.653）；降低阈值只会制造误触发。真打断的前置条件是 AEC（ESP-SR AFE，用播放 PCM 当参考信号），已作为将来可选项记录。
 - 验证：`idf.py reconfigure` + `build` exit 0、0 个 unknown symbol；`sdkconfig` 中 `BARGE_IN is not set`、`FOLLOW_UP=y`、`FOLLOW_UP_MS=4000`。
 - 未验证：真机（烧录后验：回答播完后接着说不必再喊唤醒词；BOOT 短按仍能打断并结束对话；待机时唤醒词正常）。
+### 2026-10-15 — T032 自定义唤醒词（第一步：固件侧）
+- 需求：用户要求「我可以在控制台自定义唤醒词」。先做**可行性核实**（不猜）：ESP-SR 官方文档明确写 **"MultiNet6 and MultiNet7 only accepts grapheme inputs to API calls"**（MultiNet5 才要 phoneme），并且 MultiNet 支持运行时增删改命令、上限 200–300 条；`esp_mn_commands_update()` 的返回值就是"**无法解析的短语列表**"（`esp_mn_error_t`，含 `phrases[0]->string`），所以"模型不认这个词"是可检测、可回报的，不是静默失败。本地证据：`build/srmodels/mn7_cn/vocab` 有 **405 个音节**（覆盖全部普通话），`libmultinet.a` 里能搜到 phoneme/chinese 相关符号；上游 `multinet_g2p.py`（本版本）只处理英文，说明中文侧由模型内部 G2P 承担——**汉字能否直接用，最终仍需真机确认**，这也是本轮先做固件、先测这一点的原因。
+- 实现：`robot_wakeup` 增加 `robot_wakeup_phrase()`／`robot_wakeup_set_phrase()`；换词流程 = 断开武装 → `clear()` → `add(WAKE_COMMAND_ID, 词)` → `update()`，**返回错误列表就把原词装回去**并回报原因；成功则写 NVS（`wake_cfg`/`phrase`）并打印 `wake phrase set to: …`。开机优先用 NVS 里的词，读不到或模型不认（例如以后换了模型）就退回 `WAKE_PHRASE_DEFAULT`，绝不留下"叫不醒"的状态。`robot_cloud` 新增 `wake` 指令分支（payload `{"text":"…"}`），ack 回报成功或原因；唤醒相关日志全部改成动态短语，不再硬编码"小飞小飞"。
+- 验证：完整 `idf.py build` exit 0、**0 warning**（日志里唯一的 error: 行仍是既有的 ESP_ROM_ELF_DIR gdbinit 告警）、`deskemoji_robot.bin` **0x1491d0**（84% 空闲，比上一版大 ~1.3 KB）。
+- 过程中的两次自我纠正（都发生在写盘前）：①补丁脚本的锚点 `#ifdef __cplusplus … #endif` 在 `.c` 文件里不存在（那是头文件的写法），靠"全锚点预检"在写入前拦下；②预检通过后的打印语句里有个 `✓`，在 GBK 控制台下抛 `UnicodeEncodeError` ——打印失败发生在写盘之前，故文件完好，加 `PYTHONIOENCODING=utf-8` 后重跑成功。经验：**自动化改代码要有"先全量校验锚点、再统一写入"的两段式**，且脚本别在关键路径上依赖控制台编码。
+- **第二步（未做）**：服务端给设备存唤醒词（迁移 + 字段）、随 `hello` 或指令下发并保存设备回执、控制台设备页加输入框。**未验证（真机）**：汉字是否被模型接受、换词后新词可唤醒且旧词失效、断电重启后仍是新词。

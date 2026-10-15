@@ -19,6 +19,7 @@
 #include "robot_audio.h"
 #include "robot_motion.h"
 #include "robot_ui.h"
+#include "robot_wakeup.h"
 #if CONFIG_ROBOT_CLOUD_VOICE
 #include "robot_voice.h"
 #endif
@@ -273,6 +274,29 @@ static esp_err_t apply_command(const char *type, const char *payload, char *resu
                 snprintf(result, result_size, "设备未配置语音服务，暂时无法播报");
                 err = ESP_ERR_NOT_SUPPORTED;
             }
+        }
+    } else if (strcmp(type, "wake") == 0) {
+        const cJSON *text = cJSON_GetObjectItem(root, "text");
+        if (!cJSON_IsString(text)) {
+            snprintf(result, result_size, "缺少唤醒词");
+            err = ESP_ERR_INVALID_ARG;
+        } else {
+#if CONFIG_ROBOT_ENABLE_ESP_SR
+            char reason[64] = {0};
+            esp_err_t applied = robot_wakeup_set_phrase(text->valuestring,
+                                                        reason, sizeof(reason));
+            if (applied == ESP_OK) {
+                snprintf(result, result_size, "唤醒词已设为 %.48s",
+                         text->valuestring);
+            } else {
+                snprintf(result, result_size, "%.100s",
+                         reason[0] != '\0' ? reason : "设置唤醒词失败");
+                err = applied;
+            }
+#else
+            snprintf(result, result_size, "本固件未启用离线唤醒");
+            err = ESP_ERR_NOT_SUPPORTED;
+#endif
         }
     } else if (strcmp(type, "listen") == 0) {
 #if CONFIG_ROBOT_CLOUD_VOICE

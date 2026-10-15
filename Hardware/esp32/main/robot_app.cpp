@@ -509,7 +509,8 @@ esp_err_t RobotApp::SetupOnlineServices()
     state_.store(RobotAppState::OFFLINE_WAKE_READY);
     robot_ui_set_idle_animation(true);
     if (wake_ready_) {
-        ESP_LOGI(TAG, "offline wake ready: 小飞小飞 or BOOT short press");
+        ESP_LOGI(TAG, "offline wake ready: %s or BOOT short press",
+                 robot_wakeup_phrase());
     } else {
         /*
          * Without this the log looked healthy while the wake word could never
