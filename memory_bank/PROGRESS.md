@@ -514,3 +514,15 @@ T001–T017 与 T009 已完成（依据见各任务条目）。**T018 语音对�
 - 过程小插曲：期间用户先设过「小智小智」（`xiao zhi xiao zhi`），那条命令 ack `done`；后来又设回「你好小智」。有一次补发撞上设备正在重启，ack 为 `failed`／`唤醒引擎未就绪`（设备如实回报，下一次 hello 对账即可再补）。
 - 测试数据清理：删掉本轮我用过的一次性账号（`wake_test_*`／`hello_probe_*`）与遗留设备；复核 `leftover_users=0`、`devices=1`（用户那台 DeepSeek）；`PRAGMA foreign_keys=1`，级联删除符合预期。
 - 仍未验证：**喊「你好小智」能唤醒 / 喊「小飞小飞」不响应**（语音行为层面，只需用户喊一句）；新配网提示音（4.19 s）未进过配网，未听过。
+### 2026-10-15 — T032 追加 7：修「设备当前」不刷新（ack 即权威）+ 配网提示音验收通过
+- 用户两条反馈：①「配网也听了好使」——**新配网提示音（4.19 s）验收通过**；②「控制台唤醒词旁边的设备当前，我下发成功后不会及时刷新」。
+- 根因（读代码即可确认，不是玄学）：前端设备页**每 3 秒**轮询 `/devices` 与 `/devices/:id/commands`（T022 加的自动刷新），所以问题不在前端；而服务端的 `devices.wake_applied` **只在设备发 `hello` 时写入**，设备的 `hello` 又**只在开机／掉线重连**时发（周期性的 `/api/device/status` 不带唤醒词）⇒ 下发成功后很久，「设备当前」仍停留在开机那一刻的值。
+- 修法（**不需要改固件、不需要重新烧录**）：在设备 ack 路径上，凡是 `type='wake'` 且 `status='done'`，就把该设备的 `wake_applied` 更新为指令 payload 里的 `text` —— 设备说「我设好了」，它说的就是当前值，权威且立即可得。前端再把不一致状态画出来：`设备当前：ni hao xiao zhi（待确认 → xiao zhi xiao zhi）`，这样「下发 → 生效」之间那段也看得见。
+- 验证：`npm run typecheck` exit 0、`npm run build` exit 0、`npm test` **78/78**；端到端（一次性账号 + 模拟设备，不碰真机）实测：
+  1. `POST /api/devices/:id/wake {text:"你好小智"}` → `{label:"你好小智", phrase:"ni hao xiao zhi"}`；
+  2. 此时查设备：`wake_applied` **为空**（还没回报）；
+  3. 设备侧 `GET /api/device/commands` → 拉到 `type=wake`、`payload={"text":"ni hao xiao zhi","label":"你好小智"}`；
+  4. `POST /api/device/commands/:id/ack {status:"done"}` → `{"ok":true}`；
+  5. 再查设备：`wake_applied` = **`ni hao xiao zhi`** ✓ 立即更新。
+  测试账号与设备随后清理。
+- 仍未验证：喊「你好小智」能唤醒、喊「小飞小飞」不响应（语音行为层，只差用户喊一句）。
