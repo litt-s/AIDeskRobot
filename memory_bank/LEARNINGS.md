@@ -412,3 +412,7 @@ Electron 39 二进制、7zip、NSIS 缓存都在时，`electron-builder --win --
 
 ## 云托管源码构建会偶发平台侧失败：先读构建日志再怀疑自己（2026-10-15 T034）
 `tcb cloudrun deploy` 报 `创建版本失败：任务失败` 时，先分两件事：**服务还在不在**（`record list` 里上一版是不是仍是 100% 流量 —— 在，就说明只是新版本没建起来），以及**构建日志里有没有自己的错误行**。这次失败（版本 008）日志末尾是 `error from registry: blob unknown to registry - sha256:…`，属于云端镜像仓库的瞬时问题；数字没有任何一行是 Dockerfile/npm/编译错误。**原样重跑一次就好了**（版本 009 成功）。教训：把"部署失败"当成两类处理——**我的源码错**（日志里有 `COPY`/`npm ERR!`/`error: …` 这类行）vs **平台侧错**（registry/blob/网络），后者重试而不是改代码。
+
+## 第三方客户端会悄悄丢掉 Content-Type：校验要按"有没有 body"，不是"是不是 POST"（2026-10-16 T038）
+小程序里"测试模型"按钮稳定 400，服务端日志写着"请求必须使用 JSON"——而客户端代码明明设了 `'Content-Type': 'application/json'`。原因是 **`wx.request` 在 `data` 为 `undefined` 时会把 Content-Type 一起丢掉**（没有 body 就没有实体头），于是"无 body 的 POST"被内容类型校验拦下。**正确写法是按"这次请求有没有 body"判断**（`Content-Length>0` 或 `Transfer-Encoding` 存在），而不是"方法是 POST 就要求 JSON"；空 body 不带载荷，CSRF 那条风险本来就不成立。
+**配套的排查手法值得复用**：把"400 到底谁给的"拆成三个探针——①带 Content-Type、无 body ②不带 Content-Type、无 body ③带 Content-Type + `{}`，分别打到同一个"会返回 404 的路由"上；①③ 404、② 400 就能一口咬定是中间件，而不是去猜上游。

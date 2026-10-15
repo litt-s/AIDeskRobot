@@ -393,3 +393,13 @@ node scripts/deploy-cloudbase.mjs --no-pull  # 跳过拉取（不想让线上数
 - 部署前先拉回线上库 → 部署后复查：`users=1 devices=2 models=1 roles=2 voice_settings=1 conversations=8 messages=120`，两台设备（`••••-SGZX` + 固件默认码 `••••-VP1R`）都在 ⇒ **数据没丢、机器人不受影响**。
 - 小程序通道端到端：带 `X-Aidesk-Client: miniprogram` 注册 → **201 + `sessionToken`（43 字符）**；`GET /api/auth/me` 带 `Authorization: Bearer <token>` → **200**；不带令牌 → **401**；`POST /api/auth/logout`（Bearer）→ **200**，之后 `me` → **401**。
 - 提示：**别把"小程序 + 后端"打成一个 CloudBase 部署包**——小程序是微信开发者工具上传的（不走云托管），后端走一键脚本，两者通道不同。
+
+### 小程序"测试模型"报 400：空 body 的 POST 被内容类型校验拦下（2026-10-16）
+现象：小程序里点"测试模型"→ `POST /api/models/<id>/test` **400**。
+**用三个探针一次分清"是中间件拦的"还是"上游返回的"**（都带小程序标记与一次性账号的 Bearer）：
+| 探针 | 修前 | 修后 | 含义 |
+| --- | --- | --- | --- |
+| 带 `Content-Type`、无 body | 404 模型不存在 | 404 | 过了中间件，路由正常 |
+| **不带 `Content-Type`、无 body** | **400 请求必须使用 JSON** | **404** | ← 就是它 ✓ |
+| 带 `Content-Type` + `{}` | 404 | 404 | 正常 |
+根因：**`wx.request` 在 `data` 为 `undefined` 时会把 `Content-Type` 一起丢掉**，而"测试模型"这类 POST 本身没有 body ⇒ 被"请求必须使用 JSON"拦成 400。修法（`server/index.ts`）：**只有真有 body（`Content-Length>0` 或 `Transfer-Encoding`）时才要求 `application/json`**；空 body 不带任何载荷，跨站表单那条风险不存在，大小上限检查保持不变。同时确认线上库里的模型 key 是好的（直连 DeepSeek 200，尾号 `a4ea`），与本 400 无关。
