@@ -140,3 +140,4 @@
     - **未验证**：**真机**——需用户烧录后听一次回答，并看串口那行 `= X KB/s (need 32)`；若仍卡，下一步是加大设备侧预缓冲/队列或改服务端"整段一次下发"（会牺牲一点首字延迟）。
 
 已完成本地编码与服务端 Bearer token 支持；网页 Cookie 行为不变，网页 typecheck/test/build/build:node 通过；未验证微信开发者工具/真机全链路。
+- T040 控制台窄屏导航精简（2026-10-15 用户反馈「安卓端UI上有点小问题，导航文字换行影响观感」）：侧栏导航按钮在 ≤768px（包含 Android WebView 默认宽度）下，4 字中文标签会按 2 字换行。**改用「标题 + 短标签」双 span，CSS 默认隐藏短标签，窄屏反之；按钮加 `white-space:nowrap;min-width:0` 强制单行**。改动仅 `web/src/main.tsx`（`TABS.map` 拆出 `short`，新增 `aria-label`）与 `web/src/style.css`（`.nav-long/.nav-short` 在 `@media(max-width:768px)` 切换）。`npm run typecheck` exit 0、`npm run build` 成功，CSS 产物 15.84 kB、JS 259.58 kB。Android APK 仍引用同一 dist，下载新 artifact 即可看到新导航；**未验证**：真机/模拟器 UI。
