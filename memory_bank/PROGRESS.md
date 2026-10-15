@@ -356,3 +356,11 @@ T001–T017 与 T009 已完成（依据见各任务条目）。**T018 语音对�
 - 组件与 SDK：删除 `esp32/components/aiui_sdk`、`aiui_port` 与 AIUI SDK 源码 `Hardware/include/aiui`、`Hardware/src/aiui`；`esp32/CMakeLists.txt` 去掉 `AIUI_VENDOR_ROOT` 校验；`main/CMakeLists.txt` 去掉 `aiui_sdk`／`aiui_port`／`esp_audio_simple_player`／`gmf_core`；`main/idf_component.yml` 去掉 `78/esp-opus` 与 `esp_audio_simple_player`；删除 `preflight` 的两份 AIUI 清单。
 - 验证：六个固件源文件（robot_audio、robot_network、robot_cloud、robot_voice、robot_app、app_main）编译通过（0 error）。**未验证：真机未烧录**——移除 AIUI 后的整机行为必须烧录复验（唤醒词→云端语音、设备通道、配网、表情动作、音量与按键）。
 - 方法学：这一轮再次验证"**先把声明删掉，让编译器把所有调用点变成错误**"的做法——robot_app 一次得到 102 处、robot_audio 得到 27 处精确清单，比人工搜索可靠；另外两次断言失败都在写盘之前，文件未被破坏。
+### 2026-10-15 — T028-7 修复链接失败（CloudSpeak）并清理死代码；完整构建通过
+- 用户按 T028 的固件烧录时，`idf.py build` 在**链接期**失败：`undefined reference to 'RobotApp::CloudSpeak(void*, char const*)'`。
+- 根因：T028 移除 AIUI 时删掉了 `CloudSpeak` 的**定义**，但它的**声明**（`robot_app.h`）与**注册**（`cloud_config.speak = CloudSpeak`）仍在使用。**这是"单文件 `-c` 编译不链接"的直接后果**——六个文件的编译验证无法发现"定义缺失"这一类问题，只有链接才会暴露。
+- 修法（不是补一个失败桩，而是删掉已无意义的接口）：`CloudSpeak` 的用途只是"云端播报不可用时回落 AIUI 会话"，AIUI 既已移除，回落目标不存在 → `robot_cloud_config_t` 去掉 `speak`／`speak_ctx` 与 `robot_cloud_speak_fn` 类型；`robot_cloud.c` 去掉该回落分支；`robot_app.h/.cpp` 去掉声明与注册。
+- 顺带清理：编译器指出的 8 个死函数（`json_bool`、`media_url_from_item`、`media_title_from_item`、`reply_expression_from_text`、`expression_name`、`expression_from_text`、`json_string`、`text_has_any`）全部删除，`robot_app.cpp` 1082 → **995 行**（最初 4045）。
+- 验证（本轮新增的真实证据）：用本机 EIM 环境跑**完整 `idf.py build`**（含链接）——exit code **0**、无 error、无 unused-function 警告；`Successfully created esp32s3 image`、`Generated ...\build\deskemoji_robot.bin`（0x148640 字节，app 分区 84% 空闲）。
+- 环境笔记（供下次复用）：这台机器是 EIM 布局，IDF 在 `D:\esp\v5.5.5\esp-idf`，工具在 `C:\Espressif\tools`，Python 环境在 `C:\Espressif\tools\python\v5.5.5\venv`（**没有** `python_env\idf5.5_py3.12_env`，所以 `export.bat` 会失败）。可用的命令拼法：`set PATH=<tools>\cmake\3.30.2\bin;<tools>\ninja\1.12.1;<tools>\xtensa-esp-elf\esp-14.2.0_20260121\xtensa-esp-elf\bin;%PATH%` + `set IDF_TOOLS_PATH=C:\Espressif\tools` + `set IDF_PYTHON_ENV_PATH=<venv>` + 用该 venv 的 python 跑 `idf.py -C <项目> build`。
+- 未验证：真机未烧录（用户下一步）。

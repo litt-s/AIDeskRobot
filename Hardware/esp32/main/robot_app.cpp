@@ -72,14 +72,6 @@ struct ButtonTracker {
 };
 
 
-const char *json_string(const cJSON *object, const char *key)
-{
-    const cJSON *item = cJSON_GetObjectItemCaseSensitive(object, key);
-    return cJSON_IsString(item) && item->valuestring &&
-                   item->valuestring[0] != '\0'
-               ? item->valuestring
-               : nullptr;
-}
 
 const cJSON *json_find_key(const cJSON *node, const char *key,
                            unsigned depth)
@@ -106,61 +98,11 @@ const cJSON *json_find_key(const cJSON *node, const char *key,
     return nullptr;
 }
 
-bool json_bool(const cJSON *item, bool *value)
-{
-    if (!item || !value) {
-        return false;
-    }
-    if (cJSON_IsBool(item)) {
-        *value = cJSON_IsTrue(item);
-        return true;
-    }
-    if (cJSON_IsString(item) && item->valuestring) {
-        if (strcmp(item->valuestring, "true") == 0) {
-            *value = true;
-            return true;
-        }
-        if (strcmp(item->valuestring, "false") == 0) {
-            *value = false;
-            return true;
-        }
-    }
-    return false;
-}
 
 
 
 
-const char *media_url_from_item(const cJSON *item)
-{
-    static const char *const keys[] = {
-        "uni_url", "url", "playUrl", "play_url", "audioUrl", "audio_url",
-    };
-    for (const char *key : keys) {
-        const char *value = json_string(item, key);
-        if (value &&
-            (strncmp(value, "http://", 7) == 0 ||
-             strncmp(value, "https://", 8) == 0)) {
-            return value;
-        }
-    }
-    return nullptr;
-}
 
-const char *media_title_from_item(const cJSON *item)
-{
-    static const char *const keys[] = {
-        "name", "itemname", "neatsongname", "title", "songname",
-        "album",
-    };
-    for (const char *key : keys) {
-        const char *value = json_string(item, key);
-        if (value) {
-            return value;
-        }
-    }
-    return "";
-}
 
 
 
@@ -294,140 +236,11 @@ void ready_prompt_task(void *arg)
 
 
 
-bool text_has_any(const char *text,
-                  std::initializer_list<const char *> keywords)
-{
-    if (!text) {
-        return false;
-    }
-    for (const char *keyword : keywords) {
-        if (strstr(text, keyword)) {
-            return true;
-        }
-    }
-    return false;
-}
-
-robot_expression_t expression_from_text(const char *text)
-{
-    if (!text) {
-        return ROBOT_EXPRESSION_NEUTRAL;
-    }
-    if (text_has_any(text, {"大笑", "笑死", "哈哈", "laughing", "laugh"})) {
-        return ROBOT_EXPRESSION_LAUGHING;
-    }
-    if (text_has_any(text, {"爱你", "喜欢你", "爱心", "loving", "love",
-                            "affectionate"})) {
-        return ROBOT_EXPRESSION_LOVING;
-    }
-    if (text_has_any(text, {"哭", "眼泪", "流泪", "crying", "cry"})) {
-        return ROBOT_EXPRESSION_CRY;
-    }
-    if (text_has_any(text, {"尴尬", "不好意思", "害羞", "embarrassed"})) {
-        return ROBOT_EXPRESSION_EMBARRASSED;
-    }
-    if (text_has_any(text, {"awkward", "disgust", "窘迫", "厌恶"})) {
-        return ROBOT_EXPRESSION_AWKWARD;
-    }
-    if (text_has_any(text, {"震惊", "吓一跳", "shocked", "fearful", "fear"})) {
-        return ROBOT_EXPRESSION_SHOCKED;
-    }
-    if (text_has_any(text, {"困惑", "不明白", "迷惑", "confused"})) {
-        return ROBOT_EXPRESSION_CONFUSED;
-    }
-    if (text_has_any(text, {"好吃", "美味", "香", "delicious"})) {
-        return ROBOT_EXPRESSION_DELICIOUS;
-    }
-    if (text_has_any(text, {"亲亲", "亲吻", "么么哒", "kiss"})) {
-        return ROBOT_EXPRESSION_KISSY;
-    }
-    if (text_has_any(text, {"酷", "帅", "cool"})) {
-        return ROBOT_EXPRESSION_COOL;
-    }
-    if (text_has_any(text, {"自信", "当然", "没问题", "confident", "proud"})) {
-        return ROBOT_EXPRESSION_CONFIDENT;
-    }
-    if (text_has_any(text, {"放松", "轻松", "relaxed", "calm"})) {
-        return ROBOT_EXPRESSION_RELAXED;
-    }
-    if (text_has_any(text, {"搞笑", "逗乐", "funny"})) {
-        return ROBOT_EXPRESSION_FUNNY;
-    }
-    if (text_has_any(text, {"调皮", "搞怪", "滑稽", "silly"})) {
-        return ROBOT_EXPRESSION_SILLY;
-    }
-    if (text_has_any(text, {"happy", "happiness", "smile", "开心", "高兴",
-                            "快乐", "好的"})) {
-        return ROBOT_EXPRESSION_HAPPY;
-    }
-    if (text_has_any(text, {"sad", "sadness", "难过", "悲伤", "伤心", "遗憾"})) {
-        return ROBOT_EXPRESSION_SAD;
-    }
-    if (text_has_any(text, {"anger", "angry", "生气", "愤怒", "气死"})) {
-        return ROBOT_EXPRESSION_ANGRY;
-    }
-    if (text_has_any(text, {"surprise", "惊讶", "竟然", "哇"})) {
-        return ROBOT_EXPRESSION_SURPRISED;
-    }
-    if (text_has_any(text, {"think", "想一想", "思考", "让我想想"})) {
-        return ROBOT_EXPRESSION_THINKING;
-    }
-    return ROBOT_EXPRESSION_NEUTRAL;
-}
 
 
-robot_expression_t reply_expression_from_text(const char *text)
-{
-    robot_expression_t expression = expression_from_text(text);
-    if (expression != ROBOT_EXPRESSION_NEUTRAL) {
-        return expression;
-    }
-    if (text_has_any(text, {"抱歉", "对不起", "没找到", "走丢了",
-                            "做不到", "无法", "很遗憾"})) {
-        return ROBOT_EXPRESSION_AWKWARD;
-    }
-    if (text_has_any(text, {"为什么", "怎么", "可能", "也许", "分析",
-                            "让我看看", "我想想", "建议"})) {
-        return ROBOT_EXPRESSION_THINKING;
-    }
-    if (text_has_any(text, {"恭喜", "太棒", "真棒", "成功", "为你播放",
-                            "交给我", "可以", "当然", "谢谢"})) {
-        return ROBOT_EXPRESSION_HAPPY;
-    }
-    if (text_has_any(text, {"！", "!"})) {
-        return ROBOT_EXPRESSION_SURPRISED;
-    }
-    return ROBOT_EXPRESSION_NEUTRAL;
-}
 
 
-const char *expression_name(robot_expression_t expression)
-{
-    switch (expression) {
-        case ROBOT_EXPRESSION_HAPPY: return "happy";
-        case ROBOT_EXPRESSION_SAD: return "sad";
-        case ROBOT_EXPRESSION_ANGRY: return "angry";
-        case ROBOT_EXPRESSION_SURPRISED: return "surprised";
-        case ROBOT_EXPRESSION_SLEEP: return "sleep";
-        case ROBOT_EXPRESSION_THINKING: return "thinking";
-        case ROBOT_EXPRESSION_CONFUSED: return "confused";
-        case ROBOT_EXPRESSION_AWKWARD: return "awkward";
-        case ROBOT_EXPRESSION_CRY: return "cry";
-        case ROBOT_EXPRESSION_LAUGHING: return "laughing";
-        case ROBOT_EXPRESSION_FUNNY: return "funny";
-        case ROBOT_EXPRESSION_LOVING: return "loving";
-        case ROBOT_EXPRESSION_EMBARRASSED: return "embarrassed";
-        case ROBOT_EXPRESSION_SHOCKED: return "shocked";
-        case ROBOT_EXPRESSION_COOL: return "cool";
-        case ROBOT_EXPRESSION_RELAXED: return "relaxed";
-        case ROBOT_EXPRESSION_DELICIOUS: return "delicious";
-        case ROBOT_EXPRESSION_KISSY: return "kissy";
-        case ROBOT_EXPRESSION_CONFIDENT: return "confident";
-        case ROBOT_EXPRESSION_SILLY: return "silly";
-        case ROBOT_EXPRESSION_NEUTRAL:
-        default: return "neutral";
-    }
-}
+
 
 
 }  // namespace
@@ -804,8 +617,7 @@ void RobotApp::HandleEvent(const Event &event)
                     (uint32_t)CONFIG_ROBOT_CLOUD_POLL_INTERVAL_S * 1000U;
                 cloud_config.status_interval_ms =
                     (uint32_t)CONFIG_ROBOT_CLOUD_STATUS_INTERVAL_S * 1000U;
-                cloud_config.speak = CloudSpeak;
-                cloud_config.speak_ctx = this;
+
                 /*
                  * Log which source each half came from.  Without this there is
                  * no way to tell "the setup page value took effect" from "the

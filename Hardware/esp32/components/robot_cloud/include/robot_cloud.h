@@ -4,10 +4,6 @@
 #include <stdint.h>
 #include "esp_err.h"
 
-/* Declared outside the extern "C" block on purpose: the C++ caller passes a
- * static member function, and a C-linkage function pointer type would make
- * that assignment ill-formed. */
-typedef esp_err_t (*robot_cloud_speak_fn)(void *ctx, const char *text);
 
 #ifdef __cplusplus
 extern "C" {
@@ -22,8 +18,6 @@ typedef struct {
     uint32_t poll_interval_ms;
     uint32_t status_interval_ms;
     uint32_t request_timeout_ms;
-    robot_cloud_speak_fn speak;
-    void *speak_ctx;
 } robot_cloud_config_t;
 
 esp_err_t robot_cloud_init(const robot_cloud_config_t *config);

@@ -86,9 +86,7 @@ private:
     static void NetworkEvent(void *ctx, int event_id);
     static void ProvisioningUi(void *ctx, const char *ssid, const char *url);
     static void GestureCallback(void *ctx, robot_gesture_t gesture);
-    /* Bridges the console's speak command to the cloud speech channel; kept as
-     * a callback so robot_cloud stays independent of the app. */
-    static esp_err_t CloudSpeak(void *ctx, const char *text);
+
 #if CONFIG_ROBOT_CLOUD_VOICE
     /* Bridges the voice task's start/finish notifications onto the event loop,
      * so the UI and the wake word engine are only touched from the app task. */

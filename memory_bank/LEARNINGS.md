@@ -180,6 +180,12 @@
 - 删大块代码时用"**按行数组 + 首尾行断言**"：先定位起止行并断言两行内容，再从后往前删（避免行号漂移）。本轮三次断言失败都发生在写盘之前——**文件一个字都没被改坏**；这比"字符串精确替换"稳妥得多，尤其在 CRLF/LF 混用的工程里（本轮 `.c` 是 CRLF、`.h` 是 LF，同一个匹配串不可能同时命中，必须用 `\r?\n` 或按行处理）。
 - 收尾要扫两遍：①所有编译单元（本轮 6 个）都过一遍编译器；②对整套仓库再 grep 一遍 `AIUI|aiui`，剩下的应当只有注释/文档。**"某一处编译通过"不等于"子系统删干净"**。
 - 依赖清理也是删除的一部分：删掉代码后要连带删掉 `CMakeLists` 的 `REQUIRES`／`idf_component.yml` 的依赖（`78/esp-opus`、`esp_audio_simple_player`），否则构建仍然拉取无用组件；`Kconfig` 里已无引用的选项同样该删——但**必须先确认没有任何源文件引用**（本轮 `ROBOT_ENABLE_ESP_SR`／`ROBOT_ENABLE_GESTURE`／`ROBOT_ENABLE_SERVO` 仍在用，保留）。
+## 单文件编译通过 ≠ 能链接：移除子系统后必须跑一次完整构建（2026-10-15 T028-7）
+- 现象：T028 的六个固件文件都用真实编译命令验证过"0 error"，但用户 `idf.py build` 仍在**链接期**失败：`undefined reference to 'RobotApp::CloudSpeak(void*, char const*)'`。
+- 原因很朴素但很容易漏：**删代码时"定义"被删掉了，"声明"和"调用点"还在**。单文件 `-c` 编译只做语法与符号可见性检查——因为头文件里还留着声明，调用点是合法的，编译当然通过；只有链接器才会发现"这个符号没有定义"。同理，`static` 函数"定义但未使用"是**警告**（本项目 `-Wno-error=unused-function`），不会挡住构建，所以死代码也能一路编译到链接。
+- 规则：**验证一个子系统被"删干净"，必须包含一次完整构建（含链接）**，而不能只跑单文件编译。单文件编译适合快速迭代，但它对"定义缺失""未使用的死代码""依赖残留"这三类问题一律不报。
+- 顺带一条工程习惯：删除接口时，**声明、注册点、调用点、依赖声明（CMake/idf_component.yml/Kconfig）要同批删**。本轮就是漏了"注册点仍在引用已删定义"，导致用户在烧录时才发现——修复成本从"本地一条命令"变成了"用户中断一次烧录"。
+- 记录一个可复用的环境拼法：这台机器是 EIM 布局（IDF 在 `D:\esp\v5.5.5\esp-idf`、工具在 `C:\Espressif\tools`、Python 环境在 `C:\Espressif\tools\python\v5.5.5\venv`），`export.bat` 会因为找不到 `python_env\idf5.5_py3.12_env` 而失败；可以直接拼 PATH（cmake/ninja/xtensa）+ `IDF_TOOLS_PATH=C:\Espressif\tools` + `IDF_PYTHON_ENV_PATH=<venv>`，用 venv 的 python 跑 `idf.py -C <项目> build`。
 ## 待调查
 其他供应商兼容性、真实浏览器暂停续写整链路、Cloudflare 远程 migration 与生产部署仍待验证。server/index.ts 仍保留 `if(false)` 的旧 chat-legacy 死代码与 chat_locks 过期检查，属待清理项；这不构成可路由漏洞，但会增加维护成本。
 

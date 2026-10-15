@@ -269,18 +269,6 @@ static esp_err_t apply_command(const char *type, const char *payload, char *resu
                 snprintf(result, result_size, "已播报");
             } else if (spoken == ESP_ERR_INVALID_STATE) {
                 snprintf(result, result_size, "机器人正在对话中");
-            } else if (s_cloud.config.speak != NULL) {
-                /* No cloud voice channel on this build: fall back to the
-                 * built-in stack, which needs an open AIUI session. */
-                esp_err_t local = s_cloud.config.speak(s_cloud.config.speak_ctx, text->valuestring);
-                if (local == ESP_OK) {
-                    snprintf(result, result_size, "已开始播报");
-                } else if (local == ESP_ERR_INVALID_STATE) {
-                    snprintf(result, result_size, "机器人正在待机，请先唤醒它再播报");
-                } else {
-                    snprintf(result, result_size, "设备未配置语音服务，暂时无法播报");
-                    err = ESP_ERR_NOT_SUPPORTED;
-                }
             } else {
                 snprintf(result, result_size, "设备未配置语音服务，暂时无法播报");
                 err = ESP_ERR_NOT_SUPPORTED;
