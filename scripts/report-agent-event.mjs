@@ -13,8 +13,16 @@
  * 默认**不阻断** agent：出错只打一行警告并退出 0（hook 里最怕因为通知失败把任务搞挂）。
  * 想让它返回非 0（调试用）加 --strict。
  */
-import {readFileSync} from 'node:fs';
+import {existsSync, mkdirSync, readFileSync, writeFileSync} from 'node:fs';
+import {dirname, resolve} from 'node:path';
+import {fileURLToPath} from 'node:url';
 
+/*
+ * 凭据文件固定在「仓库根目录/data/agent-key.txt」，**不跟随当前工作目录**：
+ * hook 的工作目录是不确定的，用相对路径会时灵时不灵。要自定义就设 AIDESK_AGENT_KEY_FILE。
+ */
+const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const keyFile = process.env.AIDESK_AGENT_KEY_FILE || resolve(repoRoot, 'data', 'agent-key.txt');
 const args = process.argv.slice(2);
 const value = name => {
   const index = args.indexOf(`--${name}`);
@@ -25,7 +33,7 @@ const base = (value('url') || process.env.AIDESK_EVENT_URL || 'https://aidesk-co
 const key = () => {
   if (process.env.AIDESK_AGENT_KEY) return process.env.AIDESK_AGENT_KEY.trim();
   try {
-    return readFileSync(process.env.AIDESK_AGENT_KEY_FILE || 'data/agent-key.txt', 'utf8').trim();
+    return readFileSync(keyFile, 'utf8').trim();
   } catch {
     return '';
   }
@@ -36,8 +44,20 @@ const warning = message => {
   process.exit(strict ? 1 : 0);
 };
 
+const saveKey = value('save-key');
+if (saveKey) {
+  mkdirSync(dirname(keyFile), { recursive: true });
+  writeFileSync(keyFile, `${saveKey.trim()}\n`, { encoding: 'utf8', mode: 0o600 });
+  console.log(`[aidesk] 凭据已写入：${keyFile}`);
+}
 const agentKey = key();
-if (!agentKey) warning('没有上报凭据：设置 AIDESK_AGENT_KEY，或把凭据写进 data/agent-key.txt');
+if (args.includes('--check')) {
+  console.log(`[aidesk] 凭据来源：${process.env.AIDESK_AGENT_KEY ? '环境变量 AIDESK_AGENT_KEY' : `文件 ${keyFile}（${existsSync(keyFile) ? '存在' : '不存在'}）`}`);
+  console.log(`[aidesk] 凭据：${agentKey ? `已读到（长度 ${agentKey.length}，尾号 ${agentKey.slice(-4)}）` : '没读到'}`);
+  console.log(`[aidesk] 上报地址：${base}/api/agent/events`);
+  process.exit(agentKey ? 0 : 1);
+}
+if (!agentKey) warning(`没有上报凭据：设置 AIDESK_AGENT_KEY，或先跑 --save-key <凭据>（文件位置：${keyFile}）`);
 const kind = value('kind');
 if (!['needs_confirmation', 'failed', 'finished'].includes(kind)) warning(`--kind 必须是 needs_confirmation / failed / finished（收到 "${kind}"）`);
 const body = {
