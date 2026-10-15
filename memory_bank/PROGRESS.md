@@ -370,3 +370,11 @@ T001–T017 与 T009 已完成（依据见各任务条目）。**T018 语音对�
 - 修法：**保留真实 ID（云端部署需要它），把旧库搬到新 ID 对应的文件名**。先停 `wrangler dev`（否则目标文件被 workerd 占用），把旧库的 `.sqlite`／`-wal`／`-shm` 三个文件复制成新库的对应名字；核对结果：14 表、users 58、models 2、roles 2、devices 1、voice_settings 1 —— 与旧库一致，开发数据完整恢复。随后删除临时的空库备份。
 - 教训（已写入 LEARNINGS）：`wrangler.jsonc` 里的 `database_id` 属于"**会改变数据落点**"的配置，不是普通常量；修改它之前要么先停服务、要么准备好把本地库文件一并搬过去。看到"所有接口 500、连最简接口也 500"时，优先怀疑**基础设施/绑定层面的整体失效**（库为空、密钥缺失、绑定不对），而不是逐个接口去查代码。
 - 未验证：用户重启 `wrangler dev` 后的实际表现（预期 401/正常，而不是 500）。
+### 2026-10-15 — T025 遗留：线上 D1 备份与回滚（首次快照 + “导出可恢复”实测）
+- 触发：域名在实名审核，线下等待期间挑一件**零依赖、上线前必须补**的事——线上库的备份与回滚。
+- 卡点与处理：`npx wrangler d1 export` 首次失败，报 `Your auth token has expired and could not be refreshed because the Cloudflare auth server could not be reached`；加上本机代理后转为 `In a non-interactive environment, it's necessary to set a CLOUDFLARE_API_TOKEN`——两者都不是“登录真的失效/缺 token”，而是**OAuth token 已过期（`expiration_time` 2026-10-14T17:15:53Z）且必须经代理**。`npx wrangler login` 重登即可，注意它的**回调只等 120 秒**（第一次因为我去写别的、用户点得晚，`durationMs: 120141` 超时失败；第二次秒点即 `Successfully logged in`）。
+- 执行：`npx wrangler d1 export aidesk --remote --output backups/aidesk-20261015.sql` → 成功，4,541 字节。
+- 验证（两层）：①**可恢复性**：用本机 Python `sqlite3.executescript()` 把 dump 灌进 `%TEMP%` 的临时库（不碰生产）→ 14 张表全部建起、`d1_migrations` 5 条、业务表 0 行，随后删除临时库；②**未截断**：`npx wrangler d1 execute aidesk --remote --json --command "SELECT (SELECT count(*) FROM users) AS users, …"` → 远端 `users/models/roles/devices/device_commands/conversations/messages/voice_settings/sessions/rate_limits` **全部 0**，`size_after` 172,032 字节（纯 schema），与 dump 一致。
+- **重要发现：线上 D1 是空库**（只有表结构与迁移记录）。开发期间积累的数据（58 用户、2 模型、1 设备等）全部在本地 `.wrangler` 开发库里。推论：域名接通后线上从零开始，**第一个注册的账号就是线上管理员**，「注册是否开放」必须在放机器人上线前决定（原以为要处理的是“58 个含 test_* 的账号”，实际线上没有这些账号）。
+- 文档与仓库：DEPLOY 新增「备份与回滚（2026-10-15 实测）」（含导出/恢复/版本回滚/敏感性与纪律），并修正「部署目标」里过时的“GitHub 未执行”；`## 回滚` 一节被该新节取代；`.gitignore` 增加 `backups/`（快照内含口令哈希、设备密钥哈希、模型密钥密文）。
+- 未验证：**远程恢复未实测**（会把线上库清空的破坏性操作，不做）；`wrangler rollback` 未实测（没有需要回滚的版本）。

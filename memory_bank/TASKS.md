@@ -2,7 +2,7 @@
 
 状态：已确认；更新2026-10-14。用户批准连续执行，一次完成一项后同步文档；禁止部署推送创建云资源及修改原四目录。
 
-当前任务：T026 源码托管——已推送到 GitHub（公开仓库，提交 09a5800）。T025 部署：Cloudflare Worker + D1 就绪，但线上地址在国内网络不可达（workers.dev DNS 污染），等你决定下一步（接域名／代理／换托管）。T019 会议纪要暂停在需求确认阶段。等待你验证的：T020–T024（配网页面、BOOT 长按、设备页自动刷新、语音质量、一键取消）。
+当前任务：T026 源码托管——已推送到 GitHub（公开仓库，提交 09a5800）。T025 部署：Cloudflare Worker + D1 就绪，但线上地址在国内网络不可达（workers.dev DNS 污染），等你决定下一步（接域名／代理／换托管）。T019 会议纪要暂停在需求确认阶段。域名已定路线：自购 `.xin` 域名接 Cloudflare 绑 custom domain（**实名审核中**），审核通过即部署并复验国内可达性；T025 遗留的线上 D1 备份与回滚已完成（见下）。等待你验证的：T020–T024（配网页面、BOOT 长按、设备页自动刷新、语音质量、一键取消）。
 
 - T001 基础工程与记忆：已完成。九文档、协作规则、依赖锁、Wrangler/Vite配置、本地D1迁移通过；audit 0漏洞。
 - T002 认证：已完成。公开注册登录退出、PBKDF2、随机hashed session、origin、限流；隔离集成测试通过。
@@ -67,6 +67,7 @@
   - 风险与约束：单远场麦克风的说话人分离准确率有限（纪要保留说话人编号，不硬猜姓名）；边录边传依赖网络（推荐"仅联网时允许开始"）；长录音需要对象存储（R2），而**项目规则禁止创建云资源**，因此只写绑定与代码、本地用 Wrangler 本地模拟验证，建桶待用户许可后再做。
 
 - T025 部署上线（2026-10-15 用户要求）：**已部署，但线上地址对本机与机器人当前都不可达**。执行与结果：①`wrangler d1 create aidesk` → `19747cfe-3ef1-44ec-8ece-ea564ac01b40`（区域 WNAM），真 ID 已写入 `wrangler.jsonc`；②`wrangler d1 migrations apply DB --remote` → 0001–0005 全部 ✅，云端 12 张业务表（users/sessions/models/roles/conversations/messages/chat_generations/chat_locks/devices/device_commands/voice_settings/rate_limits）；③沿用本地 `.dev.vars` 的 `ENCRYPTION_KEY`（44 字符 base64，不重建、不打印），经 stdin 写入 `wrangler secret put`，`wrangler secret list` 可见 `ENCRYPTION_KEY`；④`npm run build` + `npx wrangler deploy` → Worker `aidesk-console`，版本 `d92ab0b5-520e-497b-9289-07c066e777ad`，绑定 `env.DB(aidesk)`／`env.ASSETS`／`APP_ENV=production`，地址 `https://aidesk-console.1763584993.workers.dev`。账号 `1763584993@qq.com`（Account ID `50c97dd7965ce5c1abc69ad20c3ce5dd`）。
+- T025 遗留 · 备份与回滚（2026-10-15 完成）：首次线上 D1 快照 `backups/aidesk-20261015.sql`（4,541 字节、14 表、5 条迁移、业务表 0 行）；**可恢复性已实测**（本机 Python `sqlite3.executescript()` 回灌临时库，14 表全部建起、行数一致），并用 `d1 execute --remote` 标量子查询交叉核对远端行数（排除“导出被截断”）。流程写入 DEPLOY「备份与回滚」；`backups/` 已加入 `.gitignore`（内含口令哈希与设备密钥，禁止入库）。**新发现：线上库是空库**——开发数据全在本地，上线后第一个注册账号即线上管理员，“是否放开注册”须在放机器人上线前定。过程中 Cloudflare OAuth 已过期，已重新 `wrangler login`（回调只等 120 秒）。未验证：远程恢复未做破坏性试验。
   - **阻塞项（未验证即不得记为"已上线可用"）**：本机 `curl` 该地址失败——`workers.dev` 的 DNS 在本网络被污染（解析到 Facebook 的 `31.13.85.34`／`2a03:2880:...:face:b00c:...`），而同一时刻 `https://www.cloudflare.com/` 返回 200，属针对性阻断；账号内 **zone 数量为 0**，无法立刻用自定义域名绕开。因此"控制台线上可访问"与"机器人指向线上地址"**均不成立**。
   - 待用户决定的三条路：a) 把域名接入 Cloudflare 并给 Worker 绑 custom domain（推荐，机器人与手机都能直连）；b) 用代理／VPN 访问（只有人能访问，机器人不行）；c) 换国内可达的托管（改动最大，需重新确认技术栈）。
 

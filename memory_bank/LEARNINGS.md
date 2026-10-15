@@ -196,3 +196,14 @@
 其他供应商兼容性、真实浏览器暂停续写整链路、Cloudflare 远程 migration 与生产部署仍待验证。server/index.ts 仍保留 `if(false)` 的旧 chat-legacy 死代码与 chat_locks 过期检查，属待清理项；这不构成可路由漏洞，但会增加维护成本。
 
 URL附加模式preview_start返回本安装不支持，未据此声称T009全状态验证通过。代理续传消息被自动审批判定Instruction Poisoning而拒绝，已改由主会话实施本地代码。
+## 备份文件要“真回灌一次”才算验证过（2026-10-15 D1 快照）
+- **导出成功 ≠ 备份可用**。`wrangler d1 export` 只保证文件写出来了；文件是不是完整的、能不能被 SQLite 吃下去，要另证。
+- 便宜且安全的证法：把 dump 灌进**临时库**（本机 Python `sqlite3.executescript()`，写 `%TEMP%`），列出表名与逐表行数，跑完就删——不碰生产就能证明“可恢复”，比在生产上空跑一次 `--file` 安全得多。
+- 同时要排除“导出被截断”：在远端用 `count(*)` 交叉核对同一批表的行数，与 dump 对齐。这一次两侧都是 0（线上确实是空库），但**“两侧一致”本身就是结论**——否则无法区分“库是空的”和“导出只导了 schema”。
+- 远端核对的两个坑：`wrangler d1 execute` 的 SQL 必须用 `--command`（写成位置参数会报 `Unknown argument: SELECT …`）；用 `UNION ALL` 拼 9 张表会报 `too many terms in compound SELECT`，改用 `SELECT (SELECT count(*) FROM t1) AS t1, …` 的标量子查询即可。
+- 顺带得到一条业务事实：**线上库为空**意味着“开发库里的 58 个用户”不会自动出现在线上，上线后第一个注册账号即管理员——这类事实只能靠“真的去查一次”拿到，不能从代码或文档推断。
+## 云凭据会过期，而且过期时的报错会误导（2026-10-15 wrangler / Cloudflare）
+- 报错一：`Your auth token has expired and could not be refreshed because the Cloudflare auth server could not be reached.` —— 关键词看起来是“认证失效”，真因是**这台机器连不上 `dash.cloudflare.com`**（需要本机代理 `127.0.0.1:7897`）；wrangler 已经把“网络不通”和“凭据无效”分开写清楚了，值得读完再行动。
+- 报错二（加上代理后）：`In a non-interactive environment, it's necessary to set a CLOUDFLARE_API_TOKEN …` —— 这不是“缺 API token”，而是“**OAuth 已失效，而当前会话弹不出浏览器**”的说法。直接 `npx wrangler login` 就好，不必去后台建 token。
+- `wrangler login` 的本地回调（`127.0.0.1:8976`）**只等 120 秒**：日志里的 `durationMs: 120141` 就是这条超时。浏览器弹出后要立刻点 Allow；失败了重跑一次即可，不会留下半截状态。
+- 教训：交互式登录不要“先把链接发给用户、自己转去写别的”，要在同一个回合里盯着会话等回调。

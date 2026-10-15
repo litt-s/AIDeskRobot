@@ -18,3 +18,5 @@ Hardware/esp32/dependencies.lock
 
 # ---- 编辑期间的临时文件 ----
 tmp-*
+# ---- 线上 D1 快照：含用户口令哈希/设备密钥/模型密钥密文，禁止入库 ----
+backups/

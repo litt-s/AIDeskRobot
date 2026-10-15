@@ -3,7 +3,7 @@
 状态：已确认；最后更新：2026-10-13。用户已明确批准全方案并连续执行 T001–T006，每项验收及文档同步后进入下一项。禁止部署、推送、创建云资源；不得修改 Hardware、Android、MiniProgram、Design。
 
 ## 部署目标
-Cloudflare Worker（`aidesk-console`，同一 Worker 同时提供 SPA 静态资源与 `/api`）+ D1（`aidesk`）。**2026-10-15 已实际部署**，细节见文末「实际执行记录（2026-10-15）」；GitHub 源码托管未执行（本工作区没有 git 仓库，也没有远端）。
+Cloudflare Worker（`aidesk-console`，同一 Worker 同时提供 SPA 静态资源与 `/api`）+ D1（`aidesk`）。**2026-10-15 已实际部署**，细节见文末「实际执行记录（2026-10-15）」；源码托管已于同日推送到 GitHub（公开仓库，见下「源码托管」小节）。
 ## 本地初始化
 npm install；npm run setup:local；npm run db:migrate；npm run dev:worker；另开 npm run dev。
 ## 产物
@@ -22,15 +22,30 @@ npm run build && wrangler deploy             # 已执行
 ## 源码托管（GitHub，2026-10-15 执行）
 - 仓库：`https://github.com/litt-s/AIDeskRobot.git`（**公开**），分支 `main`，初始提交 `09a5800`（502 文件 / 8.51 MB）。本工作区此前**没有 git 仓库**，故本次从零 `git init`。
 - 忽略规则（必须保留，否则仓库会从 8.5 MB 涨到 650 MB+）：`Hardware/esp32/build/`、`Hardware/esp32/managed_components/`（`idf.py` 可重新生成）、`Hardware/esp32/sdkconfig`／`sdkconfig.old`（**含本机真实设备码 `CONFIG_ROBOT_CLOUD_KEY`**）、`dependencies.lock`、`tmp-*`；根 `.gitignore` 另覆盖 `.dev.vars`／`node_modules/`／`dist/`／`.wrangler/`。
-- **每次提交前的密钥扫描（强制步骤）**：`git grep --cached` 搜真实设备码与常见密钥模式（`ENCRYPTION_KEY=`、`appkey`／`appsecret`／`api_key` 的字面量、长 base64/hex）。本次扫到并处理：`aiui_sdk` 的注释示例里带有一份疑似真实 AIUI `appid/key/api_secret`，已替换为占位符。**扫描必须覆盖 vendored 第三方代码**，不能只看自己写的文件。预期命中一处：`.dev.vars.example` 里的 `ENCRYPTION_KEY=AAAA…A=` 是公开占位示例，不是真实密钥；除此以外的命中都要立刻停下核查。
+- **每次提交前的密钥扫描（强制步骤）**：`git grep --cached` 搜真实设备码与常见密钥模式（`ENCRYPTION_KEY=`、`appkey`／`appsecret`／`api_key` 的字面量、长 base64/hex）。本次扫到并处理：`aiui_sdk` 的注释示例里带有一份疑似真实 AIUI `appid/key/api_secret`，已替换为占位符。**扫描必须覆盖 vendored 第三方代码**，不能只看自己写的文件。预期命中一处：`.dev.vars.example` 里的 `ENCRYPTION_KEY=AAAA…A=` 是公开占位示例，不是真实密钥；除此以外的命中都要立刻停下核查。另有一条**固定误报**：用 `sk-` 这类短前缀正则会命中本项目自己的名字（`aide**sk-**console`、`aidesk-<日期>.sql`）——看到一片 `sk-` 命中先确认是不是这个，再决定是否入手核查。
 - **提交节奏（项目规则）**：每过一个阶段提交并推送一次——一个编号任务完成、或一次验收与文档同步结束即提交；提交信息写明任务号与要点。这不只是留痕：`git diff` 是小阶段验收之外最便宜的一次"改动全貌复查"，也是回滚的粒度单位。
 - **提交信息约定（便于按任务回溯）**：`T0xx <阶段>：<要点1>；<要点2>`，例如 `T023 验收：真机 capture report 无丢帧；长静音压缩生效`。要点写"改了什么／验证到什么"，空话（如"更新了文件"）不写；未验证项必须写明（如"未验证：真机"）。一个提交只归一个任务号；规则/流程类改动也给一个任务号，便于日后 `git log --grep T0xx` 直接回溯。
 - 后续更新流程：`git add -A` → 密钥扫描 → `git commit -m …` → `git push`。本机 `github.com` 直连不通，git 通过 `http.https://github.com.proxy=http://127.0.0.1:7897` 走本地代理（代理需在运行）；凭据由系统级 `credential.helper=manager` 提供。
 - 未验证：`.github/workflows/verify.yml` 尚未在 GitHub 上实际运行。
-## 回滚
-`wrangler rollback [version-id]`（或 Dashboard → Workers → Deployments → Rollback）回到上一个版本；D1 的 schema 变更前先用 `wrangler d1 export DB --remote --output backup.sql` 备份，回滚 schema 需手工执行反向 SQL。密钥不回滚（轮换后旧数据无法解密）。
+## 备份与回滚（2026-10-15 实测）
+**纪律：每次 `wrangler d1 migrations apply DB --remote` 之前、以及每次上线前，先导出一份快照。** 线上库现在虽是空的，但机器人一旦开始上报数据，误改就没得救。
+- **导出快照**（本机经代理；`wrangler` 必须能连上 `dash.cloudflare.com`，登录有效期见本节末）：
+  ```
+  $env:HTTPS_PROXY='http://127.0.0.1:7897'; npx wrangler d1 export aidesk --remote --output D:\AIDeskRobort\backups\aidesk-<日期>.sql
+  ```
+  导出期间 D1 **短暂不可用**（wrangler 会先提示），别在设备在线上报时跑。
+- **恢复**：导出文件是「`CREATE TABLE IF NOT EXISTS` + `INSERT`」，只能灌进**空库或已清空的库**（主键冲突会中断）：
+  ```
+  npx wrangler d1 execute aidesk --remote --file D:\AIDeskRobort\backups\aidesk-<日期>.sql
+  ```
+  只恢复某张表，就从 dump 里摘出该表的 `CREATE` + `INSERT` 单独执行；schema 回滚仍要手工写反向 SQL。
+- **Worker 版本回滚**：`npx wrangler rollback [version-id]`（或 Dashboard → Workers → Deployments → Rollback）；也可以直接 `npx wrangler deploy` 重新推一份旧代码。密钥不回滚（轮换后旧数据无法解密）。
+- **快照是敏感文件**：内含 `users`（用户名／口令哈希／盐）、`devices`（设备密钥哈希与掩码）、`models`（供应商 API key 的密文）。`backups/` 已加入 `.gitignore`，**不得提交、不得外发**。
+- **实测（2026-10-15）**：`backups/aidesk-20261015.sql` 4,541 字节；14 张表、5 条 `d1_migrations`（0001–0005）、业务表 0 行。用本机 Python `sqlite3.executescript()` 回灌临时库**成功**（14 表全部建起、行数与 dump 一致）——「导出文件可恢复」已实测；**「远程恢复」未实测**（不做破坏性试验）。另用 `d1 execute --remote` 的标量子查询交叉核对远端行数，与 dump 一致，排除「导出被截断」。
+- **重要事实：线上 D1 目前是空库**——开发期间的数据（58 个用户等）全在本地 `.wrangler` 开发库里，线上只有表结构与迁移记录。因此**上线后第一个注册的账号就是线上管理员**，「是否放开注册」这件事必须在放机器人上线前定。
+- **认证注意**：`npx wrangler login` 的 OAuth 回调只等 **120 秒**，浏览器弹出后要立刻点 Allow，超时报 `Timed out waiting for authorization code` 就重跑一次；OAuth token 过期后连 `d1 export` 都跑不动（报 `non-interactive environment … CLOUDFLARE_API_TOKEN`），重新 `login` 即可恢复。
 ## 当前状态
-2026-10-15 **已部署但线上不可达**：Worker `aidesk-console`（版本 `d92ab0b5-520e-497b-9289-07c066e777ad`）、D1 `aidesk`（`19747cfe-3ef1-44ec-8ece-ea564ac01b40`，区域 WNAM，12 张业务表）、secret `ENCRYPTION_KEY` 均就绪；但 `https://aidesk-console.1763584993.workers.dev` 在国内网络**不可访问**——`workers.dev` 的 DNS 被污染（解析到 Facebook 的 `31.13.85.34`），同一时刻 `https://www.cloudflare.com/` 返回 200；账号内 zone 数为 0，无法立即绑自定义域名。**因此不得记为「已上线可用」，也不要让机器人把服务器地址改成它**（会立刻失联）。GitHub 未推送（工作区无 git 仓库）。
+2026-10-15 **已部署但线上不可达**：Worker `aidesk-console`（版本 `d92ab0b5-520e-497b-9289-07c066e777ad`）、D1 `aidesk`（`19747cfe-3ef1-44ec-8ece-ea564ac01b40`，区域 WNAM，12 张业务表；**2026-10-15 复核：业务表全部 0 行**，只有表结构与迁移记录，详见「备份与回滚」）、secret `ENCRYPTION_KEY` 均就绪；但 `https://aidesk-console.1763584993.workers.dev` 在国内网络**不可访问**——`workers.dev` 的 DNS 被污染（解析到 Facebook 的 `31.13.85.34`），同一时刻 `https://www.cloudflare.com/` 返回 200；账号内 zone 数为 0，无法立即绑自定义域名。**因此不得记为「已上线可用」，也不要让机器人把服务器地址改成它**（会立刻失联）。GitHub 未推送（工作区无 git 仓库）。
 
 ## 本地测试
 先运行 `npm run setup:local`、`npm run db:migrate`、`npm run build`，再启动 `npm run dev:worker`，另一个终端运行 `npm test`。集成测试需要 localhost:8787 的本地 Worker；使用随机测试账户和虚构key，不访问真实provider。`npm run dev` 使用5173代理8787；development只允许该本地Origin。
