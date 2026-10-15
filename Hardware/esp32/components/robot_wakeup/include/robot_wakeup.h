@@ -37,6 +37,13 @@ const char *robot_wakeup_phrase(void);
 esp_err_t robot_wakeup_set_phrase(const char *phrase, char *error,
                                   size_t error_size);
 
+/*
+ * 用户写的那个词（中文，如「你好小智」），只用于显示与播报——设备发音要用它，
+ * 而喂给模型的必须是拼音。控制台下发时一并带上；没有就用空串。
+ */
+esp_err_t robot_wakeup_set_label(const char *label);
+const char *robot_wakeup_label(void);
+
 #ifdef __cplusplus
 }
 #endif

@@ -277,6 +277,7 @@ static esp_err_t apply_command(const char *type, const char *payload, char *resu
         }
     } else if (strcmp(type, "wake") == 0) {
         const cJSON *text = cJSON_GetObjectItem(root, "text");
+        const cJSON *label = cJSON_GetObjectItem(root, "label");
         if (!cJSON_IsString(text)) {
             snprintf(result, result_size, "缺少唤醒词");
             err = ESP_ERR_INVALID_ARG;
@@ -286,8 +287,15 @@ static esp_err_t apply_command(const char *type, const char *payload, char *resu
             esp_err_t applied = robot_wakeup_set_phrase(text->valuestring,
                                                         reason, sizeof(reason));
             if (applied == ESP_OK) {
-                snprintf(result, result_size, "唤醒词已设为 %.48s",
-                         text->valuestring);
+                /* 用户写的那个词（中文）留给提示音用；没有就沿用旧的。 */
+                if (cJSON_IsString(label) && label->valuestring[0] != '\0') {
+                    robot_wakeup_set_label(label->valuestring);
+                    snprintf(result, result_size, "唤醒词已设为 %.40s（%.24s）",
+                             label->valuestring, text->valuestring);
+                } else {
+                    snprintf(result, result_size, "唤醒词已设为 %.48s",
+                             text->valuestring);
+                }
             } else {
                 snprintf(result, result_size, "%.100s",
                          reason[0] != '\0' ? reason : "设置唤醒词失败");

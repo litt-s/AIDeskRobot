@@ -232,9 +232,34 @@ void provisioning_prompt_task(void *arg)
 void ready_prompt_task(void *arg)
 {
     (void)arg;
-    esp_err_t err = robot_audio_play_wav_file("/assets/network_ready.wav");
-    if (err != ESP_OK) {
-        ESP_LOGW(TAG, "ready prompt failed: %s", esp_err_to_name(err));
+    /*
+     * 联网提示要念用户自己设的那个唤醒词，所以不能再放那段写死「小飞小飞」的
+     * 预录音频——唤醒词是可以改的，预录的那句话只会越来越不对。改用云端语音
+     * 合成（控制台播报走的就是这条链路）：文案里带用户写的中文词；读不出来时
+     * 退回不含唤醒词的本地提示音，免得念出一个已经失效的旧词。
+     */
+    const char *label = robot_wakeup_label();
+    bool spoke = false;
+#if CONFIG_ROBOT_CLOUD_VOICE
+    if (label[0] != '\0') {
+        char line[96];
+        snprintf(line, sizeof(line), "网络连接成功，喊%s就能唤醒我", label);
+        spoke = robot_voice_say(line) == ESP_OK;
+        if (!spoke) {
+            ESP_LOGW(TAG, "cloud ready prompt unavailable: %s",
+                     robot_voice_last_result());
+        }
+        /* 提示音里就含着唤醒词，别让它自己把机器人叫醒（合成结束时采集已被恢复）。 */
+        robot_audio_set_capture_paused(true);
+    }
+#endif
+    if (!spoke) {
+        const char *asset = label[0] == '\0' ? "/assets/network_ready.wav"
+                                             : "/assets/key_wakeup.wav";
+        esp_err_t err = robot_audio_play_wav_file(asset);
+        if (err != ESP_OK) {
+            ESP_LOGW(TAG, "ready prompt failed: %s", esp_err_to_name(err));
+        }
     }
     /*
      * The microphone was muted for this prompt and nothing else lifts that:

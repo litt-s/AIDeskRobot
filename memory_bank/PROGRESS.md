@@ -473,3 +473,10 @@ T001–T017 与 T009 已完成（依据见各任务条目）。**T018 语音对�
 - 验证结果：控制台 `typecheck` exit 0、`vite build` exit 0（259.30 kB）、**`npm test` 78/78 通过**；固件 `idf.py build` exit 0、0 warning、`deskemoji_robot.bin` **0x149240**。
 - **运维提醒**：`0006_wake.sql` **尚未应用到线上 D1**，部署前必须 `npx wrangler d1 migrations apply DB --remote`（已写入 DEPLOY）。
 - 未验证：浏览器端「下发 → 设备执行 → 设备当前显示」链路；喊新词能唤醒/旧词失效/断电重启保留（后两条需烧录 0x149240 让设备回报 hello）。
+### 2026-10-15 — T032 追加：开机提示音不再念写死的唤醒词
+- 用户反馈：「开机连接网络的提示词还是小飞小飞」。根因：那段提示是**预录音频** `assets/network_ready.wav`（约 4.9 s 语音），文案念死了“小飞小飞”；唤醒词现在可自定义，音频里的词必然过时。
+- 改法（不重录音频，而是让它说得出用户自己的词）：①`wake` 指令 payload 增加 `label`（用户写的中文词，如「你好小智」），设备存入 NVS（`wake_cfg/label`）并打印 `wake label set to: …`；②开机提示音改成 **`robot_voice_say()` 云端合成**「网络连接成功，喊<label>就能唤醒我」——复用控制台「播报」那条已被真机验证过的链路；③云端不可用（未配语音、正在对话）时**退回 `key_wakeup.wav`**（0.58 s 提示音，不含任何词），而不是继续念旧词；④`robot_voice_say()` 结束时语音模块会恢复采集，所以紧接着再显式闭麦，**避免机器人把自己念出来的唤醒词听进去自唤醒**。
+- 时序也成立：`hello`（NETWORK_GOT_IP）→ 校时 → `SetupOnlineServices`（先初始化语音通道，再播提示音），所以提示音发出时云端语音已就绪。
+- 验证：固件 `idf.py build` exit 0、0 warning、`deskemoji_robot.bin` **0x149470**；控制台 `typecheck` exit 0、`npm run build` exit 0、`npm test` **78/78**。
+- 已知未处理：**配网阶段的 `provisioning.wav` 同样念了“小飞”**——那时还没有网络、无法云端合成，本次未动；要改需另做一段音频（或等联网后再补一句提示）。
+- 未验证：真机听感（需烧录 0x149470）。

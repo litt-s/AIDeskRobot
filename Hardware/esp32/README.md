@@ -47,6 +47,8 @@ OLED 在机构中倒装，初始化时同时启用 X/Y 镜像。舵机中心角�
 2. 没有 Wi-Fi 配置立即进入配网；有配置则尝试连接，默认超时 60 秒。
 3. 获得 IP 后关闭 Wi-Fi 省电、完成 NTP 校时，随后启动控制台设备通道。
 4. 初始化 ESP-SR 离线唤醒与手势传感器，播放“已联网”提示音，进入离线待机（`offline wake ready`）。
+
+**开机提示音会念你设的唤醒词**：设过自定义词（控制台下发 `wake` 指令时带 `label`）就**用云端语音合成**「网络连接成功，喊<你写的中文词>就能唤醒我」（复用控制台播报那条链路）；云端不可用（没配语音、正在对话）时退回 **`key_wakeup.wav`**——一段不含任何词的提示音。**不要再用预录的 `network_ready.wav`**：它念死了“小飞小飞”，唤醒词一改就变成错误信息。提示音期间麦克风保持关闭，免得机器人把自己念的唤醒词听进去自唤醒。
 5. 唤醒词、BOOT 短按或待机时前推手势 → 开一轮云端语音：暂停唤醒词、独占麦克风录音。
 6. 说完（连续静音约 900 ms）后上传整段音频；服务端返回识别文本、回复文本与 PCM，设备边收边播。
 7. 播完或取消后恢复采集、重新武装唤醒词，回到待机。
@@ -231,7 +233,9 @@ robot_voice: heard: ...
 robot_audio: playback stream start: buffered=... ms waited=... ms
 robot_voice: answer: ...
 robot_voice: cloud voice turn finished: 对话完成
-robot_wakeup: wake phrase set to: 你好小智
+robot_wakeup: wake phrase set to: ni hao xiao zhi
+robot_wakeup: wake label set to: 你好小智
+robot_app: cloud ready prompt unavailable: …
 robot_wakeup: the model cannot use this phrase: ...
 robot_wakeup: stored wake phrase rejected (…); using the default
 robot_voice: no speech within 4000 ms; nothing uploaded

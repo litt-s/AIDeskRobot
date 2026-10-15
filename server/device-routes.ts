@@ -49,7 +49,7 @@ export function deviceRoutes(app:any){
   const t=now(),id=crypto.randomUUID();
   await c.env.DB.batch([
    c.env.DB.prepare('UPDATE devices SET wake_label=?,wake_phrase=?,updated_at=? WHERE id=? AND user_id=?').bind(wake.label,wake.phrase,t,row.id,uid),
-   c.env.DB.prepare('INSERT INTO device_commands (id,device_id,user_id,type,payload,status,result,created_at,updated_at,acked_at) VALUES (?,?,?,?,?,?,?,?,?,?)').bind(id,row.id,uid,'wake',JSON.stringify({text:wake.phrase}),'pending',null,t,t,null),
+   c.env.DB.prepare('INSERT INTO device_commands (id,device_id,user_id,type,payload,status,result,created_at,updated_at,acked_at) VALUES (?,?,?,?,?,?,?,?,?,?)').bind(id,row.id,uid,'wake',JSON.stringify({text:wake.phrase,label:wake.label}),'pending',null,t,t,null),
   ]);
   return c.json({wake:{label:wake.label,phrase:wake.phrase},command:{id,type:'wake',status:'pending',created_at:t}},201);});
 

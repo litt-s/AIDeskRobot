@@ -29,6 +29,9 @@
 #define WAKE_PHRASE_MAX 64
 #define WAKE_NVS_NAMESPACE "wake_cfg"
 #define WAKE_NVS_KEY "phrase"
+#define WAKE_NVS_LABEL_KEY "label"
+/* 用户写的词只是给人看/给人听的，长度按 UTF-8 字节算够用就行。 */
+#define WAKE_LABEL_MAX 40
 #define WAKE_DETECT_DURATION_MS 3000
 #define WAKE_DETECT_THRESHOLD 0.20f
 #define WAKE_FRAME_QUEUE_DEPTH 8
@@ -41,6 +44,8 @@ typedef struct {
     void *callback_ctx;
     /* Current phrase, as handed to MultiNet.  Empty only before init. */
     char phrase[WAKE_PHRASE_MAX];
+    /* What the user called it (中文)，用于提示音；空表示没设过。 */
+    char label[WAKE_LABEL_MAX];
     int16_t *feed_buffer;
     int16_t *detect_buffer;
     size_t feed_size;
@@ -118,6 +123,31 @@ static void wake_load_phrase(char *out, size_t size)
     }
     size_t length = size;
     if (nvs_get_str(nvs, WAKE_NVS_KEY, out, &length) != ESP_OK) {
+        out[0] = '\0';
+    }
+    nvs_close(nvs);
+}
+
+static void wake_store_label(const char *label)
+{
+    nvs_handle_t nvs = 0;
+    if (nvs_open(WAKE_NVS_NAMESPACE, NVS_READWRITE, &nvs) != ESP_OK) {
+        return;
+    }
+    nvs_set_str(nvs, WAKE_NVS_LABEL_KEY, label);
+    nvs_commit(nvs);
+    nvs_close(nvs);
+}
+
+static void wake_load_label(char *out, size_t size)
+{
+    out[0] = '\0';
+    nvs_handle_t nvs = 0;
+    if (nvs_open(WAKE_NVS_NAMESPACE, NVS_READONLY, &nvs) != ESP_OK) {
+        return;
+    }
+    size_t length = size;
+    if (nvs_get_str(nvs, WAKE_NVS_LABEL_KEY, out, &length) != ESP_OK) {
         out[0] = '\0';
     }
     nvs_close(nvs);
@@ -242,6 +272,7 @@ esp_err_t robot_wakeup_init(robot_wakeup_fn callback, void *ctx)
         }
     }
     strlcpy(s_wakeup.phrase, phrase, sizeof(s_wakeup.phrase));
+    wake_load_label(s_wakeup.label, sizeof(s_wakeup.label));
     s_wakeup.multinet->print_active_speech_commands(s_wakeup.model_data);
 
     s_wakeup.feed_size =
@@ -428,6 +459,22 @@ esp_err_t robot_wakeup_set_phrase(const char *phrase, char *error,
     }
     s_wakeup.armed = was_armed;
     return err;
+}
+
+esp_err_t robot_wakeup_set_label(const char *label)
+{
+    if (label == NULL || strlen(label) >= WAKE_LABEL_MAX) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    strlcpy(s_wakeup.label, label, sizeof(s_wakeup.label));
+    wake_store_label(s_wakeup.label);
+    ESP_LOGI(TAG, "wake label set to: %s", s_wakeup.label);
+    return ESP_OK;
+}
+
+const char *robot_wakeup_label(void)
+{
+    return s_wakeup.label;
 }
 
 const char *robot_wakeup_phrase(void)
