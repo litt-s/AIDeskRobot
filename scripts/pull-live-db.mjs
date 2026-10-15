@@ -9,13 +9,25 @@
  * 接着用 scripts/export-seed.mjs 从它生成 seed/seed.sql（部署时带上），
  * 控制台里的改动就跟着下一次发布一起活下去。
  */
-import {writeFileSync, statSync} from 'node:fs';
+import {readFileSync, statSync, writeFileSync} from 'node:fs';
 
 const url = (process.env.LIVE_URL || 'https://aidesk-console-312359-12-1485927190.sh.run.tcloudbase.com')
   .replace(/\/+$/, '');
-const token = process.env.ADMIN_TOKEN || '';
+/*
+ * 令牌优先取环境变量，其次读本机的 data/admin-token.txt（已 gitignore）。
+ * 计划任务因此不用把令牌写进命令行 —— 任务管理器里能看到命令行，而那个文件本身不进仓库。
+ */
+function readToken() {
+  if (process.env.ADMIN_TOKEN) return process.env.ADMIN_TOKEN.trim();
+  try {
+    return readFileSync(process.env.ADMIN_TOKEN_FILE || 'data/admin-token.txt', 'utf8').trim();
+  } catch {
+    return '';
+  }
+}
+const token = readToken();
 if (!token) {
-  console.error('缺少 ADMIN_TOKEN（云托管服务的环境变量里那个值）');
+  console.error('缺少令牌：设置 ADMIN_TOKEN，或把值写进 data/admin-token.txt');
   process.exit(1);
 }
 const output = process.env.LIVE_DB || 'data/live.sqlite';

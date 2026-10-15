@@ -362,3 +362,13 @@ schtasks /Create /TN "AIDesk 拉回线上库" /SC MINUTE /MO 10 /F /TR "cmd /c s
 schtasks /Delete /TN "AIDesk 拉回线上库" /F     # 不想要了
 ```
 > 注意这个方案**不是强一致**：两次拉取之间的写入（例如最后 10 分钟里改的道具/唤醒词）如果紧接着发布就会丢。要一点不丢就得走方案 B（CloudBase「SQL 型数据库」）。
+
+**实测（2026-10-15 23:2x~23:3x，版本 006→007）**：
+- 端点在版本 006（代码）落地，`ADMIN_TOKEN` 走 `SubmitServerConfigChangeDiff` 注入（版本 007）后生效。
+- 行为核对：`GET /api/admin/snapshot` 无令牌 → **401**；错误令牌 → **401**；`POST` → **405**（说明是入口在拦，不是被会话中间件拦）；`GET /api/health` → 200。
+- 拉回：`node scripts/pull-live-db.mjs` → `data/live.sqlite`，**241,664 字节 / 709 ms**；内容与线上一致（users=1 li6679、devices=2（`SGZX` + 固件默认码 `VP1R`）、models=1、roles=2、voice_settings=1、conversations=8、messages=120）；拿固件默认码打 `/api/device/hello` → **200**。
+- 从拉回来的库重建种子：`D1_FILE=data/live.sqlite node scripts/export-seed.mjs` → 条数一致，且**识别出固件默认设备已存在、不重复添加**。
+- 计划任务：`schtasks /Create /TN "AIDesk 拉回线上库" /SC MINUTE /MO 10 …`（命令里**不含令牌**，脚本自己读 `data/admin-token.txt`）→ 已创建，`Next Run Time` 正常。
+- ⚠️ 踩坑：**配置变更（新的 EnvParams）是滚动生效的**，改完那一两分钟里新老实例并存 —— 我在第一分钟抽查时拿到 `404 disabled`（老实例：有代码没变量），一分钟后再查就是 `401`（新实例：变量生效）。判断这类"变量到底进没进容器"不要只看一次。
+
+**令牌存放**：`data/admin-token.txt`（43 字符随机串，已 gitignore，不入仓库）。要轮换就重新生成、再跑一次 `tmp-set-env` 那套合并（或控制台改 `ADMIN_TOKEN`）。
