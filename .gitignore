@@ -41,3 +41,6 @@ Android/.idea/
 Android/*.iml
 # ---- Local portable build tool cache ----
 .tools/
+
+# ---- 微信开发者工具的本地私有配置（含本机路径/个人设置，只应留在本机）----
+MiniProgram/**/project.private.config.json
