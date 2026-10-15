@@ -24,19 +24,15 @@ const KINDS=['needs_confirmation','failed','finished'];
 const clip=(text:string,max:number)=>text.length>max?`${text.slice(0,max-1)}…`:text;
 
 /**
- * 播报文案：必须带上"哪个软件"，不然不在电脑前根本听不懂。
+ * 播报文案：只报"哪个软件 + 什么状态"，一句念完。
  *
- * 需要你确认的事件还要把"当时能选什么"一起念出来：Codex 弹窗里是哪几个选项，播报里就得是哪几个，
- * 否则人只知道"要批准"，不知道批准的是哪一种。代价是句子变长——此时标题压到 40 字、整句压到 90 字。
+ * 标题、细节、批准选项一律不进语音：念出来又长又慢，而且念到一半人就听不出是哪件事了——
+ * 它们留在库里、控制台与手机看板上，要细节的人去看那一份。语音只负责"有事发生"这一个信号，
+ * 每个字都得值钱：Codex 任务完成 / Codex 任务中断 / Codex 待批准。
  */
-export function announcementText(source:string,kind:string,title:string,options:string[]=[]){
-  const suffix=title?`：${title}`:'';
-  const text=kind==='needs_confirmation'?`${source} 需要你确认${suffix}`
-    :kind==='failed'?`${source} 执行失败${suffix}`
-    :`${source} 的任务完成了${suffix}`;
-  /* 语音念长句会拖时间：机器人只报"一件事"，细节去手机上看。 */
-  if(kind!=='needs_confirmation'||!options.length)return clip(text,60);
-  return clip(`${clip(text,40)}。可选：${options.join('，')}`,90);
+export function announcementText(source:string,kind:string){
+  const state=kind==='needs_confirmation'?'待批准':kind==='failed'?'任务中断':'任务完成';
+  return clip(`${source} ${state}`,40);
 }
 
 /**
@@ -86,7 +82,8 @@ export function agentRoutes(app:any){
       .bind(id,key.user_id,key.id,source,kind,title||null,detail||null,options.length?JSON.stringify(options):null,'open',0,t).run();
     /* 走和控制台"播报"按钮同一条通道：device_commands 里排一条 speak。 */
     const devices=(await c.env.DB.prepare('SELECT id FROM devices WHERE user_id=?').bind(key.user_id).all()).results as any[];
-    const say=announcementText(source,kind,title,options);
+    /* 播报只说"哪个软件、什么状态"；标题与选项留给控制台/手机。 */
+    const say=announcementText(source,kind);
     let announced=0;
     for(const device of devices){
       await c.env.DB.prepare('INSERT INTO device_commands (id,device_id,user_id,type,payload,status,result,created_at,updated_at,acked_at) VALUES (?,?,?,?,?,?,?,?,?,?)')

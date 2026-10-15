@@ -5,8 +5,9 @@ import {Hono} from 'hono';
 import {agentRoutes,announcementText,normalizeOptions} from '../server/agent-routes';
 
 /*
- * T042 第一期的补充：需要确认的事件要念出"当时的选项"，跟 Codex 弹窗里那几项一致。
- * 这套用例守三件事：选项进得了库、进得了播报、坏数据不会把上报本身搞失败。
+ * T042 第一期：agent 事件通道。
+ * 语音只报"哪个软件 + 什么状态"（用户要求"机器人可以不用念具体的内容"），
+ * 标题/细节/批准选项落库并显示在控制台——两套东西必须分得开，这套用例守的就是这条线。
  */
 function fixture(){
  const sqlite=new DatabaseSync(':memory:');
@@ -23,23 +24,20 @@ function fixture(){
  const mint=async()=>((await (await call('/api/agent/keys',{method:'POST',body:'{}'})).json()) as any).secret as string;
  const report=(key:string,body:any)=>app.request('http://localhost/api/agent/events',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Agent '+key},body:JSON.stringify(body)},env);
  const speaks=()=>sqlite.prepare("SELECT payload FROM device_commands WHERE type='speak'").all() as any[];
- return {sqlite,call,mint,report,speaks};
+ const sayOf=()=>JSON.parse(speaks()[0].payload).text as string;
+ return {sqlite,call,mint,report,speaks,sayOf};
 }
 
 describe('agent announcement text',()=>{
- it('keeps the old wording when there are no options',()=>{
-  expect(announcementText('Codex','needs_confirmation','要执行 rm -rf dist')).toBe('Codex 需要你确认：要执行 rm -rf dist');
-  expect(announcementText('Codex','finished','改完 3 个文件')).toBe('Codex 的任务完成了：改完 3 个文件');
+ it('says just the software and the state',()=>{
+  expect(announcementText('Codex','needs_confirmation')).toBe('Codex 待批准');
+  expect(announcementText('Codex','failed')).toBe('Codex 任务中断');
+  expect(announcementText('Codex','finished')).toBe('Codex 任务完成');
  });
- it('reads the options out for a confirmation',()=>{
-  const say=announcementText('Codex','needs_confirmation','要执行 rm -rf dist',['允许一次','本次会话都允许','拒绝']);
-  expect(say).toBe('Codex 需要你确认：要执行 rm -rf dist。可选：允许一次，本次会话都允许，拒绝');
- });
- it('gives the options room but never rambles',()=>{
-  const say=announcementText('Codex','needs_confirmation','要'.repeat(60),['允许一次','本次会话都允许','拒绝']);
-  expect(say.length).toBeLessThanOrEqual(90);
-  expect(say).toContain('可选：');
-  expect(announcementText('Codex','failed','x'.repeat(200)).length).toBeLessThanOrEqual(60);
+ it('stays short even when the software name is long',()=>{
+  const say=announcementText('某'.repeat(80),'finished');
+  expect(say.length).toBeLessThanOrEqual(40);
+  expect(say.endsWith('…')).toBe(true);
  });
  it('drops junk options instead of failing the report',()=>{
   expect(normalizeOptions(['允许一次','','   ','x'.repeat(25),5,null,'允许一次','拒绝'])).toEqual(['允许一次','拒绝']);
@@ -49,22 +47,29 @@ describe('agent announcement text',()=>{
 });
 
 describe('agent event options',()=>{
- it('stores the options and speaks them',async()=>{
-  const {sqlite,mint,report,speaks}=fixture();
+ it('stores the options but keeps them out of the announcement',async()=>{
+  const {sqlite,mint,report,sayOf}=fixture();
   const key=await mint();
-  const r=await report(key,{kind:'needs_confirmation',source:'Codex',title:'要执行 rm -rf dist',options:['允许一次','本次会话都允许','拒绝']});
+  const r=await report(key,{kind:'needs_confirmation',source:'Codex',title:'要执行 rm -rf dist',detail:'很长的细节，语音里不该出现',options:['允许一次','本次会话都允许','拒绝']});
   expect(r.status).toBe(201);
   const body=await r.json() as any;
-  expect(body.say).toContain('可选：允许一次，本次会话都允许，拒绝');
+  expect(body.say).toBe('Codex 待批准');
   expect(body.event.options).toEqual(['允许一次','本次会话都允许','拒绝']);
   expect((sqlite.prepare('SELECT options FROM agent_events').get() as any).options).toBe('["允许一次","本次会话都允许","拒绝"]');
-  expect(JSON.parse(speaks()[0].payload).text).toBe(body.say);
+  expect(sayOf()).toBe('Codex 待批准');
+ });
+ it('never speaks the title or the detail',async()=>{
+  const {mint,report,sayOf}=fixture();
+  const key=await mint();
+  await report(key,{kind:'finished',source:'Codex',title:'改完 3 个文件',detail:'改了 web/src/main.tsx'});
+  expect(sayOf()).toBe('Codex 任务完成');
  });
  it('ignores options that arrive with a non-confirmation event',async()=>{
-  const {mint,report}=fixture();
+  const {mint,report,sayOf}=fixture();
   const key=await mint();
-  const body=await (await report(key,{kind:'finished',source:'Codex',title:'改完 3 个文件',options:['允许一次']})).json() as any;
-  expect(body.say).toBe('Codex 的任务完成了：改完 3 个文件');
+  const body=await (await report(key,{kind:'failed',source:'Codex',title:'npm test 失败',options:['允许一次']})).json() as any;
+  expect(body.say).toBe('Codex 任务中断');
+  expect(sayOf()).toBe('Codex 任务中断');
  });
  it('turns stored options back into an array for the console',async()=>{
   const {call,mint,report}=fixture();

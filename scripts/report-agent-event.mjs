@@ -72,7 +72,8 @@ try {
   const kind = value('kind');
   if (!['needs_confirmation', 'failed', 'finished'].includes(kind)) warning(`--kind 必须是 needs_confirmation / failed / finished（收到 "${kind}"）`);
   /*
-   * 需要确认的事件要把"当时能选什么"一起上报：机器人会照着念，和 Codex 弹窗里保持一致。
+   * 需要确认的事件把"当时能选什么"一起上报：机器人**不念**这些内容，它们只进控制台/手机看板，
+   * 语音那边只报"哪个软件 + 什么状态"（待批准/任务中断/任务完成）。
    * 用 | 分隔，最多 4 个、每个 24 字（服务端还会再过滤一遍，坏数据不会让上报失败）。
    */
   const options = (value('options') || '').split('|').map(item => item.trim()).filter(Boolean).slice(0, 4);
