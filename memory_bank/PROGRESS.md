@@ -538,3 +538,8 @@ T001–T017 与 T009 已完成（依据见各任务条目）。**T018 语音对�
 - 三处改动（都在服务端，**不需要烧录**）：①`reply` 事件改到"模型出完"就发，`VoiceTurnResult` 加 `timings`，`routes.ts` 每轮 `console.log('voice turn', …)`；②历史窗口 `LIMIT 100 → 20`（该用户对话已有 **102 条**消息）；③设备语音轮次追加"简短口语"要求（一到两句、不分点编号、≤60 字），**聊天页不受影响**。
 - **实测（优化后，同一输入）**：识别 2.48 s → 模型出完 4.70 s → 第一块音频 **5.23 s（−34%）** → 整轮 **7.06 s（−73%）**；输出 242 KB ≈ **7.6 秒语音**。验证：`typecheck` exit 0、`npm test` 78/78。
 - 剩下的账：**识别那 2.5 s 是当前大头**（4.19 s 音频≈0.6× 实时，基本由音频时长决定）——要再砍只能**边录边传**（说到一半音频已在服务端，用户停顿时识别已接近完成），属结构性改动（固件 + 协议 + 测试）。另：`ROBOT_CLOUD_VOICE_SILENCE_MS` 900→600 ms 可再省 0.3 s（需烧录）。
+### 2026-10-15 — 汇报应急：用 Cloudflare 快速隧道提供"今天就能用"的临时公网地址
+- 背景：用户明天要汇报成果，而 `aideskrobot.xin` 的 NS 委派**注册局还没发布**（我直接向 `.xin` 顶级域服务器做非递归权威查询确认：仍解析到 `dns17/dns18.hichina.com`，不是缓存问题），阿里云自己也标注"24-48 小时生效"，所以正式域名明天大概率用不上。
+- 排查与选择：①`workers.dev` 被污染（已知）；②`trycloudflare.com` 实测**国内可直连**（DNS 正常解析到 Cloudflare 的 104.16.x，HTTPS 200）→ 快速隧道可用；③本机**已装** `cloudflared`（`C:\Program Files (x86)\cloudflared\cloudflared.exe`）。
+- 落地：后台启动 `cloudflared tunnel --url http://127.0.0.1:8787`（`Start-Process -WindowStyle Hidden`，日志写 `%TEMP%`），拿到 `https://stamp-able-restrict-organ.trycloudflare.com`，随即**不走代理**实测：`/api/health` 200（1.9 s）、`/` 200（返回控制台 HTML）、`/api/auth/me` 401（未登录应有的响应）→ 明天汇报可用。
+- 注意：隧道指向本机 **8787**（`wrangler dev`），页面是**编译版**控制台（`dist`，与 `workers.dev` 上那份一致），不是 5173 的 vite 开发服务器；隧道是临时的、重启换地址，必须保持电脑与 dev server 在线。局域网路径（`192.168.137.1:5173`／机器人 `192.168.137.1:8787`）作为现场兜底。
