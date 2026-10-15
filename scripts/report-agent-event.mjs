@@ -39,40 +39,44 @@ const key = () => {
   }
 };
 
+class Bail extends Error {}
+/* 只打一行警告就收工。**不直接 process.exit**：fetch/AbortSignal 还挂着时硬退，Windows 上会撞 libuv 断言
+   （Assertion failed: !(handle->flags & UV_HANDLE_CLOSING)）并返回崩溃码，hook 里会变成一条莫名的"命令失败"。
+   改成抛 Bail + 设 exitCode，让进程自然收尾。 */
 const warning = message => {
   console.warn(`[aidesk] ${message}`);
-  process.exit(strict ? 1 : 0);
+  throw new Bail(message);
 };
 
 const saveKey = value('save-key');
-/* 只保存凭据（没带 --kind）时就到此为止：不该再顺带抱怨「事件类型不对」。 */
-if (saveKey && !value('kind')) {
-  console.log('[aidesk] 凭据已保存。发事件这样写：node scripts/report-agent-event.mjs --kind needs_confirmation --source Codex --title "..."');
-  process.exit(0);
-}
 if (saveKey) {
   mkdirSync(dirname(keyFile), { recursive: true });
   writeFileSync(keyFile, `${saveKey.trim()}\n`, { encoding: 'utf8', mode: 0o600 });
   console.log(`[aidesk] 凭据已写入：${keyFile}`);
+  /* 只保存凭据时就到此为止：不该再顺带抱怨「事件类型不对」；带了 --check 就继续往下做自检。 */
+  if (!value('kind') && !args.includes('--check')) {
+    console.log('[aidesk] 接下来发事件：node scripts/report-agent-event.mjs --kind needs_confirmation --source Codex --title "..."');
+    process.exit(0);
+  }
 }
 const agentKey = key();
 if (args.includes('--check')) {
   console.log(`[aidesk] 凭据来源：${process.env.AIDESK_AGENT_KEY ? '环境变量 AIDESK_AGENT_KEY' : `文件 ${keyFile}（${existsSync(keyFile) ? '存在' : '不存在'}）`}`);
   console.log(`[aidesk] 凭据：${agentKey ? `已读到（长度 ${agentKey.length}，尾号 ${agentKey.slice(-4)}）` : '没读到'}`);
   console.log(`[aidesk] 上报地址：${base}/api/agent/events`);
+  if (!agentKey) console.log(`[aidesk] 还没存凭据？先跑：node scripts/report-agent-event.mjs --save-key <凭据>（凭据在控制台「Agent 动态」页生成）`);
   process.exit(agentKey ? 0 : 1);
 }
-if (!agentKey) warning(`没有上报凭据：设置 AIDESK_AGENT_KEY，或先跑 --save-key <凭据>（文件位置：${keyFile}）`);
-const kind = value('kind');
-if (!['needs_confirmation', 'failed', 'finished'].includes(kind)) warning(`--kind 必须是 needs_confirmation / failed / finished（收到 "${kind}"）`);
-const body = {
-  source: value('source') || 'Codex',
-  kind,
-  title: value('title').slice(0, 200),
-  detail: value('detail').slice(0, 1000),
-};
-
 try {
+  if (!agentKey) warning(`没有上报凭据。两种做法：① 设环境变量 AIDESK_AGENT_KEY；② 存到文件：node scripts/report-agent-event.mjs --save-key <凭据>（文件位置：${keyFile}）`);
+  const kind = value('kind');
+  if (!['needs_confirmation', 'failed', 'finished'].includes(kind)) warning(`--kind 必须是 needs_confirmation / failed / finished（收到 "${kind}"）`);
+  const body = {
+    source: value('source') || 'Codex',
+    kind,
+    title: value('title').slice(0, 200),
+    detail: value('detail').slice(0, 1000),
+  };
   const response = await fetch(`${base}/api/agent/events`, {
     method: 'POST',
     headers: {'Content-Type': 'application/json', Authorization: `Agent ${agentKey}`},
@@ -83,5 +87,7 @@ try {
   if (!response.ok) warning(`上报失败：HTTP ${response.status} ${text.slice(0, 160)}`);
   console.log(`[aidesk] 已上报：${text.slice(0, 160)}`);
 } catch (error) {
-  warning(`上报出错：${error instanceof Error ? error.message : String(error)}`);
+  if (!(error instanceof Bail)) console.warn(`[aidesk] 上报出错：${error instanceof Error ? error.message : String(error)}`);
+  /* 默认不阻断 agent：除非 --strict，一律退出 0。 */
+  process.exitCode = strict ? 1 : 0;
 }
