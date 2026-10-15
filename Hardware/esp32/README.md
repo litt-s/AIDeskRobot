@@ -237,7 +237,9 @@ robot_voice: answer: ...
 robot_voice: cloud voice turn finished: 对话完成
 robot_wakeup: wake phrase set to: ni hao xiao zhi
 robot_wakeup: wake label set to: 你好小智
-robot_app: cloud ready prompt unavailable: …
+robot_app: cloud ready prompt attempt 1 failed: ESP_ERR_INVALID_STATE (语音通道未启动)
+robot_app: voice channel start retry failed: ESP_ERR_NO_MEM
+robot_app: cloud ready prompt unavailable; falling back to the cue
 robot_wakeup: the model cannot use this phrase: ...
 robot_wakeup: stored wake phrase rejected (…); using the default
 robot_voice: no speech within 4000 ms; nothing uploaded
@@ -273,6 +275,7 @@ provisioning requested from BOOT long press
 | `Error parse url 192.168.x.x:8787/api/device/hello` | 服务器地址缺 scheme。配网页会自动补 `http://`，但**旧 NVS 里的值不会自己变**——重开配网页保存一次即可。同时确认填的是控制台地址（本地 `:8787`），**不是**前端页面的 `:5173` |
 | `Failed to set URL`、设备通道一直不在线 | 地址不可达或设备码不对。先在同一 Wi-Fi 下用手机／电脑打开该地址，再确认设备已绑定 |
 | 唤醒没反应 | 先看 `offline wake ready`（引擎已就绪）与 `ready prompt drained; microphone resumed for offline wake`（麦克风真的在采集）。**若"只有重启后第一次不灵、按一次 BOOT 就好"，那是 T031 已修的老 bug**；若一直不灵，看有没有 `offline wake UNAVAILABLE`／`no wake model`（模型分区没烧全） |
+| 重启后没有开机提示音 | 设过自定义唤醒词时提示音走**云端合成**，失败会退回 0.58 s 的提示音（不含词，容易听成"没提示"）。看日志里 `cloud ready prompt attempt N failed: <错误码> (<原因>)`：`语音通道未启动` ⇒ 语音通道在 GOT_IP 阶段没起来（`voice channel start failed`／`init failed` 会说明）；`正在对话中` ⇒ 上一轮还没结束 |
 | 待机时看不到 `microphone peak=` | 说明采集被暂停（`robot_audio_set_capture_paused(true)` 之后没人恢复），唤醒引擎同样拿不到数据 |
 | `capture report: 0 ms of audio over … ms wall` | 这段录音一帧都没进来：通常是"以为没在播、其实在播"（播放期间 tap 丢帧）或采集被暂停。**"回复播完再聆听"的判据已修**（见 §7）；仍复现就把日志贴出来 |
 | 换唤醒词回报「模型不认识」/ 串口 `MN_COMMAND: invalid command` | 中文模型的命令**只吃拼音**：音节空格分隔、不带声调（`ni hao xiao zhi`）。汉字会被模型直接拒绝（2026-10-15 实测）；生僻音节也会被拒——此时设备保留原词，不会变聋 |

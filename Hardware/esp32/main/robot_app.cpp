@@ -59,6 +59,10 @@ constexpr uint32_t kReadyPromptStackBytes = 16 * 1024;
  */
 constexpr uint32_t kPromptDrainPollMs = 20;
 constexpr int kPromptDrainWaitSteps = 500;
+/* 开机提示音用云端合成，但语音通道可能在开机瞬间还没起来（GOT_IP 里创建
+ * 任务的 xTaskCreate 会因内存不足失败），所以给几次重试机会。 */
+constexpr int kReadyPromptAttempts = 3;
+constexpr uint32_t kReadyPromptRetryMs = 800;
 const char *TAG = "robot_app";
 std::atomic<bool> s_provisioning_prompt_running{false};
 std::atomic<bool> s_ready_prompt_running{false};
@@ -244,10 +248,27 @@ void ready_prompt_task(void *arg)
     if (label[0] != '\0') {
         char line[96];
         snprintf(line, sizeof(line), "网络连接成功，喊%s就能唤醒我", label);
-        spoke = robot_voice_say(line) == ESP_OK;
-        if (!spoke) {
-            ESP_LOGW(TAG, "cloud ready prompt unavailable: %s",
+        for (int attempt = 0; attempt < kReadyPromptAttempts && !spoke; ++attempt) {
+            esp_err_t err = robot_voice_say(line);
+            if (err == ESP_OK) {
+                spoke = true;
+                break;
+            }
+            /* 错误码必须一起打：只打 last_result 时，早期返回的路径还没有它，
+             * 日志上就只剩一个空冒号，等于什么都没说。 */
+            ESP_LOGW(TAG, "cloud ready prompt attempt %d failed: %s (%s)",
+                     attempt + 1, esp_err_to_name(err),
                      robot_voice_last_result());
+            /* 通道没起来就顺手再启动一次：start 是幂等的，GOT_IP 那次可能已经失败。 */
+            esp_err_t started = robot_voice_start();
+            if (started != ESP_OK) {
+                ESP_LOGW(TAG, "voice channel start retry failed: %s",
+                         esp_err_to_name(started));
+            }
+            vTaskDelay(pdMS_TO_TICKS(kReadyPromptRetryMs));
+        }
+        if (!spoke) {
+            ESP_LOGW(TAG, "cloud ready prompt unavailable; falling back to the cue");
         }
         /* 提示音里就含着唤醒词，别让它自己把机器人叫醒（合成结束时采集已被恢复）。 */
         robot_audio_set_capture_paused(true);
@@ -733,7 +754,16 @@ void RobotApp::HandleEvent(const Event &event)
 #endif
                 if (robot_voice_init(&voice_options) == ESP_OK) {
                     robot_voice_set_state_callback(CloudVoiceState, this);
-                    robot_voice_start();
+                    /* start 可能因内存不足（10 KB 栈的任务）失败；静默失败会让
+                     * 整个"会说话"能力消失，而日志里什么都看不到。 */
+                    esp_err_t started = robot_voice_start();
+                    if (started != ESP_OK) {
+                        ESP_LOGW(TAG, "voice channel start failed: %s",
+                                 esp_err_to_name(started));
+                    }
+                } else {
+                    ESP_LOGW(TAG,
+                             "voice channel init failed; the robot will not speak");
                 }
             }
 #endif

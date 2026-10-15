@@ -512,13 +512,20 @@ static esp_err_t voice_turn(void)
  */
 esp_err_t robot_voice_say(const char *text)
 {
+    /*
+     * 这三条是提前返回，原来自顾自 return 不写 last_result，调用方只能看到一句
+     * "cloud ready prompt unavailable: "（冒号后面空的），等于没有线索。
+     */
     if (s_voice.record_buffer == NULL || !s_voice.running) {
+        snprintf(s_voice.last_result, sizeof(s_voice.last_result), "语音通道未启动");
         return ESP_ERR_INVALID_STATE;
     }
     if (text == NULL || text[0] == '\0') {
+        snprintf(s_voice.last_result, sizeof(s_voice.last_result), "播报文本为空");
         return ESP_ERR_INVALID_ARG;
     }
     if (s_voice.busy) {
+        snprintf(s_voice.last_result, sizeof(s_voice.last_result), "正在对话中");
         return ESP_ERR_INVALID_STATE;
     }
 

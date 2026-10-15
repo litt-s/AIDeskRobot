@@ -487,3 +487,8 @@ T001–T017 与 T009 已完成（依据见各任务条目）。**T018 语音对�
 - 产物：`assets/provisioning.wav` 130,892 → 273,982 字节（8.56 s，首版）→ **134,136 字节（4.19 s，按用户要求精简后的最终版）**；WAV 头核对 `format=1/channels=1/rate=16000/bits=16`、data 长度偶数 ✓；assets 分区是固定 0x4F0000 的 SPIFFS 镜像，体积变化不影响烧录字节。
 - 验证：固件 `idf.py build` exit 0、0 warning、`deskemoji_robot.bin` 0x149470。**未验证**：真机听感（需重新烧录）。
 - 复盘：这一轮又是"预录内容里写死会变的东西"的收尾——上一轮把开机提示改成动态合成，这一轮把仅剩的那段预录音频也换成了不含可变项（唤醒词、品牌名）的文案。
+### 2026-10-15 — T032 追加 4：开机提示音失败从"空冒号"变成可定位（并加重试自愈）
+- 用户真机日志（烧录 0x149470 后）三类信息：①✅ `custom wake phrase ready: ni hao xiao zhi` + `offline wake ready: ni hao xiao zhi or BOOT short press` —— **自定义唤醒词经 NVS 跨重启保留成功**，T032 的一条验收点通过；②⚠️ `W robot_app: cloud ready prompt unavailable:`（**冒号后为空**），用户体感即"重启后 Wi-Fi 连上却没提示音了"；③⚠️ `W robot_gesture: PAJ init failed at reg 0xef: ESP_ERR_INVALID_STATE` —— 手势传感器 I2C 无应答，按既有设计自动停用（OLED 不受影响；与音频链路无关，属硬件/接线）。
+- 根因：`robot_voice_say()` 的三处**提前返回**（`record_buffer==NULL`／`!running`＝通道没启动、文本为空、`busy`＝正在对话）**不写 `last_result`**，而提示音代码只打印 `robot_voice_last_result()` ⇒ 日志只剩空冒号；同时 GOT_IP 里 `robot_voice_init()/start()` 的返回值**被静默忽略**，若启动失败（如 10 KB 栈的任务创建遇内存紧张）"会说话"的能力整体消失而日志毫无线索；兜底又只是 0.58 s 提示音（不含词），听感上就是"没提示音"。
+- 修法：①三个提前返回各自写明原因（语音通道未启动／播报文本为空／正在对话中）；②GOT_IP 里 init/start 失败显式告警；③开机提示音**重试 3 次**（间隔 800 ms），每次失败后再调一次幂等的 `robot_voice_start()`（自愈"开机瞬间没起来"），仍失败才退回提示音并打印 `falling back to the cue`。
+- 验证：`idf.py build` exit 0、0 warning、`deskemoji_robot.bin` **0x149690**。**未验证**：真机（烧录后看开机前 10 秒日志）。
