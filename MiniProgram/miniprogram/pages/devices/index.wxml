@@ -1,0 +1,79 @@
+<view class="page">
+  <button class="btn" bindtap="startAdd">绑定设备</button>
+
+  <view wx:if="{{error}}" class="tag" style="color:#ed7867;margin:20rpx 0;">{{error}}</view>
+
+  <view class="card" style="margin-top:24rpx;">
+    <view class="section-title">设备列表</view>
+    <block wx:if="{{devices.length}}">
+      <view wx:for="{{devices}}" wx:key="id" class="list-item">
+        <view class="row">
+          <view class="list-title">{{item.name}}</view>
+          <view class="badge {{item.online ? '' : 'off'}}">{{item.online ? '在线' : '离线'}}</view>
+        </view>
+        <view class="list-sub">
+          {{item.firmware ? '固件 ' + item.firmware : '尚未上报固件'}}
+          {{item.battery != null ? ' · 电量 ' + item.battery + '%' : ''}}
+        </view>
+        <view class="list-sub">密钥 {{item.key_mask}}</view>
+        <view class="row" style="margin-top:16rpx;">
+          <button class="btn ghost" data-id="{{item.id}}" bindtap="selectDevice">指令</button>
+          <button class="btn ghost" data-id="{{item.id}}" bindtap="startRename">重命名</button>
+          <button class="btn danger" data-id="{{item.id}}" bindtap="removeDevice">解绑</button>
+        </view>
+      </view>
+    </block>
+    <view wx:else class="muted">还没有绑定设备。</view>
+  </view>
+
+  <view class="card">
+    <view class="section-title">{{editing.id ? '重命名设备' : '绑定新设备'}}</view>
+    <input value="{{editing.name}}" bindinput="onNameInput" placeholder="设备名称" />
+    <view class="row">
+      <button class="btn" bindtap="saveDevice" disabled="{{busy}}">保存</button>
+      <button class="btn ghost" bindtap="cancelEdit">取消</button>
+    </view>
+    <view wx:if="{{createdKey}}" class="list-sub" style="color:#ed7867;">
+      新密钥只显示一次，已复制到剪贴板：{{createdKey}}
+    </view>
+  </view>
+
+  <view wx:if="{{selected}}" class="card">
+    <view class="section-title">{{selected.name}} 指令面板</view>
+
+    <picker range="{{emotions}}" bindchange="onEmotionChange">
+      <view class="input">表情控制</view>
+    </picker>
+    <picker range="{{actions}}" bindchange="onActionChange">
+      <view class="input">动作控制</view>
+    </picker>
+
+    <slider value="{{volume}}" min="0" max="100" bindchange="onVolumeChange" />
+    <button class="btn ghost" bindtap="sendVolume">下发音量 {{volume}}</button>
+
+    <input value="{{speak}}" bindinput="onSpeakInput" placeholder="播报文本" />
+    <button class="btn ghost" bindtap="sendSpeak" disabled="{{!canSpeak}}">播放</button>
+
+    <input value="{{wake}}" bindinput="onWakeInput" placeholder="自定义唤醒词" />
+    <button class="btn ghost" bindtap="sendWake" disabled="{{!canWake}}">下发唤醒词</button>
+
+    <picker range="{{roleNames}}" bindchange="onRoleChange">
+      <view class="input">{{selected.role_id ? '已设置语音角色' : '选择语音角色'}}</view>
+    </picker>
+
+    <view class="row">
+      <button class="btn" bindtap="sendListen" disabled="{{!selected.role_id}}">和它说句话</button>
+      <button class="btn danger" bindtap="sendReboot">重启</button>
+    </view>
+
+    <view class="section-title" style="margin-top:24rpx;">最近指令</view>
+    <block wx:if="{{commands.length}}">
+      <view wx:for="{{commands}}" wx:key="id" class="list-item">
+        <view class="list-title">{{item.type}}</view>
+        <view class="list-sub">{{item.payload}}</view>
+        <view class="list-sub">{{item.statusText}} · {{item.created_at}}</view>
+      </view>
+    </block>
+    <view wx:else class="muted">还没有指令记录。</view>
+  </view>
+</view>

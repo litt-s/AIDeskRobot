@@ -1,0 +1,39 @@
+<view class="page">
+  <scroll-view scroll-y style="height: 62vh;" scroll-top="{{scrollTop}}" class="card">
+    <view wx:if="{{loading}}" class="muted">加载中…</view>
+    <block wx:for="{{messages}}" wx:key="id">
+      <view class="bubble {{item.role === 'user' ? 'user' : 'assistant'}}">
+        <view class="who">{{item.role === 'user' ? '你' : '机器人伙伴'}}</view>
+        <view class="content">{{item.content}}</view>
+        <view wx:if="{{item.status === 'generating'}}" class="typing">
+          {{generation && generation.state === 'paused' ? '已暂停' : '正在生成…'}}
+        </view>
+        <view wx:if="{{item.status === 'interrupted'}}" class="tag">回复中断</view>
+      </view>
+    </block>
+    <view wx:if="{{!messages.length && !loading}}" class="muted">写下第一条消息，开始这轮对话。</view>
+  </scroll-view>
+
+  <view class="actions">
+    <button wx:if="{{busy || (generation && generation.state === 'running')}}" class="btn danger" bindtap="pause" disabled="{{pausing}}">
+      {{pausing ? '保存中…' : '暂停'}}
+    </button>
+    <button wx:elif="{{generation && (generation.state === 'paused' || generation.state === 'failed')}}" class="btn" bindtap="resume" disabled="{{resuming}}">
+      {{resuming ? '继续生成中…' : '继续'}}
+    </button>
+    <button wx:else class="btn" bindtap="send" disabled="{{busy || !canSend}}">发送</button>
+  </view>
+
+  <textarea
+    value="{{draft}}"
+    bindinput="onDraftInput"
+    maxlength="10000"
+    placeholder="写下你的想法…"
+    style="min-height:120rpx;"
+  ></textarea>
+
+  <view class="row" style="margin-top:16rpx;">
+    <button class="btn ghost" bindtap="rewind" disabled="{{busy}}">撤销</button>
+    <button class="btn ghost" bindtap="regenerate" disabled="{{busy}}">重新生成</button>
+  </view>
+</view>
