@@ -1,1 +1,40 @@
-{"name":"aidesk-console","version":"1.0.0","private":true,"type":"module","scripts":{"dev":"vite --host 0.0.0.0","dev:worker":"wrangler dev --port 8787","setup:local":"node scripts/setup-local.mjs","db:migrate":"wrangler d1 migrations apply DB --local","typecheck":"tsc --noEmit","build":"vite build","test":"vitest run --config vitest.config.ts","check":"npm run typecheck && npm test && npm run build","device:sim":"node scripts/device-sim.mjs","dev:worker:lan":"wrangler dev --ip 0.0.0.0 --port 8787","volc:smoke":"node scripts/volc-voice-smoke.mjs"},"dependencies":{"hono":"^4.10.0","lucide-react":"^0.468.0","react":"^19.2.0","react-dom":"^19.2.0"},"devDependencies":{"@cloudflare/workers-types":"^5.20261006.1","@types/node":"^24.0.0","@types/react":"^19.2.0","@types/react-dom":"^19.2.0","@vitejs/plugin-react":"^5.0.0","typescript":"^5.9.0","vite":"^7.1.0","vitest":"^5.0.4","wrangler":"^4.42.0","ws":"^8.21.0"}}
+{
+  "name": "aidesk-console",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "dev:worker": "wrangler dev --port 8787",
+    "setup:local": "node scripts/setup-local.mjs",
+    "db:migrate": "wrangler d1 migrations apply DB --local",
+    "typecheck": "tsc --noEmit",
+    "build": "vite build",
+    "test": "vitest run --config vitest.config.ts",
+    "check": "npm run typecheck && npm test && npm run build && npm run build:node",
+    "device:sim": "node scripts/device-sim.mjs",
+    "dev:worker:lan": "wrangler dev --ip 0.0.0.0 --port 8787",
+    "volc:smoke": "node scripts/volc-voice-smoke.mjs",
+    "build:node": "esbuild server/node/index.ts --bundle --platform=node --format=esm --target=node22 --packages=external --outfile=dist-server/index.mjs",
+    "start:node": "node dist-server/index.mjs"
+  },
+  "dependencies": {
+    "@hono/node-server": "^2.1.5",
+    "hono": "^4.10.0",
+    "lucide-react": "^0.468.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "ws": "^8.21.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261006.1",
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "typescript": "^5.9.0",
+    "vite": "^7.1.0",
+    "vitest": "^5.0.4",
+    "wrangler": "^4.42.0"
+  }
+}

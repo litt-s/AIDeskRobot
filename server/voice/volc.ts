@@ -55,6 +55,23 @@ export function voiceSettingsFromEnv(env: {
   };
 }
 
+/*
+ * 识别实现可替换。
+ * Workers 里靠 "fetch + Upgrade 头" 拿到 WebSocket（见下面的 transcribe），但 Node 没有这套语义，
+ * 所以 Node 容器启动时注入一个基于 ws 的实现（server/node/asr-ws.ts）。Worker 不注入，走原路径。
+ */
+export type Transcriber = (
+  settings: VoiceSettings,
+  pcm: Uint8Array,
+  options?: { timeoutMs?: number },
+) => Promise<TranscriptResult>;
+
+let transcriberOverride: Transcriber | null = null;
+
+export function setTranscriber(next: Transcriber | null): void {
+  transcriberOverride = next;
+}
+
 /* Workers 的 fetch 在带 Upgrade 头时返回的响应上挂 webSocket；类型不在标准 lib 中。 */
 type UpgradeResponse = Response & { webSocket?: WebSocket };
 
@@ -80,6 +97,7 @@ export async function transcribe(
   pcm: Uint8Array,
   options: { timeoutMs?: number } = {},
 ): Promise<TranscriptResult> {
+  if (transcriberOverride) return transcriberOverride(settings, pcm, options);
   const timeoutMs = options.timeoutMs ?? 20000;
   const started = Date.now();
   const requestId = crypto.randomUUID();

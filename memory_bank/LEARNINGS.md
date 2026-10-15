@@ -332,3 +332,18 @@ URL附加模式preview_start返回本安装不支持，未据此声称T009全状
 - 顺着上一条的 SNI 对照法往下试：给 Worker 加 `robot.aideskrobot.xin` 后同刻对照 —— 裸域名 **0/4**、子域名 **0/4**、隧道 **4/4**，两者解析到同一批 IP ⇒ **干扰作用在后缀（`.xin`）这一层，换子域名无效**。可见"换个子域名试试"只能排除"主机名被点名"这一种假设，**不能解决后缀级问题**。
 - 另一条更值得警惕的观察：同一个域名在同一天内 **0/4 → 3/6 → 7/10** 反复波动。**只测一次就下结论，会得到完全相反的判断**（早先那次 7/10 让人以为"能用但不稳"，实际它在某些窗口是完全不通的）。
 - 纪律：①判定可达性一律"**同刻、同 IP、单变量**"对照，跨时刻数据不可比；②结论要附上时间窗口与样本量；③**给"演示/交付"选路径时按最差窗口而不是平均值来设计**（因此机器人走局域网、公网只作辅助）。
+
+## 并发"没有 Docker 也要交付容器"：把平台能力收敛到适配层（2026-10-15 T034）
+`server/**` 里 20 多个文件之所以能一行不改地跑在 Node 上，是因为它们只依赖三个平台能力：`env.DB`、`crypto`、`fetch`。迁移时的正确动作不是"重写业务层"，而是**把平台差异全部收进适配层**：D1 → `node:sqlite` 的最小包装、ASR 的 `ws` 实现 + 注入点、静态资源读盘。判断标准很简单——**业务文件在 diff 里出现就是设计错了**（本轮 `server/index.ts`／`device-routes.ts`／`voice/*.ts` 的 diff 为空）。
+
+## `fetch` + `Upgrade` 拿 WebSocket 是 Workers 专有语义，Node 里必须换 `ws`（2026-10-15 T034）
+同一份端点、同一份帧协议，但建连方式不通用：Workers 用 `fetch(url, {headers:{Upgrade:'websocket'}})` 拿到 `response.webSocket`（所以 URL 要写 `https://`，写 `wss://` 反而会被 Fetch API 拒绝）；Node 只能用 `ws`（`new WebSocket(url, {headers})` 才能带鉴权头，全局 `WebSocket` 不支持自定义头，所以用不了）。**好处**：既然帧编解码在 `server/voice/frames.ts` 里，两个实现共用同一份协议代码，只有"怎么建连"不同——这也是当初把帧协议单独抽出来的价值。**验证方式（拿不到真 key 也能验）**：用假 key 建连 → 607 ms 收到 `Unexpected server response: 401`，证明 DNS/TLS／握手／鉴权头这条路是通的，剩下的只是凭据问题（真 key + 真语音仍未验证，已在 PROGRESS 里记为未验证）。
+
+## `ws` 的 exports 没有 types 条件：装 `@types/ws` 也救不了 `moduleResolution: bundler`（2026-10-15 T034）
+`ws/package.json` 的 `exports["."]` 是 `{browser, import: ./wrapper.mjs, require: ./index.js}`，**没有 `types` 条件**，而 ws 自身不带类型；`moduleResolution: "bundler"` 会照着 exports 解析到 `wrapper.mjs`，于是报 `TS7016`。**不要**以为装上 `@types/ws` 就好了——TS 不会在 exports 命中后回落到 `@types`。本轮的做法是在仓库里写 `types/ws.d.ts`，**只声明实际用到的表面**（构造函数带 `headers`、`on('open'|'message'|'close'|'error')`、`send`、`close`）：比 `any` 严（写错方法名立刻编译失败），也不必为类型再引一个依赖。
+
+## 静态资源服务：`有扩展名却找不到` 要 404，不要回落 `index.html`（2026-10-15 T034）
+SPA 兜底（`not_found_handling: single-page-application`）的常见实现是"文件不存在就返回 index.html"。这会把**拼错的资源路径**变成一段 HTML：浏览器报 `Unexpected token '<'`，看起来像"JS 语法错误"，实际是取文件取错了。正确做法是按路径形状分流：**没有扩展名**（`/devices/123`）才当路由回落 `index.html`；**有扩展名**（`/assets/x.js`）就当资源，找不到就 404。
+
+## 迁移的"证据链"应该跑在**接口层**，而不是看日志（2026-10-15 T034）
+换运行时最怕"看起来起来了，其实某些 SQL 变了行为"。本轮本地验证不是"打开首页看一眼"，而是用一次性账号跑完整链路：注册 → 建模型 → 建角色 → 建设备 → 设备 `hello`（设备鉴权头 + `hash()` 路径）→ 控制台下发唤醒词（`pinyin` 转换）→ 设备拉指令 → ack → `wake_applied` 立即更新 → 清理。**这一串同时覆盖了 D1 包装里最容易出问题的三处**：`INSERT … RETURNING`（限流用的 `first()` 单行返回）、`batch()` 事务、`run()` 的 `meta.changes`。另外，验证 HTTP **非 GET** 请求时必须带 `Origin` 头——CSRF 中间件会先判来源，不带就 403，容易误判成"接口坏了"。

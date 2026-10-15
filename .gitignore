@@ -23,3 +23,7 @@ backups/
 
 # ---- 烟测脚本的产物（scripts/volc-voice-smoke.mjs 每次都写到仓库根目录）----
 volc-tts-smoke.mp3
+
+# ---- CloudBase 容器版：Node 打包产物与本机 SQLite 数据（真库，含用户/设备数据）----
+dist-server/
+data/

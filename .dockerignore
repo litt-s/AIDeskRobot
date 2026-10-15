@@ -1,0 +1,13 @@
+node_modules
+dist
+dist-server
+data
+.git
+.wrangler
+backups
+Hardware
+docs
+*.log
+tmp-*
+volc-tts-smoke.mp3
+.dev.vars

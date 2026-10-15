@@ -29,3 +29,14 @@ production 未配置密钥时拒绝服务。开发密钥仅示例或 gitignored 
 触发方式有两种：控制台设备页的「和它说句话」（`listen` 指令，便于逐步排查音频链路）与唤醒词（`CONFIG_ROBOT_CLOUD_VOICE` 打开时接管）。 取消：BOOT 短按在云端一轮进行中（录音或播报）会走 `robot_voice_cancel()`——`robot_voice` 据此停止录音或截断回复流并丢弃已排队音频、恢复采集，控制台指令记录记为「已取消」；只丢弃本地队列会表现为"跳一段后继续说"，因为回复是边收边播的流。`speak` 指令走 `/api/device/say`（云合成，不录音、不走模型），失败时上报原因，没有本地语音栈可回落。已知限制：BOOT 键在云端一轮进行中不中断（需先用 BOOT 短按取消该轮）。
 ## 语音失败为什么必须落库
 一轮语音对话的失败是**静默**的：设备拿不到音频就不会出声，而失败原因原本只写在设备串口日志里，控制台一个字都看不到。这在真机排查时直接把"能不能修"变成了"能不能看见"。因此 `runVoiceTurn` 会返回 `failure` 字段，路由层无论成败都把结果写进该设备的专属会话（回复或失败原因作为助手消息，失败时 status=failed）。诊断语音问题时应先看这条会话，而不是先怀疑固件。
+
+## 双运行形态（2026-10-15 T034：Cloudflare Worker 与 Node 容器）
+`server/` 里所有路由、SQL、鉴权、语音编排都是**平台无关**的——它们只依赖三个能力：`env.DB`（D1 形状）、`crypto`（WebCrypto）、`fetch`。因此"换个托管"不需要重写业务层，只需要在**适配层**补齐这三件事：
+
+1. **数据库**：`server/node/d1-sqlite.ts` 用 `node:sqlite` 的 `DatabaseSync` 实现 D1 里我们真正用到的那一小块——`prepare(sql).bind(...)`、`first()/all()/run()`（返回 `{meta:{changes,last_row_id}}`）、以及 `batch()`（包在 `BEGIN/COMMIT/ROLLBACK` 里）。**故意只实现用到的部分**：接口面越窄，"D1 与 SQLite 行为不一致"能藏的地方就越少；写超范围的方法会立刻编译/运行失败，而不是静默返回怪结果。
+2. **语音识别**：Worker 版靠 `fetch(..., {headers:{Upgrade:'websocket'}})` 拿 `response.webSocket`——这是 Workers 专有语义，Node 没有。`server/node/asr-ws.ts` 用 `ws` 直连同一端点，**帧协议复用 `server/voice/frames.ts`**（与 Worker 版同一份编解码实现，对照已真机验证过 `scripts/volc-voice-smoke.mjs`）。`volc.ts` 里加了 `setTranscriber()` 注入点：Worker 不注入（保持原路径零改动），Node 启动时注入。**TTS 不需要适配**——那是普通 `fetch` 流式响应，两边一样。
+3. **静态资源**：Worker 由 `wrangler.jsonc` 的 `assets`（`not_found_handling: single-page-application`）兜底；Node 版在 `server/node/index.ts` 里读 `dist/`：**没有扩展名的路径**回落 `index.html`（前端路由），**有扩展名却找不到**则返回 404（否则拼错的文件名会拿到一段 HTML，浏览器报 `Unexpected token '<'`，把真正的原因藏起来）。
+
+启动顺序（Node 版）：建/打开 SQLite → `PRAGMA foreign_keys=ON`／`busy_timeout` → 跑 `migrations/*.sql`（记在 `_migrations` 表里，**跑过就不跑**——`ALTER TABLE` 不幂等，不能靠 SQL 自己保证）→ `setTranscriber()` → `serve()`。数据文件默认 `./data/aidesk.sqlite`（可用 `DB_PATH` 覆盖），**该目录必须挂持久卷**，否则容器发布即丢库。
+
+限流按来源 IP 分桶，Worker 读的是 `CF-Connecting-IP`；容器里由入口把 `X-Forwarded-For` 的第一个地址补成这个头（容器只经平台网关暴露），业务代码因此一行不用改。
