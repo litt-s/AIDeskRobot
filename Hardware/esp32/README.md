@@ -116,7 +116,7 @@ NVS 落点：
 | `ROBOT_CLOUD_URL` | 空 | 服务器地址的**编译期兜底**；配网页填了就用配网页的 |
 | `ROBOT_CLOUD_KEY` | 空 | 设备码的编译期兜底；同上。**建议留空**，让固件镜像不带任何凭据 |
 | `ROBOT_CLOUD_POLL_INTERVAL_S` | 3 | 指令轮询间隔 |
-| 唤醒词 | `xiao fei xiao fei` | 不是 Kconfig，而是代码里的 `WAKE_PHRASE_DEFAULT`（`robot_wakeup.c`）；运行时由 NVS（`wake_cfg`/`phrase`）覆盖，控制台或设置页下发即可换词 |
+| 唤醒词 | `xiao fei xiao fei` | 不是 Kconfig，而是代码里的 `WAKE_PHRASE_DEFAULT`（`robot_wakeup.c`）；运行时由 NVS（`wake_cfg`/`phrase`）覆盖。**必须是拼音**（音节空格分隔、不带声调，如 `ni hao xiao zhi`）——中文 MultiNet 模型拒绝汉字（2026-10-15 真机实测） |
 | `ROBOT_CLOUD_STATUS_INTERVAL_S` | 60 | 状态上报间隔 |
 | `ROBOT_CLOUD_VOICE` | n | 打开云端语音对话 |
 | `ROBOT_CLOUD_VOICE_MAX_RECORD_MS` | 10000 | 单句录音上限 |
@@ -269,6 +269,7 @@ provisioning requested from BOOT long press
 | 唤醒没反应 | 先看 `offline wake ready`（引擎已就绪）与 `ready prompt drained; microphone resumed for offline wake`（麦克风真的在采集）。**若"只有重启后第一次不灵、按一次 BOOT 就好"，那是 T031 已修的老 bug**；若一直不灵，看有没有 `offline wake UNAVAILABLE`／`no wake model`（模型分区没烧全） |
 | 待机时看不到 `microphone peak=` | 说明采集被暂停（`robot_audio_set_capture_paused(true)` 之后没人恢复），唤醒引擎同样拿不到数据 |
 | `capture report: 0 ms of audio over … ms wall` | 这段录音一帧都没进来：通常是"以为没在播、其实在播"（播放期间 tap 丢帧）或采集被暂停。**"回复播完再聆听"的判据已修**（见 §7）；仍复现就把日志贴出来 |
+| 换唤醒词回报「模型不认识」/ 串口 `MN_COMMAND: invalid command` | 中文模型的命令**只吃拼音**：音节空格分隔、不带声调（`ni hao xiao zhi`）。汉字会被模型直接拒绝（2026-10-15 实测）；生僻音节也会被拒——此时设备保留原词，不会变聋 |
 | 播放期间喊唤醒词打断不了 | **已知上限，且已按 2026-10-15 决策（选 B）关闭该功能**：单麦无 AEC 时喇叭漏音在麦克风上是 9k–26k，用户语音被压在里面，MultiNet 整段播放零检出；调低阈值只会误触发。要真打断需先加 AEC（ESP-SR AFE，用播放 PCM 做参考）；当前用 **BOOT 短按**打断 |
 | 识别断断续续 | 先看 `capture report`：`audio ≈ wall` 且有 `gaps >= 400 ms` → 是音频里真实的停顿；`audio` 明显小于 `wall` → 采集丢帧 |
 | 识别不到／听不清 | 看 `microphone peak`：长期只有几十 → 麦克风没接或 `ROBOT_MIC_SHIFT` 不对；长期钉在 32768、RMS 过半 → 增益过大，语音被钳成方波 |

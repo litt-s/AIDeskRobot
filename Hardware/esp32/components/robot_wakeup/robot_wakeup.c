@@ -372,6 +372,20 @@ esp_err_t robot_wakeup_set_phrase(const char *phrase, char *error,
         }
         return ESP_ERR_INVALID_ARG;
     }
+    /*
+     * The Chinese MultiNet model wants pinyin syllables; hanzi are rejected by
+     * the model itself ("MN_COMMAND: invalid command"), which is a dead end for
+     * the user unless we say what to write instead.
+     */
+    for (const char *c = phrase; *c != '\0'; ++c) {
+        if ((unsigned char)*c >= 0x80) {
+            if (error) {
+                snprintf(error, error_size,
+                         "唤醒词要用拼音，例如 ni hao xiao zhi");
+            }
+            return ESP_ERR_INVALID_ARG;
+        }
+    }
     if (s_wakeup.model_data == NULL) {
         if (error) {
             snprintf(error, error_size, "唤醒引擎未就绪");
