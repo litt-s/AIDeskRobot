@@ -626,15 +626,4 @@ T001–T017 与 T009 已完成（依据见各任务条目）。**T018 语音对�
 - **根因（设备侧）**：`robot_voice.c` 的 `VOICE_READ_CHUNK` 是 1024 字节，`esp_http_client_config_t` 没设 `buffer_size`（默认 **512 字节**），而音频是恒定 **32 KB/s**。局域网 RTT 1~5 ms 时这点小读完全够；换公网后 RTT 几十毫秒，每次小读的往返开销把吞吐压到接近/低于 32 KB/s，播放缓冲被吃空 ⇒ 断续。
 - **改动**：`VOICE_READ_CHUNK 1024 → 4096`、`buffer_size = 4096`、`buffer_size_tx = 2048`；新增 `stream done: pcm=N bytes in M ms = X KB/s (need 32)` 诊断行。另把端到端剖析固化为 `scripts/voice-profile.mjs`（对运行中的服务跑一轮，打印每帧到达时刻、事件顺序、缺口直方）。`idf.py build` **exit 0**，`deskemoji_robot.bin` **0x1496e0**。
 - **未验证**：**真机**（需烧录后听一次回答 + 看那行 KB/s）。若仍卡：加大设备侧预缓冲/队列，或服务端加"整段一次下发"开关（牺牲首字延迟换平滑）。
-
-
-### 2026-10-15 — T040 控制台窄屏导航精简
-- 用户反馈 Android 端侧栏导航在窄宽度下“对话工作台”等四字中文会按 2 字折行。`web/src/main.tsx` 把 `TABS.map` 拆出 `short`（已有：`对话/模型/角色/设备/语音`），按钮内容改为 `<span className="nav-long">{title}</span><span className="nav-short">{short}</span>`，并补 `aria-label={title}`。
-- `web/src/style.css`：默认 `.nav-short{display:none}`；在 `@media(max-width:768px)` 内加 `white-space:nowrap;min-width:0`、`.nav-long{display:none}`、`.nav-short{display:inline}`，避免窄屏按钮内部断行；其它窄屏样式不动。
-- 验证：`npm run typecheck` exit 0、`npm run build` 成功（CSS 15.84 kB、JS 259.58 kB）。
-- **未验证**：真机/模拟器 UI 截图；Android APK 仍需用户从 GitHub Actions 重新下载安装。
-
-
-### 2026-10-15 — T040 CI 收尾
-- commit `eac7562` 推送后 Run #46（`38751086336`）完成：`verify` 与 `android` 均 success。`android` job 的 `gradle --no-daemon assembleDebug` 通过，`aidesk-android-debug` artifact 已更新。
-- **未验证**：真机/模拟器导航视觉效果；需用户重新下载并安装新 APK 后确认。
+- **T039 追加：第一次烧录后仍卡，但诊断行给出确凿数字 ⇒ 真正瓶颈是 TCP 窗口而不是读块**。日志：`stream done: pcm=301448 bytes in 16290 ms = 18 KB/s (need 32)`（下行 18 KB/s < 音频所需 32 KB/s ⇒ 必然断续）；同一轮 `sending 320000 bytes` → `heard` 相隔 **18.4 s**（上行 ~17 KB/s ⇒ "等待很久"的主因：10 秒录音要传 18 秒）。从本机实测到云托管域名 **RTT 均 111 ms**（81~137）、同链路下载 253 KB 用 0.7 s（≈400 KB/s）⇒ 链路不差；瓶颈在设备侧 **lwIP 收发窗口 5760 字节**（5760/0.111≈52 KB/s 理论上限，扣掉 TLS/解析实测 18 KB/s）。**改动**：`TCP_WND_DEFAULT`／`TCP_SND_BUF_DEFAULT` 5760→**20000**、`TCP_RECVMBOX_SIZE` 6→16、`SPIRAM_TRY_ALLOCATE_WIFI_LWIP=y`；写进 `sdkconfig.defaults`（入库）并同步本机 `sdkconfig`。`idf.py build` exit 0、bin `0x149910`、构建产物中已确认 `CONFIG_LWIP_TCP_WND_DEFAULT=20000`。**未验证**：真机——再烧一次看那行是否 ≥32 KB/s（预期上行 320 KB 从 18 s 降到 4~6 s）。

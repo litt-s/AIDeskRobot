@@ -392,3 +392,14 @@ Electron 39 二进制、7zip、NSIS 缓存都在时，`electron-builder --win --
 ## 换成公网托管后，"设备一次读多少字节"会变成瓶颈（2026-10-15 T039 播放一卡一卡）
 同一个固件，局域网里播放很顺，把服务器地址换成公网域名后就一卡一卡——**差异不在音频链路，而在每字节的往返开销**：`esp_http_client` 的接收缓冲默认只有 **512 字节**，而 `voice_read_response()` 一次只读 1024 字节；音频却是恒定 **32 KB/s**。局域网 RTT 1~5 ms 时"小口多读"毫无压力，RTT 变成几十毫秒后，同样的读次数直接卡在 32 KB/s 上下，播放缓冲被吃空就断续。修法不需要动播放逻辑：把读量大一档（1024 → 4096）和接收缓冲（512 → 4096）即可。
 **方法论**：判断"卡顿是服务端不给还是设备读得慢"，别靠听——先在**本地**用可控模型量服务端出流节奏（`scripts/voice-stream-sim.ts`：真 TTS + 假模型 + 一个按真实时间消费、队列见底的"设备模型"），服务端如果没问题，矛头自然指向设备/网络；再给设备加一行可量化日志（本次是 `pcm=N bytes in M ms = X KB/s，需要 32`），下一次复现就有数字，而不是继续猜。
+
+## 吞吐 = 窗口 ÷ RTT：换公网后先量 RTT，再调窗口，别只调"一次读多少"（2026-10-15 T039）
+第二次迭代给了完整答案。第一轮把 `VOICE_READ_CHUNK` 与 `esp_http_client` 的接收缓冲从 1 KB/512 B 提到 4 KB，**烧进去仍然卡**；靠新加的 `stream done: … = X KB/s (need 32)` 才看清：下行只有 **18 KB/s**，而音频要 32 KB/s；上行同样只有 ~17 KB/s（320 KB 录音传了 18 秒，这就是"等待很久"的主因）。从本机实测同一条链路：RTT 均 **111 ms**、下载 253 KB 仅 0.7 s（≈400 KB/s）⇒ 链路没问题。设备侧 lwIP 的 `TCP_WND_DEFAULT`／`TCP_SND_BUF_DEFAULT` 都是 **5760 字节**，`5760 ÷ 0.111 ≈ 52 KB/s` 就是天花板，扣掉 TLS 与逐帧解析落到 18 KB/s。**结论：跨公网吞吐由"窗口 ÷ RTT"决定，改读块只减少系统调用次数，改不了上限。**先量 RTT（本机 `ping` 同域名即可），再决定窗口放多大；放大窗口的代价是内存，`CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP=y` 把 lwIP 缓冲落到 PSRAM。
+**副产品**：一条**能自证**的诊断日志（`pcm=N bytes in M ms = X KB/s (need 32)`）比任何推测都值钱——它在同一份日志里同时解释了"卡顿"与"等待很久"，而这两件事表面看毫不相干。
+
+## 播放卡顿/上行慢的"窗口÷RTT"账（2026-10-15 T039，排查流程）
+1. **先量 RTT**：`ping <默认域名>`（本机实测 81~137 ms，均 111 ms），同链路下载 253 KB 仅 0.7 s ⇒ 链路不是瓶颈。
+2. **算上限**：设备侧 `CONFIG_LWIP_TCP_WND_DEFAULT`（收）与 `CONFIG_LWIP_TCP_SND_BUF_DEFAULT`（发）默认都是 **5760 字节** ⇒ 上限 ≈ 5760 ÷ RTT；RTT 111 ms ⇒ ~52 KB/s，实测 18 KB/s。音频需 32 KB/s，10 s 录音（320 KB）的上传同样受这条限制。
+3. **改法**（已写入 `sdkconfig.defaults`，新检出自动生效；本机 `sdkconfig` 同步）：`TCP_WND_DEFAULT=20000`、`TCP_SND_BUF_DEFAULT=20000`、`TCP_RECVMBOX_SIZE=16`、`SPIRAM_TRY_ALLOCATE_WIFI_LWIP=y`。
+4. **验证指标**：串口 `robot_voice: stream done: pcm=N bytes in M ms = X KB/s (need 32)` 要 **≥32**；上行看 `sending N bytes of audio` 到 `heard` 的时间差（320 KB 应从 18 s 降到 4~6 s）。
+5. **还没动的旋钮**：`CONFIG_ROBOT_CLOUD_VOICE_MAX_RECORD_MS`（现 10 s，降下来直接砍掉最坏情况的上行时间）、`CONFIG_ROBOT_CLOUD_VOICE_THRESHOLD`（现 700，调高可减少"把环境噪声当说话"而录满 10 秒）、窗口继续放大到 64 KB（更吃内存）。
