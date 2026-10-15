@@ -134,3 +134,9 @@
     - `npm run desktop:pack` 重新生成 `desktop/release/win-unpacked/AIDesk.exe`（约 210 MB），运行后 `Get-Process AIDesk` `MainWindowTitle='AIDesk · 机器人工作台'`，`Invoke-WebRequest http://127.0.0.1:45713/` → 200/576 字节，`Invoke-WebRequest /api/auth/me` → 401（`{error:"请先登录"}`），自动跑完 0001–0006 迁移；关闭主窗口后 `AIDESK_PORT` 对应 Node 子进程一起退出。
   - **未验证**：用户本人桌面环境下的注册 / 模型 / 角色 / 设备 / 对话 / 语音设置全流程真机验收（本次窗口由本机 Codex 代开，未跑业务流）；以及 "PC 端访问 192.168.x.x 上的机器人" 的跨网段；electron-builder 的 `--win portable` 单文件目标在本机网络下卡在下载 `winCodeSign`，暂不作为默认产物。
   - **设计边界**：仅修改根工程、`web/`、`server/`、`shared/` 等新控制台文件，未触碰 Android / MiniProgram / Design / Hardware 任何代码；T035 通用图标资产已就位，新增的 `desktop/main.cjs`、`scripts/generate-icons.py`（T035 已有）均在根工程范围内。
+
+  - T039 机器人改走公网托管后「回答一卡一卡」：设备侧收流吞吐优化 + 可量化诊断（2026-10-15 用户反馈）：现象是机器人改指云托管默认域名后播放一卡一卡，而**同一固件在局域网下没有这个问题**。**先量再改**：①服务端侧用新增的 `scripts/voice-stream-sim.ts`（真实火山 TTS + 假模型 + 一个"设备播放模型"：队列上限 800 ms、按真实时间消费、队列见底即记一次饿死）量到——一轮 5751 ms 音频在 5285 ms 内发完、句子之间**没有**长时间空洞，首块音频 727 ms ⇒ **不是"服务端不给数据"**；②设备侧读链路是短板：`VOICE_READ_CHUNK` 只有 1024 字节，而 `esp_http_client_config_t` 的接收缓冲走默认 **512 字节**，音频需求是恒定 32 KB/s；局域网 RTT 1~5 ms 时余量很大，换成公网（RTT 几十毫秒）后每次小读的往返开销把吞吐压到接近甚至低于 32 KB/s ⇒ 播放缓冲被吃空 ⇒ 一卡一卡。**改动**（`Hardware/esp32/components/robot_cloud/robot_voice.c`，属设备通道，不动 `robot_audio`/`robot_wakeup`）：`VOICE_READ_CHUNK 1024 → 4096`、`config.buffer_size = 4096`（原为默认 512）、`config.buffer_size_tx = 2048`；同时新增一行诊断日志 `stream done: pcm=N bytes in M ms = X KB/s (need 32)`，配合 `robot_audio` 既有的 `playback queue full` 告警（丢块即听感缺口），下次复现就能用数字判断而不是靠听。另把端到端出流剖析脚本固化为 `scripts/voice-profile.mjs`（对着运行中的服务跑一轮，打印每帧到达时刻与事件顺序）。
+    - **验证**：`idf.py build` exit 0，`deskemoji_robot.bin` 0x1496e0；本地模拟脚本可重复跑（`SEED_DB=<含 voice_settings 的库> node scripts/voice-stream-sim.mjs 800`）。
+    - **未验证**：**真机**——需用户烧录后听一次回答，并看串口那行 `= X KB/s (need 32)`；若仍卡，下一步是加大设备侧预缓冲/队列或改服务端"整段一次下发"（会牺牲一点首字延迟）。
+
+已完成本地编码与服务端 Bearer token 支持；网页 Cookie 行为不变，网页 typecheck/test/build/build:node 通过；未验证微信开发者工具/真机全链路。

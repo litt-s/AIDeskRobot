@@ -24,7 +24,12 @@
 #define TAG "robot_voice"
 
 #define VOICE_URL_MAX 288
-#define VOICE_READ_CHUNK 1024
+/*
+ * 一次从 TLS 里最多取多少字节。1 KB 在局域网够用，但换成公网托管后（RTT 几十毫秒）
+ * 读请求的大小直接决定吞吐：32 KB/s 的音频要求每秒 32 次 1 KB 的读，稍有抖动就跟不上，
+ * 播放就会一卡一卡。4 KB 把同样的音频摊到 8 次读，余量大得多。
+ */
+#define VOICE_READ_CHUNK 4096
 /* Upper bound on a single utterance, independent of what the caller asks for. */
 #define VOICE_MAX_RECORD_MS 30000
 #define VOICE_DEFAULT_MAX_RECORD_MS 10000
@@ -309,6 +314,14 @@ static esp_err_t voice_read_response(esp_http_client_handle_t client)
     bool playback_open = false;
     bool done = false;
 
+    /*
+     * 收流诊断：一卡一卡到底是"服务端不给数据"还是"设备读得慢"，看这两个数就知道——
+     * pcm 字节数除以耗时就是实际吞吐，音频只有 32 KB/s，低于它必然播不满。
+     * 同时 robot_audio 在播放队列塞满时会打 "playback queue full"（那一块音频被丢掉）。
+     */
+    size_t pcm_bytes = 0;
+    const TickType_t read_started = xTaskGetTickCount();
+
     int read = 0;
     while (!done && !s_voice.cancel_requested &&
            (read = esp_http_client_read(client, (char *)chunk, VOICE_READ_CHUNK)) > 0) {
@@ -352,6 +365,7 @@ static esp_err_t voice_read_response(esp_http_client_handle_t client)
             }
 
             if (frame.type == VOICE_FRAME_PCM) {
+                pcm_bytes += frame.payload_expected;
                 voice_handle_pcm(frame.payload, frame.payload_expected, &playback_open);
             } else if (frame.type == VOICE_FRAME_JSON) {
                 char *event = malloc(frame.payload_expected + 1);
@@ -374,6 +388,17 @@ static esp_err_t voice_read_response(esp_http_client_handle_t client)
     }
     frame_reset(&frame);
     free(chunk);
+
+    /*
+     * ≤32 KB/s 就说明读链路跟不上播放（1 KB 读 + 公网 RTT 时代的老问题），
+     * 越大越安全；同时也会打一行 queue full 的告警，那是真的丢了音频。
+     */
+    const uint32_t read_ms = (uint32_t)((xTaskGetTickCount() - read_started) * portTICK_PERIOD_MS);
+    if (pcm_bytes > 0 && read_ms > 0) {
+        ESP_LOGI(TAG, "stream done: pcm=%u bytes in %u ms = %u KB/s (need 32)",
+                 (unsigned)pcm_bytes, (unsigned)read_ms,
+                 (unsigned)((pcm_bytes / 1024) * 1000 / read_ms));
+    }
 
     if (playback_open) {
         if (cancelled) {
@@ -422,6 +447,12 @@ static esp_err_t voice_open_request(const char *path, const char *content_type,
         .url = url,
         .timeout_ms = (int)s_voice.options.request_timeout_ms,
         .keep_alive_enable = false,
+        /*
+         * 默认接收缓冲只有 512 字节，一帧音频（~10 KB）要拆成二十来次传输层读取；
+         * 公网 RTT 一放大，音频就喂不满播放缓冲。放大到 4 KB / 2 KB 只是多几 KB 内存。
+         */
+        .buffer_size = 4096,
+        .buffer_size_tx = 2048,
     };
 #if CONFIG_MBEDTLS_CERTIFICATE_BUNDLE
     config.crt_bundle_attach = esp_crt_bundle_attach;

@@ -311,3 +311,8 @@ tcb api tcbr SubmitServerConfigChangeDiff --api-version 2022-02-17 --body '{"Env
 修复（不用改固件、不用重新配网）：**让播种把固件默认码那台设备也建出来**（`seed.sql` 追加一条 `INSERT OR REPLACE INTO devices`，`id=c0ffee00-…-f1`、同一位 `role_id`，`key_mask=••••-••••-VP1R`），重新部署。本地先用同一把码验证 `hello` → **200**（带横线格式也 200、乱码 401），部署后线上复验：`hello`（固件默认码）→ **200**、乱码 → **401**、`/api/health` → **200**。
 
 ⚠️ 遗留：若用户在配网页**手打**了第三把码（既不是固件默认、也不是库里那把），仍会 401——那种情况只能从控制台"新建设备 → 复制设备码 → 粘贴回配网页"，不要手抄（`I/L→1`、`O→0` 的容错只覆盖这两类形近字）。
+
+### 播放卡顿/断续怎么查（2026-10-15 T039）
+- **先看两行日志**（都在串口里）：`robot_voice: stream done: pcm=N bytes in M ms = X KB/s (need 32)` —— 低于 32 就是读链路喂不满；`robot_audio: playback queue full: type=… samples=…` —— 出现即表示有一块音频被丢掉（听感上的缺口）。
+- **再量服务端**：`SEED_DB=<含 voice_settings 的 SQLite> node scripts/voice-stream-sim.mjs 800`（第 2 个参数是模拟设备的队列上限 ms）打印"音频总长 / 出流墙钟 / 饿死次数与时刻"；对**运行中的服务**做端到端剖析用 `node scripts/voice-profile.mjs <wav>`（打印每帧到达时刻与事件顺序，明细写 `data/voice-profile.json`）。
+- **已知的两个杠杆**：设备侧 `VOICE_READ_CHUNK` 与 `esp_http_client_config_t.buffer_size`（读吞吐）；`robot_audio` 的 `PLAYBACK_FAST/SAFE_PREBUFFER_SAMPLES` 与队列深度（抗抖动能力）。服务端目前**不做限速**，能多快发多快，让设备尽量缓冲。
