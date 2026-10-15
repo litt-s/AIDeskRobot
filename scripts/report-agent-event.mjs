@@ -2,7 +2,7 @@
  * 把"编程 agent 的状态"上报给 AIDesk（T042 第一期：只通知，不批准）。
  *
  * 给 Codex 的 hook 调用，例如：
- *   node scripts/report-agent-event.mjs --kind needs_confirmation --source Codex --title "要执行 rm -rf dist"
+ *   node scripts/report-agent-event.mjs --kind needs_confirmation --source Codex --title "要执行 rm -rf dist" --options "允许一次|本次会话都允许|拒绝"
  *   node scripts/report-agent-event.mjs --kind finished --source Codex --title "改完 3 个文件"
  *   node scripts/report-agent-event.mjs --kind failed --source Codex --detail "npm test 失败：3 个用例"
  *
@@ -71,11 +71,17 @@ try {
   if (!agentKey) warning(`没有上报凭据。两种做法：① 设环境变量 AIDESK_AGENT_KEY；② 存到文件：node scripts/report-agent-event.mjs --save-key <凭据>（文件位置：${keyFile}）`);
   const kind = value('kind');
   if (!['needs_confirmation', 'failed', 'finished'].includes(kind)) warning(`--kind 必须是 needs_confirmation / failed / finished（收到 "${kind}"）`);
+  /*
+   * 需要确认的事件要把"当时能选什么"一起上报：机器人会照着念，和 Codex 弹窗里保持一致。
+   * 用 | 分隔，最多 4 个、每个 24 字（服务端还会再过滤一遍，坏数据不会让上报失败）。
+   */
+  const options = (value('options') || '').split('|').map(item => item.trim()).filter(Boolean).slice(0, 4);
   const body = {
     source: value('source') || 'Codex',
     kind,
     title: value('title').slice(0, 200),
     detail: value('detail').slice(0, 1000),
+    options,
   };
   const response = await fetch(`${base}/api/agent/events`, {
     method: 'POST',
