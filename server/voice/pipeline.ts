@@ -105,6 +105,12 @@ export interface VoiceTurnResult {
   reply: string;
   spoken: number;
   audioBytes: number;
+  /*
+   * 各段耗时（毫秒）。存在是为了回答"机器人等得久到底久在哪一段"，而不是靠猜：
+   * asr=识别（含设备上传与服务端等待）、firstSentence=模型吐出第一句、
+   * firstAudio=第一块音频发往设备、model=模型出完、total=整轮。
+   */
+  timings: { asrMs: number; firstSentenceMs: number; firstAudioMs: number; modelMs: number; totalMs: number };
   /**
    * Set whenever the turn produced no answer. The caller persists it, because
    * otherwise a failed turn is silent everywhere the user can see: the robot
@@ -151,7 +157,9 @@ export async function runVoiceTurn(
   pcm: Uint8Array,
   emit: Emit,
 ): Promise<VoiceTurnResult> {
-  const result: VoiceTurnResult = { transcript: '', reply: '', spoken: 0, audioBytes: 0, failure: null };
+  const started = Date.now();
+  const result: VoiceTurnResult = { transcript: '', reply: '', spoken: 0, audioBytes: 0, failure: null,
+    timings: { asrMs: 0, firstSentenceMs: 0, firstAudioMs: 0, modelMs: 0, totalMs: 0 } };
 
   let transcript = '';
   try {
@@ -163,6 +171,7 @@ export async function runVoiceTurn(
     return result;
   }
   result.transcript = transcript;
+  result.timings.asrMs = Date.now() - started;
   await emit({ type: 'asr', text: transcript });
   if (!transcript) {
     result.failure = EMPTY_TRANSCRIPT;
@@ -179,9 +188,15 @@ export async function runVoiceTurn(
     const spoken = plainTextForSpeech(sentence);
     if (!spoken) return;
     result.spoken += 1;
+    if (!result.timings.firstSentenceMs) {
+      result.timings.firstSentenceMs = Date.now() - started;
+    }
     chain = chain.then(async () => {
       await withDeadline(deps.synthesize(spoken, async (chunk) => {
         result.audioBytes += chunk.length;
+        if (!result.timings.firstAudioMs) {
+          result.timings.firstAudioMs = Date.now() - started;
+        }
         await emit(chunk);
       }), SPEAK_DEADLINE_MS, '语音合成');
     }).catch(async (error) => {
@@ -203,12 +218,20 @@ export async function runVoiceTurn(
     return result;
   }
 
+  /*
+   * 模型已经出完，回复文本此刻就能发——它原来放在最后（等所有句子合成并播完），
+   * 结果是设备日志里的 `answer:` 时间戳看着像"模型很慢"，其实是"模型 + 全部合成"。
+   * 下游没有任何东西依赖它最后到达，所以提前发，日志才可用于定位延迟。
+   */
+  result.timings.modelMs = Date.now() - started;
+  if (result.reply.trim()) await emit({ type: 'reply', text: result.reply.trim() });
+
   for (const sentence of splitter.flush()) speak(sentence);
   await chain;
   /* Synthesis failures are reported as they happen, but they are also the only
    * thing that went wrong when the model answered and no audio came out. */
   if (!result.audioBytes) result.failure ??= '语音合成失败：没有生成任何音频';
-  if (result.reply.trim()) await emit({ type: 'reply', text: result.reply.trim() });
+  result.timings.totalMs = Date.now() - started;
   await emit({ type: 'done' });
   return result;
 }

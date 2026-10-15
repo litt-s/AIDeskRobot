@@ -167,8 +167,14 @@ export function voiceRoutes(app:any){
   if(audio.length%2)fail('音频必须是 16 位 PCM',400);
 
   const conversation=await ensureConversation(c,device);
-  const history=(await c.env.DB.prepare("SELECT role,content FROM messages WHERE conversation_id=? AND user_id=? AND status='complete' ORDER BY created_at DESC,rowid DESC LIMIT 100").bind(conversation,device.user_id).all()).results.reverse() as ChatMessage[];
-  const context:ChatMessage[]=[{role:'system',content:cfg.system_prompt+'\n任务：'+cfg.task},...history];
+  const history=(await c.env.DB.prepare("SELECT role,content FROM messages WHERE conversation_id=? AND user_id=? AND status='complete' ORDER BY created_at DESC,rowid DESC LIMIT 20").bind(conversation,device.user_id).all()).results.reverse() as ChatMessage[];
+  /*
+ * 语音轮次额外要求"短"。这是实测出来的：同一个角色，模型对一句话的回复可能是
+ * 一段编号长文（测到过 66 秒语音），既让人等得久，机器人念起来也听着累。
+ * 聊天页不受影响，这条只加在设备语音这条路上。
+ */
+const VOICE_STYLE='\n语音对话要求：用一到两句口语化的话直接回答，不要分点、不要编号、不要列表，尽量控制在 60 字以内。';
+const context:ChatMessage[]=[{role:'system',content:cfg.system_prompt+'\n任务：'+cfg.task+VOICE_STYLE},...history];
 
   /*
    * Recognition must be told the rate the device actually captured at; a
@@ -187,6 +193,10 @@ export function voiceRoutes(app:any){
     const emit=async(event:any)=>{if(closed)return;try{controller.enqueue(event instanceof Uint8Array?encodePcmChunk(event):encodeJsonEvent(event));}catch{closed=true;}};
     try{
      const turn=await runVoiceTurn(deps,context,audio,emit);
+     /* 一轮的耗时拆解，直接打在 dev 控制台：asr=识别、firstSentence=模型第一句、
+        firstAudio=第一块音频、model=模型出完、total=整轮；history=这次带了多少条上下文
+        （带满 100 条时提示词会很长，首字延迟明显变大）。 */
+     console.log('voice turn', JSON.stringify({...turn.timings,spoken:turn.spoken,audioBytes:turn.audioBytes,history:history.length,transcript:turn.transcript.slice(0,24)}));
      /*
       * A turn that produced no answer used to leave no trace anywhere the user
       * could see: the robot just stayed silent and the console showed nothing.
