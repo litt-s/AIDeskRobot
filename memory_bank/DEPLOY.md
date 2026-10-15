@@ -200,3 +200,8 @@ VOLC_API_KEY=你的key npm run volc:smoke
 3. **等 zone 变 Active**：回 Cloudflare 域名页面，状态从 `Pending Nameserver Update` → **`Active`**（一般 10 分钟~1 小时，最长 24 小时；可点 "Check nameservers now" 手动触发）。**不要手建 DNS 记录**——绑 custom domain 时 Cloudflare 会自动建，证书（Universal SSL）也会自动签发，Free 计划够用。
 4. **我这边收尾**：在 `wrangler.jsonc` 加 `routes: [{pattern: "desk.<域名>", custom_domain: true}]` → `npx wrangler deploy` → 从国内实测（`Resolve-DnsName` + `curl https://desk.<域名>/api/health` 连打 10 次）→ 再把机器人的服务器地址指过去（Kconfig `ROBOT_CLOUD_URL` 或配网页）。
 5. 校验手段：`npx wrangler whoami`（刷新 OAuth）之后用 API 查 zone 列表即可确认是否已接入（直接拿配置文件里的 token 调 API 会报 `Invalid access token`，因为它不负责刷新）。
+## 上线状态（2026-10-15 晚，域名接入完成）
+- **已接入**：`aideskrobot.xin`（注册局委派已发布 `dell`/`rob.ns.cloudflare.com` ✓、Cloudflare zone `active` ✓）；`wrangler.jsonc` 加 `routes: [{pattern: "aideskrobot.xin", custom_domain: true}]` → 部署版本 `78ec188f-4fc9-441d-932c-4501b7668e43`，线上入口变为 **`https://aideskrobot.xin`**（顺带：配置里没有 `workers_dev`，该入口已被 wrangler 自动关闭）。线上库迁移到 `0006` ✓。
+- **但国内直连质量不合格（实测）**：不走代理连打 `https://aideskrobot.xin/api/health` → **7/10**（成功耗时 1.1s~13.2s，失败为 15s 超时）；同一时刻**隧道那条路 6/6 稳定**（1.2~1.5s）。
+- **根因定位（对照实验，同一台 IP `104.16.230.132`、同刻各 6 次）**：SNI=`www.cloudflare.com` → **6/6**；SNI=`aideskrobot.xin` → **3/6**；SNI=`*.trycloudflare.com` → **6/6**。⇒ 既不是 Cloudflare、也不是 IP、也不是配置问题，而是**这个主机名（很可能 `.xin` 后缀）在国内被针对性干扰**。另外测了 12 个候选 Cloudflare IP（`--resolve` 指定 IP + 正确 SNI），最好的也只有 **4/6**，所以"IP 优选"救不回来。
+- **因此的使用建议**：机器人 + 控制台演示走**局域网**（`192.168.137.1` 系列，实测稳）；对外/远程用 **Cloudflare 快速隧道**（`trycloudflare.com`，实测 6/6）；`aideskrobot.xin` 作为"已上线"的正式入口保留（能开，但可能偶发超时，不要作为唯一依赖）。彻底改善公网直连需要换后缀（如 `.com`/`.top`）或换国内托管（后者要备案 + 改代码）。

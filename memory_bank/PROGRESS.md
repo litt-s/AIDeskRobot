@@ -543,3 +543,9 @@ T001–T017 与 T009 已完成（依据见各任务条目）。**T018 语音对�
 - 排查与选择：①`workers.dev` 被污染（已知）；②`trycloudflare.com` 实测**国内可直连**（DNS 正常解析到 Cloudflare 的 104.16.x，HTTPS 200）→ 快速隧道可用；③本机**已装** `cloudflared`（`C:\Program Files (x86)\cloudflared\cloudflared.exe`）。
 - 落地：后台启动 `cloudflared tunnel --url http://127.0.0.1:8787`（`Start-Process -WindowStyle Hidden`，日志写 `%TEMP%`），拿到 `https://stamp-able-restrict-organ.trycloudflare.com`，随即**不走代理**实测：`/api/health` 200（1.9 s）、`/` 200（返回控制台 HTML）、`/api/auth/me` 401（未登录应有的响应）→ 明天汇报可用。
 - 注意：隧道指向本机 **8787**（`wrangler dev`），页面是**编译版**控制台（`dist`，与 `workers.dev` 上那份一致），不是 5173 的 vite 开发服务器；隧道是临时的、重启换地址，必须保持电脑与 dev server 在线。局域网路径（`192.168.137.1:5173`／机器人 `192.168.137.1:8787`）作为现场兜底。
+### 2026-10-15 — 正式域名接入完成（aideskrobot.xin），但国内直连质量不合格：定位到"主机名被干扰"
+- 用户告知域名已可用（阿里云/Cloudflare 邮件）：权威查询确认注册局委派已发布（`.xin` 顶级域服务器直接应答 `dell`/`rob.ns.cloudflare.com`）✓、zone `active` ✓。随即在 `wrangler.jsonc` 加 `routes: [{pattern:"aideskrobot.xin", custom_domain:true}]` → 部署 `78ec188f-4fc9-441d-932c-4501b7668e43`，线上入口成为 `https://aideskrobot.xin`；wrangler 同时提示 `workers_dev` 未配置、按默认关闭（正好，入口只留自定义域名）。
+- **实测不合格**：不走代理连打 10 次 `/api/health` → **7/10**（成功 1.1~13.2 s，失败 15 s 超时），单测 `/` 17.8 s（TLS 10.1 s）、`/api/health` 甚至 `server closed abruptly`。
+- **对照实验（决定性）**：同一台 IP `104.16.230.132`、同一时刻、各 6 次 —— SNI=`www.cloudflare.com` **6/6**、SNI=`aideskrobot.xin` **3/6**、SNI=`*.trycloudflare.com` **6/6**。⇒ **不是 Cloudflare、不是 IP、不是配置，而是这个主机名（大概率 `.xin` 后缀）在国内被针对性干扰**。另测 12 个候选 CF IP（`--resolve` + 正确 SNI），最好 4/6 ⇒ "IP 优选"也救不回来（此前基于"域名能绕开 workers.dev 污染"的乐观预期，至此被实测修正）。
+- 应对（已写入 DEPLOY）：演示走局域网（稳）＋对外用快速隧道（实测 6/6）；正式域名保留为"已上线"入口，但不作为唯一依赖。彻底解决需换后缀或换国内托管。
+- 方法论沉淀：**"换域名能不能解决可达性"必须用同 IP、同刻、不同 SNI 的对照实验来判定**；只测单个域名会把网络抖动误判成"域名方案失败"，反之也会把"主机名被干扰"误判成"Cloudflare 不行"。
