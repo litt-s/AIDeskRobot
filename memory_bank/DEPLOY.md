@@ -299,3 +299,15 @@ tcb api tcbr DescribeEnvBaseInfo --api-version 2022-02-17 --body '{"EnvId":"<env
 tcb api tcbr SubmitServerConfigChangeDiff --api-version 2022-02-17 --body '{"EnvId":"<envId>","ServerName":"aidesk-console","Items":[{"Key":"EnvParam","Value":"{\"ENCRYPTION_KEY\":\"…\"}"}]}'
 ```
 ⚠️ `tcbr` 这类多版本产品**必须带 `--api-version 2022-02-17`**，否则报 `version=undefined … action is invalid`。
+
+### 机器人改指新域名后报 401 的排查与修复（2026-10-15 晚，版本 004）
+现象：机器人把服务器地址改成云托管默认域名后，串口出现 `Certificate validated`（网络与证书都没问题）但每个设备接口都 **401 `设备凭据无效或已被吊销`**（连开机提示音那次 `say` 也 401）。
+
+排查（都不需要问用户、也不需要动线上库）：
+1. **线上播种到底有没有生效** —— 拿一个"播种里一定存在"的用户名去注册：`POST /api/auth/register {"username":"li6679",...}` → **409 用户名已被使用** ⇒ 库确实被播种了（409 不会创建任何数据，是个非破坏性探针；若返回 201 说明库是空的，那就得先修播种）。
+2. **种子里的设备指纹对不对** —— 把本地 D1 里那台设备的 `key_hash` 与 `seed.sql` 里的字面值比对：**完全一致**（`70wayLb…`），`key_mask` 都是 `••••-••••-SGZX` ⇒ 种子本身没抓错行。
+3. **机器人手里到底是哪把码** —— 固件编译期默认码来自 `sdkconfig` 的 `CONFIG_ROBOT_CLOUD_KEY`（配网页设备码留空时用它），把它按 `normalizeDeviceKey` 规则归一后算 SHA-256：得到 `••••-••••-VP1R`，**与库里那把 `••••-••••-SGZX` 不是同一把**。⇒ 机器人手里若是"固件默认码"，库里没有它，必然 401。
+
+修复（不用改固件、不用重新配网）：**让播种把固件默认码那台设备也建出来**（`seed.sql` 追加一条 `INSERT OR REPLACE INTO devices`，`id=c0ffee00-…-f1`、同一位 `role_id`，`key_mask=••••-••••-VP1R`），重新部署。本地先用同一把码验证 `hello` → **200**（带横线格式也 200、乱码 401），部署后线上复验：`hello`（固件默认码）→ **200**、乱码 → **401**、`/api/health` → **200**。
+
+⚠️ 遗留：若用户在配网页**手打**了第三把码（既不是固件默认、也不是库里那把），仍会 401——那种情况只能从控制台"新建设备 → 复制设备码 → 粘贴回配网页"，不要手抄（`I/L→1`、`O→0` 的容错只覆盖这两类形近字）。
