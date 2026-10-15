@@ -372,3 +372,14 @@ schtasks /Delete /TN "AIDesk 拉回线上库" /F     # 不想要了
 - ⚠️ 踩坑：**配置变更（新的 EnvParams）是滚动生效的**，改完那一两分钟里新老实例并存 —— 我在第一分钟抽查时拿到 `404 disabled`（老实例：有代码没变量），一分钟后再查就是 `401`（新实例：变量生效）。判断这类"变量到底进没进容器"不要只看一次。
 
 **令牌存放**：`data/admin-token.txt`（43 字符随机串，已 gitignore，不入仓库）。要轮换就重新生成、再跑一次 `tmp-set-env` 那套合并（或控制台改 `ADMIN_TOKEN`）。
+
+### 一键部署（推荐，2026-10-15 起）
+```bash
+node scripts/deploy-cloudbase.mjs            # 拉回线上库 → 重建种子 → 打包 → 部署
+node scripts/deploy-cloudbase.mjs --no-pull  # 跳过拉取（不想让线上数据进种子时）
+```
+它按顺序做四件事：①`pull-live-db`（失败不致命，会用现有种子继续）；②用拉回来的库重跑 `export-seed`；③`git archive HEAD` + `seed/seed.sql` 打成 `data/cr-deploy`；④`tcb cloudrun deploy --source data/cr-deploy --port 80 --open-access-types PUBLIC --wait`（CLI 会问两个问题：确认部署选 `y`，灰度发布选 `No`）。
+
+**意义**：库里有什么完全由代码包里的种子决定，而"先拉回、再打包"把丢数据的窗口从"上次拉取到现在（默认 10 分钟）"压到"开始打包到发布完成（几分钟）"。**实测（版本 009）**：跑完一键部署后 `health=200`、再拉回来看 `users=1 devices=2 models=1 roles=2 voice_settings=1 conversations=8 messages=120`、固件默认码 `hello` → 200 ⇒ 数据确实跟着发布过去了。
+
+⚠️ **平台侧会偶发构建失败**：第一次跑（版本 008）构建日志最后一行是 `error from registry: blob unknown to registry - sha256:…` —— 这是云端镜像仓库的瞬时问题，**不是代码问题**，线上版本 007 一直正常；原样重跑一次即成功。
