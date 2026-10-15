@@ -8,7 +8,9 @@
  *
  * 这样"迁移到国内托管"不用动任何路由、SQL 或前端代码，也就不会把已经验收过的功能改坏。
  */
-import {existsSync, mkdirSync, readdirSync, readFileSync, statSync} from 'node:fs';
+import {existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync} from 'node:fs';
+import {timingSafeEqual} from 'node:crypto';
+import {tmpdir} from 'node:os';
 import {dirname, extname, join, resolve, sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {DatabaseSync} from 'node:sqlite';
@@ -113,8 +115,12 @@ function openDatabase() {
   applyMigrations(db);
   applySeed(db, path);
   console.log(`database ready: ${path}`);
+  rawHandle = db;
   return createD1(db);
 }
+
+/* 保留原始句柄：只有它能在收到快照请求时做一次一致性拷贝。 */
+let rawHandle: DatabaseSync | null = null;
 
 function buildEnv() {
   const encryptionKey = process.env.ENCRYPTION_KEY || '';
@@ -195,11 +201,58 @@ function staticResponse(pathname: string): Response | null {
   return new Response(readFileSync(file), {headers});
 }
 
+/*
+ * 只读快照：把"当前库"的一致副本交给本机。
+ *
+ * 云托管容器没有持久盘（体验版也没有挂载卷入口），每次发布都会回到"空库 + 播种"，
+ * 于是本机那份 seed/seed.sql 就是唯一的持久载体。这个端点让"发布前先把线上数据拉回来"
+ * 成为一条命令：GET 到的是 VACUUM INTO 出来的一致副本（不是原文件，避免拷到写了一半的
+ * 状态）。用 ADMIN_TOKEN 作为 Bearer 令牌；没有配令牌时直接 404，功能等于关闭。
+ */
+function snapshotResponse(request: Request): Response | null {
+  const url = new URL(request.url);
+  if (url.pathname !== '/api/admin/snapshot') return null;
+  const expected = process.env.ADMIN_TOKEN || '';
+  if (!expected) return new Response('disabled', {status: 404});
+  if (request.method !== 'GET') return new Response('method not allowed', {status: 405});
+  const header = request.headers.get('authorization') || '';
+  const token = header.startsWith('Bearer ') ? header.slice(7).trim() : '';
+  const a = Buffer.from(token);
+  const b = Buffer.from(expected);
+  if (a.length !== b.length || !timingSafeEqual(a, b)) {
+    return new Response('unauthorized', {status: 401});
+  }
+  if (!rawHandle) return new Response('no database', {status: 503});
+  const target = join(process.env.SNAPSHOT_DIR || tmpdir(), `aidesk-snapshot-${Date.now()}.sqlite`);
+  try {
+    rawHandle.exec(`VACUUM INTO '${target.replaceAll("'", "''")}'`);
+    const body = readFileSync(target);
+    return new Response(body, {
+      headers: {
+        'Content-Type': 'application/octet-stream',
+        'Content-Disposition': 'attachment; filename="aidesk.sqlite"',
+        'Cache-Control': 'no-store',
+      },
+    });
+  } catch (error) {
+    console.error('snapshot failed', error);
+    return new Response('snapshot failed', {status: 500});
+  } finally {
+    try {
+      rmSync(target, {force: true});
+    } catch {
+      /* 临时文件删不掉不影响响应 */
+    }
+  }
+}
+
 const env = buildEnv();
 /* 必须在处理第一个请求之前注入，之后 /api/device/voice 才走 Node 版识别。 */
 setTranscriber(transcribeViaWs);
 
 const fetch = (request: Request): Response | Promise<Response> => {
+  const snapshot = snapshotResponse(request);
+  if (snapshot) return snapshot;
   const url = new URL(request.url);
   if (url.pathname !== '/api' && !url.pathname.startsWith('/api/')) {
     const hit = staticResponse(url.pathname);

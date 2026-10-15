@@ -337,3 +337,28 @@ seed applied: …/seed.sql (users=1 devices=2 models=1 roles=2 voice_settings=1 
 **纪律**：在持久化落地之前，**控制台里改的任何东西（模型 key、语音凭据、唤醒词、新设备、账号）都只活到下一次发布**。改完要同步进种子——要么告诉我，我重新导出；要么自己跑上面那条命令，然后重新部署（部署源固定用 `data/cr-deploy`，它带着种子）。
 
 **还没做的持久化方案**（等用户选）：A. 定期把 SQLite 快照到云存储（启动时拉回，代价是可能丢最后几分钟）；B. 换成 CloudBase「SQL 型数据库」（真持久，改动较大）。
+
+### 方案 A：把线上库拉回本机（快照端点，2026-10-15 起）
+容器没有持久盘，所以"数据能不能活过下一次发布"取决于**本机那份 `seed/seed.sql`**。为了让控制台/设备侧的新改动也能进种子，服务端加了一个**只读快照端点**：
+
+```
+GET /api/admin/snapshot      Authorization: Bearer <ADMIN_TOKEN>
+```
+- 返回的是 **`VACUUM INTO` 出来的一致副本**（不是原文件，不会拷到写了一半的状态）；
+- 令牌是服务环境变量 `ADMIN_TOKEN`（用 `SubmitServerConfigChangeDiff` 注入，**值从不打印**）；**没配令牌时该端点直接 404**（等于关闭）；
+- 端点由 Node 入口直接处理，**不经过会话鉴权中间件**，也不会出现在控制台的路由里。
+
+**发布前的标准流程**（3 步，谁都照这个来）：
+```bash
+ADMIN_TOKEN=<值> node scripts/pull-live-db.mjs      # 1. 线上库 → data/live.sqlite
+D1_FILE=data/live.sqlite node scripts/export-seed.mjs  # 2. → seed/seed.sql（自动补固件默认设备）
+# 3. 用带种子的源码包重新部署（部署源固定 data/cr-deploy）
+```
+也可以只做 1（拉回来看线上到底有什么），`data/` 已 gitignore，**不会入库**。
+
+**可选：定时自动拉**（本机 Windows 计划任务，每 10 分钟一次）。装了之后 `data/live.sqlite` 永远是最近 10 分钟的线上数据，任何会话直接 `export-seed` 部署都不会丢东西：
+```powershell
+schtasks /Create /TN "AIDesk 拉回线上库" /SC MINUTE /MO 10 /F /TR "cmd /c set ADMIN_TOKEN=<值>&& cd /d D:\AIDeskRobort && node scripts/pull-live-db.mjs >> data\\pull-live.log 2>&1"
+schtasks /Delete /TN "AIDesk 拉回线上库" /F     # 不想要了
+```
+> 注意这个方案**不是强一致**：两次拉取之间的写入（例如最后 10 分钟里改的道具/唤醒词）如果紧接着发布就会丢。要一点不丢就得走方案 B（CloudBase「SQL 型数据库」）。
