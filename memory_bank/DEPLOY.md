@@ -326,7 +326,11 @@ node scripts/export-seed.mjs                        # 默认导出"有设备的�
 SEED_USERNAME=li6679 node scripts/export-seed.mjs    # 指定用户
 D1_FILE=<path.sqlite> node scripts/export-seed.mjs    # 指定源库（默认自动挑带 wake_label 列的那个）
 ```
-脚本会导出该用户的 `users/models/roles/conversations/messages/devices/voice_settings`，并**额外补一台"固件编译期默认设备码"的设备**（读 `Hardware/esp32/sdkconfig` 的 `CONFIG_ROBOT_CLOUD_KEY`）——配网页设备码填的就是那把码，种子里没有它，发布之后机器人必然 401。输出只打印条数与掩码，**不打印任何密钥**。
+脚本会导出该用户的 `users/models/roles/conversations/messages/devices/voice_settings/agent_keys/agent_events`，并**额外补一台"固件编译期默认设备码"的设备**（读 `Hardware/esp32/sdkconfig` 的 `CONFIG_ROBOT_CLOUD_KEY`）——配网页设备码填的就是那把码，种子里没有它，发布之后机器人必然 401。输出只打印条数与掩码，**不打印任何密钥**。
+
+**清单必须跟着新表走**：`agent_keys`/`agent_events` 是 T042 加的，加的时候漏了这份清单，2026-10-16 实测**每次部署都等于吊销一次 PC 上报凭据**——部署完成、上报立刻 401「凭据无效或已被吊销」。所以新增表或重要字段时，除了 `migrations/`，必须回头改 `scripts/export-seed.mjs` 的 `tables`，并在部署后跑一次真实链路（`node scripts/report-agent-event.mjs --kind finished --source Codex --title 自检`）验收：401 只出现在「新容器 + 老凭据」这个组合上，光跑单测或 GET 是发现不了的。`device_commands`（待下发队列）**故意不导出**：那是易失状态，发布时把旧指令重放一遍比丢掉更糟。
+
+**救回被漏掉的记录**（2026-10-16 用过一次）：部署**前**那一步 `pull-live-db` 拉回来的 `data/live.sqlite` 里还有旧记录，把它复制一份当源库 `D1_FILE=data/live-rescue.sqlite node scripts/export-seed.mjs`，再用 `node scripts/deploy-cloudbase.mjs --no-pull --no-seed` 发布，记录就回来了（用户不必重新生成凭据）。要快：每 10 分钟的定时拉取会覆盖这份本地库。
 
 **验收**：本地起一次服务看那行日志，条数要对得上、且必须 `devices>=1`：
 ```

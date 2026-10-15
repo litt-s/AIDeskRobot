@@ -429,3 +429,15 @@ Electron 39 二进制、7zip、NSIS 缓存都在时，`electron-builder --win --
 2. **它默认要从 GitHub 下载 Electron**：`⨯ connect ETIMEDOUT 20.205.243.166:443`（GitHub 在国内时常连不上）。本机 `node_modules/electron/dist` 已经有完整的 Electron（`npm run desktop:pack` 装依赖时就下好了），所以离线打包只需覆盖一个字段：
    `{"electronDist": "node_modules/electron/dist"}` → `npx electron-builder --win --x64 --dir --config=<临时配置>`，**6 秒**就完成（对比在线时的数分钟）。
 3. 顺带：产物目录被正在运行的 `AIDesk.exe` 占用时会报 `EBUSY: resource busy or locked, rmdir ... win-unpacked` —— 打包前先关掉应用。**我这次是先删掉产物目录再打包，结果打包没完成，桌面快捷方式一度指向不存在的 exe**；正确顺序是"先关应用 → 直接打包覆盖"，不要先删。
+
+## 漏一张表 = 每次发布吊销一次凭据：种子的表清单要和 migrations 同步（2026-10-16 T042）
+- 现象：控制台里刚生成的上报凭据、本机也 `--save-key` 存好了，一次部署之后就 401「凭据无效或已被吊销」。用户的第一反应是"是不是刚才重新部署的原因"——**是**。
+- 根因：`server/node/index.ts` 的启动顺序是"先跑 `migrations/`、再用 `seed/seed.sql` 播种"，而容器没有持久盘，所以**发布之后库里的东西完全等于种子**。`scripts/export-seed.mjs` 的导出表清单是手写的，T042 新增 `agent_keys`/`agent_events` 时没人回头改它 ⇒ 种子里没有凭据 ⇒ 新容器起来就是"这个 key 不存在"。
+- 规则：**"新增一张表"和"它能不能活过下一次发布"是同一件事**。加表时除了写 migration，必须同步检查种子导出清单，并在部署后用真实链路验收一次——只跑单元测试或只读接口是发现不了的，因为 401 只出现在「新容器 + 老凭据」这个组合上。
+- 救回办法：部署**前**那次 `pull-live-db` 的产物还有旧记录。把它复制一份当源库重建种子（`D1_FILE=... node scripts/export-seed.mjs`），再用 `--no-pull --no-seed` 发布，凭据就带回去了——省掉让用户重新生成凭据这一步。前提是快：每 10 分钟的定时拉取会覆盖本地那份库。
+- 与之相对，**易失队列要明确排除**：`device_commands`（待下发指令）故意不进种子——带着它发布会把已处理的旧指令重放一遍，比丢掉更糟。"要不要进种子"是每张表都要单独回答的问题，不能按"顺手都带上"处理。
+
+## 用 PowerShell 拼接脚本改文件时，函数里的 Write-Output 会混进返回值（2026-10-16 T042 配网页）
+- 做法：用"返回字符串"的 PowerShell 函数把大段新代码替换进现有文件。函数里除了 `return` 还写了 `Write-Output "正在替换 X 字符"` 这类日志 ⇒ 这些字符串**一并进入输出流**，被 `$text = Splice ...` 收进变量，最终日志被拼到了文件开头（内容本身正确，前缀是垃圾）。
+- 教训：**在"返回字符串"的函数里不要用 Write-Output 做日志**，改用 `[Console]::WriteLine`，或把日志挪到函数外。另外"先写临时文件、再一次性拼接"比在 PowerShell 里做多步字符串手术更安全，每一步都能单独核对。
+- 附带一条：PowerShell here-string 写出的文件必须显式指定 UTF-8 无 BOM（`New-Object System.Text.UTF8Encoding($false)`）。C 源码里混进 BOM 会直接编译报错，`••••` 这类字符在 ANSI 下也会写坏。
