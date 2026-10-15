@@ -147,3 +147,6 @@
     - **未验证**：真机（需烧录）。预期串口出现 `streamed N bytes while recording (M ms); no separate upload` 而不再出现 `sending N bytes of audio`，且"说完话到开口"少掉整段上传的几秒。
 
 已完成本地编码与服务端 Bearer token 支持；网页 Cookie 行为不变，网页 typecheck/test/build/build:node 通过；未验证微信开发者工具/真机全链路。
+
+
+- T040 追加部署（2026-10-15）：用户复看时仍显示旧四字导航，定位为 Android WebView 正在加载 CloudBase 旧版前端产物。已用 `git archive 0df70b9` 生成干净部署源并补入本机 `seed/seed.sql`，重新部署既有 CloudBase 服务 `aidesk-console`。部署记录 **005 / BuildId 2608739705 / 流量 100%**；线上 `index.html` 引用 `assets/index-Bx3hjYFg.js` 和 `assets/index-C75e6vgW.css`，CSS 200 且包含 `nav-short`/`nav-long`。待用户在 Android 内点「重新加载」或清理应用数据后确认短标签单行效果。
