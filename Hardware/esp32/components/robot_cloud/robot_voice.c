@@ -33,6 +33,13 @@
 #define VOICE_DEFAULT_MIN_RECORD_MS 400
 /* Safety net so a noisy room cannot keep a conversation alive forever. */
 #define VOICE_MAX_TURNS_PER_CONVERSATION 30
+/*
+ * A reply can be long, and the next turn must not begin until it has been
+ * spoken: the recording would otherwise overlap the playback, and the tap drops
+ * exactly those frames.  Generous ceiling, checked against `running` and the
+ * cancel flag so a stuck playback cannot wedge the voice task.
+ */
+#define VOICE_REPLY_DRAIN_WAIT_MS 180000
 #define VOICE_DEFAULT_SILENCE_THRESHOLD 700
 #define VOICE_DEFAULT_TIMEOUT_MS 45000
 /* Ceiling on waiting for the wake chime to finish before recording starts. */
@@ -697,6 +704,18 @@ static void voice_finalise_capture(uint64_t wall_ms)
              (unsigned)longest_gap_ms, VOICE_REPORT_LONG_GAP_MS,
              (unsigned)long_gaps, (unsigned)trimmed_ms, (unsigned)squeezed_ms);
 }
+/*
+ * True while the robot still owes the listener audio.  `robot_audio_is_playing`
+ * only turns true once the playback task has enough buffered audio to start
+ * writing, so a reply that is still filling its pre-buffer looks idle - that
+ * gap is what let the next turn begin on top of the previous reply.
+ */
+static bool voice_playback_pending(void)
+{
+    return robot_audio_is_playing() ||
+           robot_audio_playback_buffered_samples() > 0;
+}
+
 static void voice_perform_turn(void)
 {
     /*
@@ -705,9 +724,19 @@ static void voice_perform_turn(void)
      * the beep out of the front of every utterance.
      */
     int64_t wait_started_us = esp_timer_get_time();
-    while (s_voice.running && robot_audio_is_playing() &&
-           (esp_timer_get_time() - wait_started_us) / 1000 < VOICE_DRAIN_WAIT_MS) {
+    while (s_voice.running && !s_voice.cancel_requested &&
+           voice_playback_pending() &&
+           (esp_timer_get_time() - wait_started_us) / 1000 < VOICE_REPLY_DRAIN_WAIT_MS) {
         vTaskDelay(pdMS_TO_TICKS(VOICE_POLL_INTERVAL_MS));
+    }
+    if (s_voice.cancel_requested) {
+        /* Interrupted while the previous reply was still playing: drop what is
+         * queued so the robot goes quiet now, and let the restart path in
+         * voice_run_turn() open a fresh turn. */
+        robot_audio_abort_playback();
+        snprintf(s_voice.last_result, sizeof(s_voice.last_result), "已取消");
+        s_voice.last_outcome = VOICE_OUTCOME_CANCELLED;
+        return;
     }
     robot_audio_set_capture_paused(false);
 
@@ -725,7 +754,18 @@ static void voice_perform_turn(void)
 
     int64_t started_us = esp_timer_get_time();
     while (s_voice.running && !s_voice.stop_requested) {
-        if ((esp_timer_get_time() - started_us) / 1000 >= (int64_t)s_voice.options.max_record_ms) {
+        const int64_t elapsed_ms =
+            (esp_timer_get_time() - started_us) / 1000;
+        if (elapsed_ms >= (int64_t)s_voice.options.max_record_ms) {
+            break;
+        }
+        /*
+         * The "nobody spoke" timeout normally lives in the capture tap, which
+         * only runs when frames arrive.  Bound it here as well so a stalled
+         * capture cannot burn the whole recording budget before giving up.
+         */
+        if (s_voice.options.follow_up_ms > 0 && !s_voice.speech_seen &&
+            elapsed_ms >= (int64_t)s_voice.options.follow_up_ms) {
             break;
         }
         vTaskDelay(pdMS_TO_TICKS(VOICE_POLL_INTERVAL_MS));

@@ -434,3 +434,11 @@ T001–T017 与 T009 已完成（依据见各任务条目）。**T018 语音对�
 - 修法：提示音**排空后无条件恢复采集**，并打印证据行。等待用有界循环（`kPromptDrainWaitSteps = 500` × `kPromptDrainPollMs = 20` = 最多 10 s），避免播放状态异常时把提示音任务挂死。
 - 验证：完整 `idf.py build` exit 0、无新 warning；`deskemoji_robot.bin` 0x148c30（84% 空闲）。**未验证：真机**（重启后直接喊唤醒词、不按任何键；开机日志应出现 `ready prompt drained; microphone resumed for offline wake`）。
 - 方法学（已写入 LEARNINGS）：**"恢复/清理动作写在错误分支里"是很隐蔽的一类 bug**——正常路径反而没人收拾。审这类代码只需问一句："成功路径上，谁来把状态恢复回去？"
+### 2026-10-15 — T030 追加：修「下一轮在回复开播前就开始」；真机日志确认单麦打断的硬上限
+- 用户真机反馈（附串口日志 `11.txt`）：「重启连上网直接喊小飞成功了，回答一半打断效果不好，只成功了一次」。**T031 通过**（重启后不按任何键即可唤醒）。按日志逐行核对，问题不在唤醒引擎，而在 T030 引入的聆听时机。
+- 关键日志（59.5–72.2 s）：`answer: 嘿嘿，那俺再讲一个！…（长回复）` → **80 ms 后** `listening again: conversation turn 2` → 10 s 后 `capture report: 0 ms of audio over 10039 ms wall, voiced 0 ms` → `no speech within 4000 ms; nothing uploaded` → `conversation ended after 2 turns: 没有听到声音`。也就是说：**回复还在播，对话就被"没人说话"结束了**，而这段录音一帧都没进账。
+- 根因：`robot_audio_is_playing()` 只在播放任务攒够预缓冲**真正开始写 I2S** 之后才为真；PCM 刚入队、正在预缓冲的三五百毫秒里它是 false。`voice_perform_turn()` 用它判断"播完没有"，于是被瞬间穿过——下一轮录音在回复真正开播之前就开始了，而 tap 在播放期间会丢弃所有帧（这条丢弃规则本是为"唤醒提示音别录进去"加的），于是那次录音 0 ms、预算被吃光、4 秒超时提前触发。
+- 为什么"打断"几乎不成功：那段录音期间用户喊的"小飞小飞"要么被 tap 丢掉，要么被当内容送去做 ASR（`heard: 小飞。` → 模型回"咦？小飞？谁是呀？"）。而真正播放期间的麦克风电平是 **9k–26k**（喇叭漏音），用户语音被压在下面，MultiNet 在整个播放期间**一次都没检出**（全日志仅两次检出，都在机器人安静时：prob 0.300 / 0.653，阈值 0.20）。
+- 修法：①判定换成 `voice_playback_pending() = robot_audio_is_playing() || robot_audio_playback_buffered_samples() > 0`，把"入队未开播"也算在内；②等待上限放到 180 s（长回复）并在等待中响应打断（取消则 `robot_audio_abort_playback()` 立即静音，再走 restart 开新一轮）；③"没人说话"的退出除采集回调外，**在录音循环里也按时间兜底**（采集停摆时不再录满 10 s）。
+- 验证：`idf.py build` exit 0、`deskemoji_robot.bin` 0x148cc0（84% 空闲）。**未验证：真机**（要重新烧录验证"回复播完才开始听下一句""长回复期间不再被 4 秒超时打断对话"）。
+- **待用户决定（打断的路线）**：真打断需要 ESP-SR 的 AFE（`aec_init`，用播放 PCM 当参考信号把喇叭漏音从麦克风里扣掉）——这是唯一能让"边听边说"稳定工作的办法，属中等改造（`robot_wakeup` 从"裸 PCM → MultiNet"改成 AFE 流程 + 播放参考接入）。备选是退回"只有按键能打断"或只保留"播完接着说"。

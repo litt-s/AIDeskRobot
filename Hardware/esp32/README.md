@@ -136,6 +136,8 @@ NVS 落点：
 - 播放是半双工：播放期间暂停采集，避免单麦、无 AEC 的自激。
 - 取消：`robot_voice_cancel()` 同时置停止与取消标志，读取循环据此截断流、丢弃队列、恢复采集——这是“长回答按一次停不下来”的修法。
 - **连续对话**：`follow_up_ms > 0` 时，一轮正常结束后自动开下一轮聆听（不回唤醒词、不播提示音）；没人说话、被取消或出错就结束整段对话。上限 30 轮兜底（`VOICE_MAX_TURNS_PER_CONVERSATION`）。
+- **“播完”要怎么看**：下一轮必须等上一轮**真的播完**（含"已入队但还在预缓冲"那段），判据是 `robot_audio_is_playing() || robot_audio_playback_buffered_samples() > 0`；只看前者会踩空——预缓冲窗口里它是 false，结果录音抢在回复开播之前开始，"没人说话"的超时还会在回复仍在播放时结束整段对话。
+- **没人说话的退出有两处**：采集回调里按帧统计之外，录音主循环也按时间兜底（回调不跑时不会傻等满 `MAX_RECORD_MS`）。
 - **起始静音超时**：一轮里还没听到人声时，`follow_up_ms` 到点即结束且**不上传**（旧行为是录满 `MAX_RECORD_MS` 再把 10 秒静音传上去）。
 - **打断（barge-in）**：回答播放期间麦克风与唤醒引擎都保持工作，唤醒词被听到就切断回复流并立刻进入下一轮聆听（`robot_voice_interrupt_listen()`）。代价是单麦无 AEC 会听见自己的声音——关掉 `ROBOT_CLOUD_VOICE_BARGE_IN` 即回到原来的半双工（只有按键能打断）。
 
@@ -261,6 +263,8 @@ provisioning requested from BOOT long press
 | `Failed to set URL`、设备通道一直不在线 | 地址不可达或设备码不对。先在同一 Wi-Fi 下用手机／电脑打开该地址，再确认设备已绑定 |
 | 唤醒没反应 | 先看 `offline wake ready`（引擎已就绪）与 `ready prompt drained; microphone resumed for offline wake`（麦克风真的在采集）。**若"只有重启后第一次不灵、按一次 BOOT 就好"，那是 T031 已修的老 bug**；若一直不灵，看有没有 `offline wake UNAVAILABLE`／`no wake model`（模型分区没烧全） |
 | 待机时看不到 `microphone peak=` | 说明采集被暂停（`robot_audio_set_capture_paused(true)` 之后没人恢复），唤醒引擎同样拿不到数据 |
+| `capture report: 0 ms of audio over … ms wall` | 这段录音一帧都没进来：通常是"以为没在播、其实在播"（播放期间 tap 丢帧）或采集被暂停。**"回复播完再聆听"的判据已修**（见 §7）；仍复现就把日志贴出来 |
+| 播放期间喊唤醒词打断不了 | **单麦无 AEC 的已知上限**：喇叭漏音在麦克风上是 9k–26k，用户语音被压在里面，MultiNet 检不出。真打断需要上 AEC（ESP-SR AFE）；当前请用 BOOT 打断 |
 | 识别断断续续 | 先看 `capture report`：`audio ≈ wall` 且有 `gaps >= 400 ms` → 是音频里真实的停顿；`audio` 明显小于 `wall` → 采集丢帧 |
 | 识别不到／听不清 | 看 `microphone peak`：长期只有几十 → 麦克风没接或 `ROBOT_MIC_SHIFT` 不对；长期钉在 32768、RMS 过半 → 增益过大，语音被钳成方波 |
 | 长回答按一次停不下来 | 已修（`robot_voice_cancel`）。若复现，请保留 `robot_voice:` 前后的完整日志 |
