@@ -33,3 +33,4 @@ migrations 现为 0001_initial、0002_limits、0003_generations、0004_devices�
 依赖变化：新增 `@hono/node-server`（HTTP 服务）与把 `ws` 从 devDependencies 提到 **dependencies**（运行时需要）；`types/ws.d.ts` 是仓库内的最小类型声明（见 LEARNINGS：ws 的 exports 没有 types 条件，`@types/ws` 在 `moduleResolution: bundler` 下解析不到）。新增命令 `npm run build:node`（esbuild 打包 `server/node/index.ts` → `dist-server/index.mjs`，`--packages=external` 保留 node_modules 依赖）与 `npm run start:node`；`npm run check` 已把 `build:node` 纳入。
 
 约束不变：仍**不得**修改 Android／MiniProgram／Design；机器人既有语音链路（`robot_audio`、`robot_wakeup`）行为不动。形态 B 是**新增**运行形态，形态 A 的线上入口保持可用（回滚路径）。
+形态 B 另有三个可选环境变量：`PORT`（默认 80）、`DB_PATH`（默认 `./data/aidesk.sqlite`，**必须挂持久卷**）、`SEED_FILE`（默认 `/app/seed/seed.sql`，只在库为空时执行一次，用于把已有账号/设备/凭据搬进新库）。

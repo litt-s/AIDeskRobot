@@ -27,3 +27,5 @@ volc-tts-smoke.mp3
 # ---- CloudBase 容器版：Node 打包产物与本机 SQLite 数据（真库，含用户/设备数据）----
 dist-server/
 data/
+# ---- 播种文件含真实账号/设备/凭据密文，只在本机生成、只进代码包，不入库 ----
+seed/*.sql

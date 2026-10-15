@@ -211,7 +211,7 @@ VOLC_API_KEY=你的key npm run volc:smoke
 ## 腾讯云 CloudBase 云托管（T034，2026-10-15 起）
 **为什么走这条**：Cloudflare 免费版本身没问题（隧道实测 6/6），但 `workers.dev`／`pages.dev`／`.xin` 这类**被点名的主机名模式**在境内被针对性干扰（见「上线状态」的对照实验）。国内托管 + **CloudBase 默认域名** 既不出境、又**免备案**（自有域名绑上去才需要 ICP 备案）。目标形态是**单容器**：一个 Node 进程同时给前端静态资源和 `/api`，与现在"同源"的形态一致（不改前端、不加跨域）。
 
-**产物**：`Dockerfile`（两段构建：`npm ci` + `npm run build` + `npm run build:node` → 运行段只留生产依赖）、`.dockerignore`（排除 `Hardware/`、`node_modules/`、`.dev.vars` 等）、`server/node/**`。代码包 zip（`data/cloudbase-source.zip`）由 `git archive` 从已提交的版本生成，**不含** `Hardware/`、`.dev.vars`、`sdkconfig`。
+**产物**：`Dockerfile`（两段构建：`npm ci` + `npm run build` + `npm run build:node` → 运行段只留生产依赖）、`.dockerignore`（排除 `Hardware/`、`node_modules/`、`.dev.vars` 等）、`server/node/**`。代码包 zip（`data/cloudbase-source.zip`）由 `git archive` 从已提交的版本生成（再补进不入库的 `seed/seed.sql`），**不含** `Hardware/`、`.dev.vars`、`sdkconfig`。
 
 ### 步骤（控制台，只能由账号持有人操作）
 1. **建环境**：腾讯云 → 云开发 CloudBase 控制台 → 新建环境（按量计费，新用户有免费额度）→ 记下**环境 ID**。
@@ -229,3 +229,30 @@ VOLC_API_KEY=你的key npm run volc:smoke
 
 ### 与 Cloudflare 版的关系
 两个形态可以并存：Cloudflare 版是**回滚路径**（`aideskrobot.xin` 仍然在线），CloudBase 版是**主路径**。两边数据库**不互通**——CloudBase 上是独立的 SQLite，需要重新注册与建设备（现有账号/设备数据在本地 D1 与 Cloudflare D1 里，都不在 CloudBase）。
+
+### 从已有数据播种（可选，T034 实测通过）
+**为什么**：CloudBase 那边是**全新的空库**。若什么都不做，换托管就要"重新注册账号 → 重填模型密钥（要翻找 DeepSeek 的 key）→ 重填语音凭据（要翻找火山的 key）→ 重新建设备 → 到配网页面把新设备码敲进机器人"——半夜做这些很容易出错。播种把这一串变成零操作。
+
+**怎么做**：`server/node/index.ts` 的 `applySeed()` 在**库为空**（`users` 表没有行）时执行 `seed.sql`；库非空就只打一行 `seed skipped` 跳过，所以重启、重新发布都不会重复灌。镜像里固定读 `/app/seed/seed.sql`（Dockerfile 用 `ENV SEED_FILE` 指过去）。**播种文件不能放在数据卷里**——卷是空的才需要播种，放卷里就永远读不到。
+
+**播种文件怎么生成**（一次性工具，用完即弃、不入库）：从本机开发库 `VACUUM INTO` 出一份快照，再按 `user_id` 导出 `users/models/roles/conversations/messages/devices/voice_settings` 的 `INSERT OR REPLACE` 语句。生成时注意两点：①**列名显式写出**（裸 `VALUES` 会在 schema 加列后静默错位）；②字符串值里的单引号要双写转义。
+
+**为什么搬过去就能直接用**：模型密钥与语音 API Key 都是 AES-GCM 密文，**同一把 `ENCRYPTION_KEY` 就能解开**；设备的 `key_hash` 不变 ⇒ **机器人不用重新配网**（只需改服务器地址）；账号口令哈希不变 ⇒ 原来的用户名密码照登。
+
+**实测（本地，2026-10-15）**：空库 + 播种 → `seed applied: … (users=1)`；用播种进去的**探测设备**调 `/api/device/hello` → **200**（假 key → 401）；同一个库重启 → `seed skipped (users=1)`；对播种后的密文用同一把 `ENCRYPTION_KEY` 解密 → 模型密钥（`sk-` 开头、35 字符）与语音 Key（46 字符）**都能解开**。最终发布的 `seed.sql`（不含探测设备）落库结果：users 1／models 1／roles 2／conversations 8／messages 120／**devices 1**（正是那台 `DeepSeek`，`key_mask` 一致）／voice_settings 1。
+
+**上线后可删**：数据落进数据卷之后，代码包里可以不再带 `seed/seed.sql`（留着也无害：库非空就跳过）。
+
+
+### 从已有数据播种（可选，T034 实测通过）
+**为什么**：CloudBase 那边是**全新的空库**。若什么都不做，换托管就要"重新注册账号 → 重填模型密钥（要翻找 DeepSeek 的 key）→ 重填语音凭据（要翻找火山的 key）→ 重新建设备 → 到配网页面把新设备码敲进机器人"——半夜做这些很容易出错。播种把这一串变成零操作。
+
+**怎么做**：`server/node/index.ts` 的 `applySeed()` 在**库为空**（`users` 表没有行）时执行 `seed.sql`；库非空就只打一行 `seed skipped` 跳过，所以重启、重新发布都不会重复灌。镜像里固定读 `/app/seed/seed.sql`（Dockerfile 用 `ENV SEED_FILE` 指过去）。**播种文件不能放在数据卷里**——卷是空的才需要播种，放卷里就永远读不到。
+
+**播种文件怎么生成**（一次性工具，用完即弃、不入库）：从本机开发库 `VACUUM INTO` 出一份快照，再按 `user_id` 导出 `users/models/roles/conversations/messages/devices/voice_settings` 的 `INSERT OR REPLACE` 语句。生成时注意两点：①**列名显式写出**（裸 `VALUES` 会在 schema 加列后静默错位）；②字符串值里的单引号要双写转义。
+
+**为什么搬过去就能直接用**：模型密钥与语音 API Key 都是 AES-GCM 密文，**同一把 `ENCRYPTION_KEY` 就能解开**；设备的 `key_hash` 不变 ⇒ **机器人不用重新配网**（只需改服务器地址）；账号口令哈希不变 ⇒ 原来的用户名密码照登。
+
+**实测（本地，2026-10-15）**：空库 + 播种 → `seed applied: … (users=1)`；用播种进去的**探测设备**调 `/api/device/hello` → **200**（假 key → 401）；同一个库重启 → `seed skipped (users=1)`；对播种后的密文用同一把 `ENCRYPTION_KEY` 解密 → 模型密钥（`sk-` 开头、35 字符）与语音 Key（46 字符）**都能解开**。最终发布的 `seed.sql`（不含探测设备）落库结果：users 1／models 1／roles 2／conversations 8／messages 120／**devices 1**（正是那台 `DeepSeek`，`key_mask` 一致）／voice_settings 1。
+
+**上线后可删**：数据落进数据卷之后，代码包里可以不再带 `seed/seed.sql`（留着也无害：库非空就跳过）。

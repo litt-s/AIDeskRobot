@@ -64,6 +64,35 @@ function applyMigrations(db: DatabaseSync) {
   }
 }
 
+/*
+ * 可选的一次性数据播种。
+ *
+ * 用途：把本机（或 Cloudflare）上已经存在的那套数据原样搬进新库——账号、模型、角色、
+ * 设备、语音凭据。密文（模型密钥、语音 API Key）用的还是**同一个 ENCRYPTION_KEY**，
+ * 所以搬过去就能直接解密使用；设备的 `key_hash` 不变，**机器人不用重新配网**。
+ *
+ * 只在库是空的时候执行（users 表没有行），所以重启、重发都不会重复灌。
+ * 播种文件**不能放在数据卷里**——卷是空的才需要播种，放卷里就永远读不到；默认放 /app/seed/seed.sql。
+ */
+function applySeed(db: DatabaseSync, dbPath: string) {
+  const file = process.env.SEED_FILE || join(dirname(dbPath), 'seed.sql');
+  if (!existsSync(file)) return;
+  const users = (db.prepare('SELECT COUNT(*) AS n FROM users').get() as {n: number}).n;
+  if (users > 0) {
+    console.log(`seed skipped (users=${users}): ${file}`);
+    return;
+  }
+  db.exec('BEGIN');
+  try {
+    db.exec(readFileSync(file, 'utf8'));
+    db.exec('COMMIT');
+  } catch (error) {
+    db.exec('ROLLBACK');
+    throw error;
+  }
+  console.log(`seed applied: ${file} (users=${(db.prepare('SELECT COUNT(*) AS n FROM users').get() as {n: number}).n})`);
+}
+
 function openDatabase() {
   const path = process.env.DB_PATH || join(process.cwd(), 'data', 'aidesk.sqlite');
   if (path !== ':memory:') mkdirSync(dirname(path), {recursive: true});
@@ -71,6 +100,7 @@ function openDatabase() {
   db.exec('PRAGMA foreign_keys = ON');
   db.exec('PRAGMA busy_timeout = 5000');
   applyMigrations(db);
+  applySeed(db, path);
   console.log(`database ready: ${path}`);
   return createD1(db);
 }

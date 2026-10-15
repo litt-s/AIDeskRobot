@@ -37,6 +37,6 @@ production 未配置密钥时拒绝服务。开发密钥仅示例或 gitignored 
 2. **语音识别**：Worker 版靠 `fetch(..., {headers:{Upgrade:'websocket'}})` 拿 `response.webSocket`——这是 Workers 专有语义，Node 没有。`server/node/asr-ws.ts` 用 `ws` 直连同一端点，**帧协议复用 `server/voice/frames.ts`**（与 Worker 版同一份编解码实现，对照已真机验证过 `scripts/volc-voice-smoke.mjs`）。`volc.ts` 里加了 `setTranscriber()` 注入点：Worker 不注入（保持原路径零改动），Node 启动时注入。**TTS 不需要适配**——那是普通 `fetch` 流式响应，两边一样。
 3. **静态资源**：Worker 由 `wrangler.jsonc` 的 `assets`（`not_found_handling: single-page-application`）兜底；Node 版在 `server/node/index.ts` 里读 `dist/`：**没有扩展名的路径**回落 `index.html`（前端路由），**有扩展名却找不到**则返回 404（否则拼错的文件名会拿到一段 HTML，浏览器报 `Unexpected token '<'`，把真正的原因藏起来）。
 
-启动顺序（Node 版）：建/打开 SQLite → `PRAGMA foreign_keys=ON`／`busy_timeout` → 跑 `migrations/*.sql`（记在 `_migrations` 表里，**跑过就不跑**——`ALTER TABLE` 不幂等，不能靠 SQL 自己保证）→ `setTranscriber()` → `serve()`。数据文件默认 `./data/aidesk.sqlite`（可用 `DB_PATH` 覆盖），**该目录必须挂持久卷**，否则容器发布即丢库。
+启动顺序（Node 版）：建/打开 SQLite → `PRAGMA foreign_keys=ON`／`busy_timeout` → 跑 `migrations/*.sql`（记在 `_migrations` 表里，**跑过就不跑**——`ALTER TABLE` 不幂等，不能靠 SQL 自己保证）→ **可选播种**（`seed.sql` 存在且 `users` 表为空时执行一次，见 DEPLOY「从已有数据播种」）→ `setTranscriber()` → `serve()`。数据文件默认 `./data/aidesk.sqlite`（可用 `DB_PATH` 覆盖），**该目录必须挂持久卷**，否则容器发布即丢库。
 
 限流按来源 IP 分桶，Worker 读的是 `CF-Connecting-IP`；容器里由入口把 `X-Forwarded-For` 的第一个地址补成这个头（容器只经平台网关暴露），业务代码因此一行不用改。

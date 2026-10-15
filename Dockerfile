@@ -18,6 +18,9 @@ RUN npm ci --omit=dev && npm cache clean --force
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/dist-server ./dist-server
 COPY migrations ./migrations
+# 可选的一次性播种（把已有账号/设备/模型/语音凭据搬进新库）；seed/seed.sql 不入库，缺失时启动会自动跳过。
+COPY seed ./seed
+ENV SEED_FILE=/app/seed/seed.sql
 EXPOSE 80
 # 语音识别走 ws（server/node/asr-ws.ts），不需要额外系统依赖。
 CMD ["node", "dist-server/index.mjs"]
