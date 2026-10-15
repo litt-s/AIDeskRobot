@@ -633,3 +633,8 @@ T001–T017 与 T009 已完成（依据见各任务条目）。**T018 语音对�
 - `web/src/style.css`：默认 `.nav-short{display:none}`；在 `@media(max-width:768px)` 内加 `white-space:nowrap;min-width:0`、`.nav-long{display:none}`、`.nav-short{display:inline}`，避免窄屏按钮内部断行；其它窄屏样式不动。
 - 验证：`npm run typecheck` exit 0、`npm run build` 成功（CSS 15.84 kB、JS 259.58 kB）。
 - **未验证**：真机/模拟器 UI 截图；Android APK 仍需用户从 GitHub Actions 重新下载安装。
+
+
+### 2026-10-15 — T040 CI 收尾
+- commit `eac7562` 推送后 Run #46（`38751086336`）完成：`verify` 与 `android` 均 success。`android` job 的 `gradle --no-daemon assembleDebug` 通过，`aidesk-android-debug` artifact 已更新。
+- **未验证**：真机/模拟器导航视觉效果；需用户重新下载并安装新 APK 后确认。
