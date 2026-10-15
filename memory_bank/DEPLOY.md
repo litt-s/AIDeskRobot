@@ -383,3 +383,13 @@ node scripts/deploy-cloudbase.mjs --no-pull  # 跳过拉取（不想让线上数
 **意义**：库里有什么完全由代码包里的种子决定，而"先拉回、再打包"把丢数据的窗口从"上次拉取到现在（默认 10 分钟）"压到"开始打包到发布完成（几分钟）"。**实测（版本 009）**：跑完一键部署后 `health=200`、再拉回来看 `users=1 devices=2 models=1 roles=2 voice_settings=1 conversations=8 messages=120`、固件默认码 `hello` → 200 ⇒ 数据确实跟着发布过去了。
 
 ⚠️ **平台侧会偶发构建失败**：第一次跑（版本 008）构建日志最后一行是 `error from registry: blob unknown to registry - sha256:…` —— 这是云端镜像仓库的瞬时问题，**不是代码问题**，线上版本 007 一直正常；原样重跑一次即成功。
+
+### 小程序（T038）后端通道：为什么"重新部署"之前必须先提交（2026-10-16）
+现象：微信开发者工具能连 CloudBase，但小程序登不上；另一会话的诊断是"把最新后端重新部署到云托管"。方向对，但**漏了两个关键前提**：
+1. **那段后端代码当时只存在于工作区、没有提交**。`node scripts/deploy-cloudbase.mjs` 打包的是 `git archive HEAD`（**已提交**的内容），所以"未提交的后端改动"无论部署多少次都不会上线。这次缺的正是小程序要用的 Bearer 通道：`requestSessionToken()`（读 `Authorization: Bearer`）+ `X-Aidesk-Client: miniprogram` 时 register/login 额外返回 `sessionToken` 并跳过 Origin 校验。→ **先提交，再部署**。
+2. **部署必须走一键脚本**（见上条规则）：直接 `tcb cloudrun deploy` 会把线上库打回旧种子，机器人的设备码立刻 401——这正是昨晚踩过的坑。
+
+**实测（版本 010，2026-10-16 00:0x）**：
+- 部署前先拉回线上库 → 部署后复查：`users=1 devices=2 models=1 roles=2 voice_settings=1 conversations=8 messages=120`，两台设备（`••••-SGZX` + 固件默认码 `••••-VP1R`）都在 ⇒ **数据没丢、机器人不受影响**。
+- 小程序通道端到端：带 `X-Aidesk-Client: miniprogram` 注册 → **201 + `sessionToken`（43 字符）**；`GET /api/auth/me` 带 `Authorization: Bearer <token>` → **200**；不带令牌 → **401**；`POST /api/auth/logout`（Bearer）→ **200**，之后 `me` → **401**。
+- 提示：**别把"小程序 + 后端"打成一个 CloudBase 部署包**——小程序是微信开发者工具上传的（不走云托管），后端走一键脚本，两者通道不同。

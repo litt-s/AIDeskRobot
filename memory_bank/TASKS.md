@@ -151,3 +151,4 @@
     - **方案 B（CloudBase SQL 型数据库）评估**（用户问"麻烦吗"）：**不是"直接改"那么轻**——需要①你在控制台新建 SQL 实例（新资源），并大概率要给云托管服务配 VPC 才能连；②代码侧移植：`mysql2` 依赖（package.json 当前被并行会话的桌面端改动占着，提交会连带）、`ON CONFLICT DO UPDATE`→`ON DUPLICATE KEY UPDATE`、限流那处 `INSERT … RETURNING` 要改写、`ORDER BY rowid` 要换成自增列、`CREATE INDEX IF NOT EXISTS` 在 MySQL 不成立、迁移脚本要另写一套；③把现有种子数据迁进去。估时一个完整任务，建议演示过后按 T041 排期。
 
 已完成本地编码与服务端 Bearer token 支持；网页 Cookie 行为不变，网页 typecheck/test/build/build:node 通过；未验证微信开发者工具/真机全链路。
+      - **2026-10-16 00:0x 收尾**：后端 Bearer 通道原在工作区未提交，线上（版本 009，由 HEAD 构建）没有它 ⇒ 小程序登不上。已代为提交（`df71050`）并用 `node scripts/deploy-cloudbase.mjs` 部署（版本 010）：部署前拉回线上库，部署后复查 `users=1 devices=2 …` 全在（机器人不受影响）；端到端实测 注册(小程序标记)→201+`sessionToken`、`me`(Bearer)→200、无令牌→401、logout(Bearer)→200 且随后 401。小程序侧可重新编译登录。另：不要把小程序与后端打成一个云托管部署包（小程序走微信开发者工具上传）。
