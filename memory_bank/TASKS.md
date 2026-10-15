@@ -1,8 +1,8 @@
 # AIDesk 机器人控制台 TASKS
 
-状态：已确认；更新2026-10-14。用户批准连续执行，一次完成一项后同步文档；禁止部署推送创建云资源及修改原四目录。
+状态：已确认；更新2026-10-15。用户批准连续执行，一次完成一项后同步文档；2026-10-15 已明确授权 T036 新增 Android 端，Hardware/MiniProgram/Design 仍不改。
 
-当前任务：T026 源码托管——已推送到 GitHub（公开仓库，提交 09a5800）。T025 部署：Cloudflare Worker + D1 就绪，但线上地址在国内网络不可达（workers.dev DNS 污染），等你决定下一步（接域名／代理／换托管）。T019 会议纪要暂停在需求确认阶段。域名已定路线：自购 `.xin` 域名接 Cloudflare 绑 custom domain（**实名审核中**），审核通过即部署并复验国内可达性；T025 遗留的线上 D1 备份与回滚已完成（见下）。T020–T024 **已于 2026-10-15 由用户真机验收通过**（配网页面逐字段保存、BOOT 长按配网、设备页与对话页自动刷新、语音质量、一键取消），详见下方验收条目。
+当前任务：T036 Android 端——**编码完成，待 GitHub Actions Android 构建验证**。实现为原生 WebView 控制台壳：完全加载网页端响应式 SPA，共用同源 Cookie、账户、模型、角色、聊天、设备与语音设置；首次启动可选择 Cloudflare/CloudBase/局域网地址。后续只有 Android 真机安装与登录验收未做。
 
 - T001 基础工程与记忆：已完成。九文档、协作规则、依赖锁、Wrangler/Vite配置、本地D1迁移通过；audit 0漏洞。
 - T002 认证：已完成。公开注册登录退出、PBKDF2、随机hashed session、origin、限流；隔离集成测试通过。
@@ -113,3 +113,7 @@
 
   - T025 追加（2026-10-15）：**改 `wrangler.jsonc` 的 `database_id` 会切换本地 D1 文件**——把占位 ID 换成云端真实 ID 后，`wrangler dev` 去读一个空的本地库，导致所有 `/api/*` 返回 500（连 `/api/auth/me` 也不例外）。已把旧库文件（含 `-wal`／`-shm`）复制到新 ID 对应的文件名下，本地开发数据完整恢复（14 表；users 58／models 2／roles 2／devices 1／voice_settings 1）。本地 D1 文件位于 `.wrangler/state/v3/d1/miniflare-D1DatabaseObject/<hash>.sqlite`（已 gitignore）。
 - T035 通用应用图标资产：已完成（网页端已接线，`npm run build` 通过）。新增 `assets/icons/`、`scripts/generate-icons.py`、`web/public/` favicon 与 `web/index.html` 引用；小程序可直接上传 PNG，Android/PC/macOS 资源已产出但打包接线与真机效果未验证。
+
+
+- T036 Android 端完全移植网页端（2026-10-15 用户要求「帮我完成android端的开发，完全移植网页端就行」）：**编码完成**。新增 `Android/` Gradle 工程（Java 17/AGP 8.7.2/Gradle 8.9/compileSdk 35/minSdk 26/targetSdk 35），单 Activity 原生 WebView 壳加载用户配置的控制台地址；保留同源 HttpOnly Cookie、DOM Storage、SPA 路由、SSE 聊天、暂停续写、撤销/重新生成、设备与语音设置等网页端全部能力。首次启动支持 Cloudflare/CloudBase/局域网地址，底部提供重新加载/更换服务器；允许局域网 HTTP；返回键优先 WebView 历史；退出/切后台 flush Cookie。复用 T035 adaptive 图标（mdpi–xxxhdpi）。新增 GitHub Actions `android` job（Temurin 17 + Gradle 8.9 + `assembleDebug` 并上传 APK）。
+  - **未验证**：本机没有 JDK/Android SDK，官方与镜像下载被网络重置，无法本地 `assembleDebug`；GitHub Android 构建和真机安装/登录/聊天/设备页尚未验证。也不做正式签名发布。

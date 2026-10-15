@@ -18,3 +18,6 @@ users(id,username,password_hash,salt)；sessions(token_hash,user_id,expires_at)�
 
 ## 设备侧 NVS（配网页写入，不是 D1）
 `wifi_cfg`：`ssid`、`password`；`cloud_cfg`：`url`（控制台服务器地址）、`key`（设备码）。配网页**填了才写、留空不写**（逐字段保存，没填的字段保持原值）；设备码在 NVS 内明文保存，页面只显示后四位，不显示完整值。启动时逐字段回落：NVS 缺哪一项才用固件编译值（`ROBOT_CLOUD_URL`／`ROBOT_CLOUD_KEY`）。
+
+## Android 客户端数据（T036）
+不新增服务端表和字段。Android 本地只持久化两类轻量状态：SharedPreferences 的 `server_url` 与 WebView Cookie/LocalStorage；控制台业务数据仍完全归服务端用户隔离数据模型所有。

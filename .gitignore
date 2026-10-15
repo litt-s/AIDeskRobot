@@ -29,3 +29,15 @@ dist-server/
 data/
 # ---- 播种文件含真实账号/设备/凭据密文，只在本机生成、只进代码包，不入库 ----
 seed/*.sql
+
+# ---- PC 桌面端打包产物 ----
+desktop/release/
+# ---- Android build ----
+Android/.gradle/
+Android/build/
+Android/app/build/
+Android/local.properties
+Android/.idea/
+Android/*.iml
+# ---- Local portable build tool cache ----
+.tools/

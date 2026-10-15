@@ -40,3 +40,7 @@ production 未配置密钥时拒绝服务。开发密钥仅示例或 gitignored 
 启动顺序（Node 版）：建/打开 SQLite → `PRAGMA foreign_keys=ON`／`busy_timeout` → 跑 `migrations/*.sql`（记在 `_migrations` 表里，**跑过就不跑**——`ALTER TABLE` 不幂等，不能靠 SQL 自己保证）→ **可选播种**（`seed.sql` 存在且 `users` 表为空时执行一次，见 DEPLOY「从已有数据播种」）→ `setTranscriber()` → `serve()`。数据文件默认 `./data/aidesk.sqlite`（可用 `DB_PATH` 覆盖），**该目录必须挂持久卷**，否则容器发布即丢库。
 
 限流按来源 IP 分桶，Worker 读的是 `CF-Connecting-IP`；容器里由入口把 `X-Forwarded-For` 的第一个地址补成这个头（容器只经平台网关暴露），业务代码因此一行不用改。
+
+
+## Android 客户端架构（T036）
+`Android/app/src/main/java/cn/aidesk/console/MainActivity.java` 是单 Activity 壳：无地址时渲染原生服务器设置页，有地址后创建 `WebView` 并加载用户保存的控制台 URL。WebView 启用 JavaScript/DOM Storage/Database，CookieManager 接受并 flush Cookie，因此登录态、SPA 状态与网页端完全同源。`shouldOverrideUrlLoading` 只允许当前控制台 origin 内部导航，外部 origin 交给系统浏览器，避免服务器地址被页面任意替换。Activity 生命周期里暂停/恢复 WebView、持久化 Cookie；返回键优先执行 WebView 历史。业务 API、聊天 SSE、设备轮询与语音设置没有任何 Android 副本，仍由 `server/**` 提供。

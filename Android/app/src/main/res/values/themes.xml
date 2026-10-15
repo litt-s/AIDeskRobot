@@ -1,0 +1,9 @@
+<resources>
+    <style name="Theme.AIDesk" parent="@android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">@color/aidesk_background</item>
+        <item name="android:navigationBarColor">@color/aidesk_background</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:colorPrimary">@color/aidesk_primary</item>
+        <item name="android:colorAccent">@color/aidesk_primary</item>
+    </style>
+</resources>

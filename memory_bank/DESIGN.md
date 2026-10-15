@@ -1,6 +1,6 @@
 # AIDesk 机器人控制台 DESIGN
 
-状态：已确认；最后更新：2026-10-13。用户已明确批准全方案并连续执行 T001–T006，每项验收及文档同步后进入下一项。禁止部署、推送、创建云资源；不得修改 Hardware、Android、MiniProgram、Design。
+状态：已确认；最后更新：2026-10-15。用户已明确批准全方案并连续执行 T001–T006，每项验收及文档同步后进入下一项。禁止部署、推送、创建云资源；不得修改 Hardware、Android、MiniProgram、Design。
 
 ## 效果
 机器人工作台的冷白纸面与深青蓝控制面板；珊瑚色仅用于机器人信号眼。
@@ -31,3 +31,7 @@
 
 ## 应用图标
 青蓝圆角渐变背景配白色机器人脸；眼睛和嘴用青蓝，天线信号点用珊瑚色，保持极简几何。源文件在 `assets/icons/aidesk-icon.svg`，多尺寸 PNG、Windows `.ico`、macOS `.icns` 与 Android adaptive foreground/background 同目录生成。网页 favicon 已放到 `web/public/` 并在 `web/index.html` 引用；生成脚本为 `scripts/generate-icons.py`。
+
+
+## Android 视觉与交互（T036）
+Android 不重画控制台，首屏使用与网页一致的浅色品牌基调：背景 `#F7F8FB`、主按钮 `#2563EB`、正文 `#17203A`。首次启动页只有“控制台地址”一个输入项，说明文案明确Cloudflare、腾讯 CloudBase、局域网地址都可用。进入控制台后加载网页端完整响应式界面；底部保留 50dp 的白色原生条，仅提供「重新加载」和「更换服务器」，不遮挡业务内容。系统状态栏/导航栏同为浅色背景，adaptive launcher 复用 T035 的 5 密度资源。

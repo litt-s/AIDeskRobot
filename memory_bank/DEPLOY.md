@@ -1,6 +1,6 @@
 # AIDesk 机器人控制台 DEPLOY
 
-状态：已确认；最后更新：2026-10-13。用户已明确批准全方案并连续执行 T001–T006，每项验收及文档同步后进入下一项。禁止部署、推送、创建云资源；不得修改 Hardware、Android、MiniProgram、Design。
+状态：已确认；最后更新：2026-10-15。用户已明确批准全方案并连续执行 T001–T006，每项验收及文档同步后进入下一项。禁止部署、推送、创建云资源；不得修改 Hardware、Android、MiniProgram、Design。
 
 ## 部署目标
 Cloudflare Worker（`aidesk-console`，同一 Worker 同时提供 SPA 静态资源与 `/api`）+ D1（`aidesk`）。**2026-10-15 已实际部署**，细节见文末「实际执行记录（2026-10-15）」；源码托管已于同日推送到 GitHub（公开仓库，见下「源码托管」小节）。
@@ -256,3 +256,9 @@ VOLC_API_KEY=你的key npm run volc:smoke
 **实测（本地，2026-10-15）**：空库 + 播种 → `seed applied: … (users=1)`；用播种进去的**探测设备**调 `/api/device/hello` → **200**（假 key → 401）；同一个库重启 → `seed skipped (users=1)`；对播种后的密文用同一把 `ENCRYPTION_KEY` 解密 → 模型密钥（`sk-` 开头、35 字符）与语音 Key（46 字符）**都能解开**。最终发布的 `seed.sql`（不含探测设备）落库结果：users 1／models 1／roles 2／conversations 8／messages 120／**devices 1**（正是那台 `DeepSeek`，`key_mask` 一致）／voice_settings 1。
 
 **上线后可删**：数据落进数据卷之后，代码包里可以不再带 `seed/seed.sql`（留着也无害：库非空就跳过）。
+
+
+## Android 构建与分发（T036）
+代码在 `Android/`。本机要求 JDK 17 + Gradle 8.9 + Android SDK Platform 35；在 `Android/` 目录执行 `gradle assembleDebug`，产物是 `app/build/outputs/apk/debug/app-debug.apk`。GitHub Actions `android` job 已在 Ubuntu runner 上执行同一命令并上传 `aidesk-android-debug` artifact，可直接下载安装调试包。
+
+首次启动 App 要求填写完整控制台地址：Cloudflare/CloudBase 用 `https://...`，局域网 Node 容器可用 `http://192.168.x.x:端口`。更换服务器可通过底部原生「更换服务器」或右上溢出菜单。因为 Android 只保存服务器 URL 和 WebView Cookie，清应用数据即可登出并清除本机会话；服务端账户、模型、设备与密钥不受影响。发布签名 APK 仍需后续提供正式 keystore，当前未配置。

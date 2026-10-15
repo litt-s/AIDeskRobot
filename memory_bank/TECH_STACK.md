@@ -1,6 +1,6 @@
 # AIDesk 机器人控制台 TECH_STACK
 
-状态：已确认；最后更新：2026-10-13。用户已明确批准全方案并连续执行 T001–T006，每项验收及文档同步后进入下一项。禁止部署、推送、创建云资源；不得修改 Hardware、Android、MiniProgram、Design。
+状态：已确认；最后更新：2026-10-15。用户已明确批准全方案并连续执行 T001–T006，每项验收及文档同步后进入下一项。用户 2026-10-15 已授权 T036 新增 Android 工程；Hardware/MiniProgram/Design 仍不改。
 
 ## 已批准技术
 React TypeScript Vite；Hono Cloudflare Workers；D1 SQLite；单根 package.json。
@@ -34,3 +34,9 @@ migrations 现为 0001_initial、0002_limits、0003_generations、0004_devices�
 
 约束不变：仍**不得**修改 Android／MiniProgram／Design；机器人既有语音链路（`robot_audio`、`robot_wakeup`）行为不动。形态 B 是**新增**运行形态，形态 A 的线上入口保持可用（回滚路径）。
 形态 B 另有三个可选环境变量：`PORT`（默认 80）、`DB_PATH`（默认 `./data/aidesk.sqlite`，**必须挂持久卷**）、`SEED_FILE`（默认 `/app/seed/seed.sql`，只在库为空时执行一次，用于把已有账号/设备/凭据搬进新库）。
+
+
+## Android 客户端（2026-10-15 T036 新增）
+选择**原生 WebView 控制台壳**而不是复制一套业务 UI：网页端 React/Vite 已经是响应式单页应用，同一 origin 的 HttpOnly Cookie、SSE 流、轮询、暂停续写和 SPA 路由都能被 Android WebView 完整承载。Android 只保留三件原生职责：服务器地址持久化（SharedPreferences）、WebView Cookie/LocalStorage 持久化、加载/更换服务器原生入口。
+
+工程基线：Java 17、Android Gradle Plugin 8.7.2、Gradle 8.9、compileSdk 35、minSdk 26、targetSdk 35；无 AndroidX/第三方运行时依赖。包名 `cn.aidesk.console`。为支持局域网 Node 容器，应用声明允许 HTTP 明文；所有密钥仍只存在服务端，Android 只保存用户选择的服务器 URL 和平台 Cookie。

@@ -1,6 +1,6 @@
 # AIDesk 机器人控制台 LEARNINGS
 
-状态：已确认；最后更新：2026-10-13。用户已明确批准全方案并连续执行 T001–T006，每项验收及文档同步后进入下一项。禁止部署、推送、创建云资源；不得修改 Hardware、Android、MiniProgram、Design。
+状态：已确认；最后更新：2026-10-15。用户已明确批准全方案并连续执行 T001–T006，每项验收及文档同步后进入下一项。禁止部署、推送、创建云资源；不得修改 Hardware、Android、MiniProgram、Design。
 
 ## 已确认的问题
 - npm解析最新Wrangler4要求workers-types5；升级types后安装通过。
@@ -356,3 +356,7 @@ SPA 兜底（`not_found_handling: single-page-application`）的常见实现是"
 
 ## esbuild 是"可用但非直接依赖"：`npm ci` 之后还能不能调用要心里有数（2026-10-15 T034）
 `build:node` 用的是 `node_modules/.bin/esbuild`，而 esbuild 其实是 vite 的**传递依赖**。npm 会为整棵树（含被提升的传递依赖）链接 bin，所以现在能跑；但升级 vite／调整依赖结构后它可能消失。**若云端构建报 `esbuild: command not found`，把 esbuild 显式加进 devDependencies 即可**（当晚本机 npm 网络受限，没能先补这一步；本地与 Docker 的差别只在这一处）。
+
+
+## 跨端复用响应式控制台比复制业务层更小（2026-10-15 T036）
+Android “完全移植网页端”不需要把 React 组件、SSE 解析、Cookie 鉴权、轮询逻辑再写一遍。WebView 用同一 origin 加载同一个 SPA，天然继承 HttpOnly Cookie、SSE、暂停续写、页面 `pagehide` 暂停请求和响应式布局。原生侧只要管住两件事：**用户指向哪台服务器**（SharedPreferences）和**会话留在哪里**（CookieManager/LocalStorage）。不要为了“更原生”复制鉴权状态，否则 Android 会变成第二套状态机。局域网 HTTP 必须显式声明明文流量，否则用户最稳定的 `192.168.137.1:8787` 形态会静默失败。

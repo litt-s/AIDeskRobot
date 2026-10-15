@@ -1,6 +1,6 @@
 # AIDesk 机器人控制台 PROGRESS
 
-状态：已确认；更新2026-10-14。用户批准连续执行；未部署、未推送、未创建云资源。
+状态：已确认；更新2026-10-15。用户批准连续执行；部署/推送状态以 DEPLOY 与 TASKS 为准。2026-10-15 T036 新增 Android 端。
 
 ## 当前摘要
 T001–T017 与 T009 已完成（依据见各任务条目）。**T018 语音对话闭环的服务端与网页端已完成并验证**，固件侧音频通道尚未开始。2026-10-14 另完成 T020（配网页改为分区表单，Wi-Fi 与设备码互不影响）与 T021（BOOT 长按进入配网、配网中长按重启），两者均通过编译验证、真机未验证。最近一次 `npm test`（2026-10-14）为 8 文件 61 项全部通过，`npm run typecheck` 与 `vite build` 通过；本地 D1 已应用迁移 0005。Cloudflare 部署、GitHub 推送与云资源创建均未执行。tests/integration.test.ts 需要本地 Worker 在 8787 运行，未运行时会失败，属既有环境依赖。
@@ -582,3 +582,10 @@ T001–T017 与 T009 已完成（依据见各任务条目）。**T018 语音对�
 - 新增 SVG 源文件、多尺寸 PNG、Windows `.ico`、macOS `.icns`、Android adaptive background/foreground，以及 `scripts/generate-icons.py` 再生成脚本。
 - 网页端已把 `favicon.svg`、`favicon.ico`、`apple-touch-icon.png` 放入 `web/public/` 并在 `web/index.html` 引用；`npm run build` 已复跑通过，构建产物中能看到这些 favicon 文件。
 - 未验证/未接线：微信小程序上传效果、Android adaptive icon 真机效果、Electron/PC 打包安装图标均未接线或未实测。
+
+
+### 2026-10-15 — T036 Android 端
+- 按用户要求新增 Android 工程，策略是“原生壳 + 完整网页端”：不复制 API/UI/流式解析，避免第二套业务状态。`MainActivity` 先从 SharedPreferences 读服务器地址；无地址显示原生设置页，有地址创建 WebView 并加载同一 SPA。
+- WebView 打开 JavaScript/DOM Storage/Database；CookieManager 启用并在暂停/更换服务器时 flush；允许局域网 HTTP；只允许当前控制台 origin 内部导航。底部原生条仅提供重新加载与更换服务器。Manifest 使用 AIDesk adaptive 图标、`adjustResize`、`singleTask` 与配置变化不重建。
+- 工程资源、主题、菜单、Gradle/AGP/SDK 版本、`.gitignore` 和 GitHub Actions Android job 已就位。
+- **未验证**：本机缺 JDK/SDK，尝试官方与腾讯镜像下载均被网络重置，无法本地构建；已改为 GitHub Actions `assembleDebug` 验证，结果待查。真机首次启动、地址输入、登录、SSE 流、设备在线与语音设置均待安装后复验。

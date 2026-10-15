@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">AIDesk</string>
+    <string name="setup_title">连接 AIDesk 控制台</string>
+    <string name="setup_subtitle">填写网页控制台的完整地址。手机与电脑将共用同一套账户、模型、角色、对话和设备数据。</string>
+    <string name="server_label">控制台地址</string>
+    <string name="server_hint">例如 https://your-domain.example 或 http://192.168.137.1:8787</string>
+    <string name="connect">进入工作台</string>
+    <string name="change_server">更换服务器</string>
+    <string name="reload">重新加载</string>
+    <string name="back">返回</string>
+    <string name="error_empty">请先填写控制台地址</string>
+    <string name="error_invalid">地址无效，请填写 http:// 或 https:// 开头的完整地址</string>
+    <string name="error_page">无法加载控制台，请检查网络或地址是否正确</string>
+</resources>
