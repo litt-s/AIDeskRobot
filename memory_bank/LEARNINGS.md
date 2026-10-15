@@ -219,3 +219,8 @@ URL附加模式preview_start返回本安装不支持，未据此声称T009全状
 - `sdkconfig.defaults` 不在 ninja 的依赖图里。改完直接 `idf.py build`，ninja 判定"无事可做"，**CMake 根本不会重新加载 defaults**，Kconfig 的 `unknown kconfig symbol` 警告也就不会打印——于是"0 警告"看起来像通过，其实那次什么都没检查（本轮真踩到：第一次构建只跑了 5 个任务、用时 3 秒）。
 - 判据：想验证 defaults 的改动，必须显式 `idf.py reconfigure`，并在日志里看到 `Loading defaults file ... sdkconfig.defaults`，再看警告计数。这一次 reconfigure 后 `unknown kconfig symbol` 为 **0**（此前 9）。
 - 删除一个组件时，除了删组件与调用代码，**还要清 `sdkconfig.defaults` 里对应的 `CONFIG_*`**：残留的 7 个 `*SIMPLE_PLAYER*`（已删的 esp_audio_simple_player）与 `ROBOT_ENABLE_EXPRESSION_TAG`／`ROBOT_AIUI_VCN`（已删的 AIUI Kconfig）会在**每次构建**刷 9 条警告，长期掩盖真正的警告。
+## 删 `assets/` 里的文件不会减少烧录字节（2026-10-15）
+- 直觉：删掉 166 KB 用不上的提示音，烧录镜像应该小 166 KB。**实测：`assets.bin` 仍是 5,177,344 字节，一个字节都没少。**
+- 原因：`assets` 是 **SPIFFS 分区镜像**，`spiffs_create_partition_image(assets ...)` 配合 `partitions.csv` 里固定的 `0x4F0000`，`spiffsgen.py` 每次都生成**填满分区**的镜像；删文件只是让分区内部多出空闲页。
+- 推论：想靠删资源真正省 Flash，必须同时改 `partitions.csv` 的 `assets` 大小并重算后续偏移（合并固件与量产脚本也要跟着改），那是独立的一件事。
+- 规矩：**判断「能省多少空间」永远看产物尺寸**（`build/assets.bin`、`build/deskemoji_robot.bin` 的字节数），不要按源文件大小推算——本轮就是先把错判写进文档、又用一次构建把自己纠正过来的。

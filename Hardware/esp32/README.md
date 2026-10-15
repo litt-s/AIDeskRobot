@@ -259,7 +259,9 @@ esp32/
 ├─ partitions.csv                 16 MB 分区表
 ```
 
-注意 `assets/` 是用 `spiffs_create_partition_image` **整目录打包**的：任何放进去的文件都会被烧进 `assets` 分区。目前只有 4 个文件被代码引用（`key_wakeup.wav`、`network_ready.wav`、`provisioning.wav`、`wakeup_ack.wav`），另外 4 个（`aiui_exit.wav`、`kws_enable.wav`、`ready.ogg`、`wificonfig.ogg`，合计约 166 KB）已无引用却仍在烧录，**待清理**。
+`assets/` 是用 `spiffs_create_partition_image` **整目录打包**成 SPIFFS 镜像的：放进去的文件都会被烧进 `assets` 分区，且镜像**按分区大小（`partitions.csv` 里的 0x4F0000 = 4.93 MiB）填满生成**——所以删文件**不会减少烧录字节**，只会腾出分区内部的空闲页（2026-10-15 实测：删掉 166 KB 无用文件后 `assets.bin` 仍是 5,177,344 字节）。想让删资源真正省 Flash，得连分区大小一起改。
+
+当前 4 个文件全部被代码引用：`key_wakeup.wav`、`network_ready.wav`、`provisioning.wav`、`wakeup_ack.wav`。（2026-10-15 已删除 4 个无引用的 AIUI／旧工程遗留：`aiui_exit.wav`、`kws_enable.wav`、`ready.ogg`、`wificonfig.ogg`，合计 166,091 字节。）
 
 ## 15. 与旧版 AIUI 固件的差异（T028，2026-10-15）
 
