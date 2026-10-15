@@ -59,6 +59,22 @@ describe('explicit trust boundaries',()=>{
     expect(trustedOrigin('https://desk.example.org','https://desk.example.org/api/login','production')).toBe(true);
     expect(trustedOrigin('https://evil.example.org','https://desk.example.org/api/login','production')).toBe(false);
   });
+  it('accepts the same host behind a proxy, where the app only ever sees http',()=>{
+    /*
+     * TLS ends at the gateway, so the URL the container sees says http while
+     * the browser's Origin says https. Treating that difference as cross-site
+     * locked the console out of its own API on CloudBase CloudRun: every write
+     * (login, register, add device) answered 403 while reads kept working.
+     * A different host or port is still a different origin.
+     */
+    expect(trustedOrigin('https://desk.example.org','http://desk.example.org/api/models','production')).toBe(true);
+    expect(trustedOrigin('http://desk.example.org','https://desk.example.org/api/models','production')).toBe(true);
+    expect(trustedOrigin('https://desk.example.org:8443','http://desk.example.org:8443/api/models','production')).toBe(true);
+    expect(trustedOrigin('https://desk.example.org','http://desk.example.org:8080/api/models','production')).toBe(false);
+    expect(trustedOrigin('https://evil.example.org','http://desk.example.org/api/models','production')).toBe(false);
+    expect(trustedOrigin('https://desk.example.org/path','http://desk.example.org/api/models','production')).toBe(false);
+    expect(trustedOrigin('https://user@desk.example.org','http://desk.example.org/api/models','production')).toBe(false);
+  });
   it('restricts providers to exact administrator-approved hosts',()=>{
     expect(providerURL('https://api.deepseek.com')).toBe('https://api.deepseek.com');
     expect(()=>providerURL('https://api.deepseek.com.evil.org')).toThrow();

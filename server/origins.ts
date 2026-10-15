@@ -14,6 +14,10 @@
  * address that name resolved to. An attacker would have to already control
  * content served from inside the user's own network.
  *
+ * Behind a proxy (a container platform, nginx) the request URL the app sees
+ * carries the scheme the proxy spoke, not the one the browser used, so the
+ * comparison also accepts a bare origin with the same host - see below.
+ *
  * DEV_ALLOWED_ORIGINS stays for the cases this does not cover - a tunnel or a
  * hostname that resolves to a private address, for example - and is still
  * checked as an exact match.
@@ -48,6 +52,24 @@ function parseBareOrigin(origin: string) {
 export function trustedOrigin(origin: string | undefined, requestURL: string, environment: string, configured = '') {
   if (!origin || origin === 'null') return false;
   if (origin === new URL(requestURL).origin) return true;
+  /*
+   * Behind a reverse proxy the container only ever receives http, while the
+   * browser's Origin says https - TLS ended at the gateway. Comparing the two
+   * byte for byte then calls every same-origin write "cross-site": on CloudBase
+   * CloudRun that turned login/register/add-device into 403s while plain reads
+   * kept working. So a bare origin naming the same host counts as same-origin
+   * even when the scheme differs. Nothing is loosened: a different host is
+   * still rejected, and parseBareOrigin still refuses anything but a bare
+   * scheme://host[:port].
+   */
+  const requested = parseBareOrigin(origin);
+  if (requested) {
+    try {
+      if (requested.host === new URL(requestURL).host) return true;
+    } catch {
+      /* requestURL always parses in practice; if it does not, trust nothing. */
+    }
+  }
   if (environment !== 'development') return false;
   if (configured.split(',').some(value => value.trim() === origin)) return true;
   const url = parseBareOrigin(origin);

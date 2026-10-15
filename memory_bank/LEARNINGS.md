@@ -375,3 +375,7 @@ Electron 39 自带 Node 22.22.1，主进程里 `ELECTRON_RUN_AS_NODE=1` + `proce
 
 ## electron-builder 的 `--dir` 是更稳的默认产物（2026-10-15 T037）
 Electron 39 二进制、7zip、NSIS 缓存都在时，`electron-builder --win --x64 --dir` 能稳定产出 `desktop/release/win-unpacked/AIDesk.exe`；而 `portable` 单文件目标会继续拉 `winCodeSign`，本机网络下容易卡住。除非明确要免安装单文件，否则先把“能运行的 unpacked 目录”当默认产物更可控。
+
+## 同一台主机换了协议不算跨源：反向代理会把 https 拦在门外（2026-10-15 T034 CloudBase 部署）
+容器平台（CloudBase 云托管、任何 ingress/nginx 后面）**只把 http 转发给应用**，TLS 在网关就结束了；于是应用里 `c.req.url` 是 `http://host/...`，而浏览器发来的 `Origin` 是 `https://host`。原来的同源判定是 `origin === new URL(requestUrl).origin` —— 逐字节比较，于是**所有写请求（登录、注册、建设备）被判成跨源 403，而读请求照常 200**。现象很容易被误判成"后端没连上"。实测证据（同一次部署、同一个域名，只换 Origin 的协议）：`Origin: http://<域名>` 注册 → **201**；`Origin: https://<域名>` → **403**。
+修法：同源判定补一条"**bare origin 的 host 与请求 URL 的 host 相同即算同源**"（协议不参与比较）。这不放松安全性——不同 host 依然拒绝，`parseBareOrigin` 依旧只接受 `scheme://host[:port]`（无路径/凭据/查询），而 CSRF 关心的正是"是不是同站页面发出的"。**教训：任何"严格比较完整 origin"的代码，在反向代理后面都要先问一句——应用看到的是不是浏览器看到的那个协议？**

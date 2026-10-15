@@ -279,3 +279,23 @@ npm run desktop:pack     # build + build:node + electron-builder --win --x64 --d
 - `AIDESK_SERVER_URL` 指向线上时，与浏览器打开同一地址等价；Cookie 仍由 Electron 用户数据目录持久化，不落业务库。
 
 **当前验证与遗留**：`npm run check` 与 `desktop:pack` 已通过；启动后窗口可见、`GET /` 200、`GET /api/auth/me` 401，0001–0006 迁移自动应用。未验证：用户桌面人工注册/聊天/设备页全流程，跨网段机器人接入，`portable` 单文件分发（`electron-builder --win portable --x64` 在当前网络会卡在下载 `winCodeSign`），Windows 代码签名。
+
+### 实际执行记录（2026-10-15 晚，CloudBase 云托管已上线）
+- **环境**：`my-base01-d0gacogbi5e4deac3`（体验版 `baas_trial`、`ap-shanghai`）。`tcbr DescribeEnvBaseInfo` 返回 `Status=normal`、`EnvType=baas`、`PackageType=Trial` ⇒ **云托管已开通**（无需再调 `CreateCloudRunEnv`；也确认走的是大租户路径 —— 部署记录里 `RunId` 是 `multi_tenant_*`）。
+- **服务**：`aidesk-console`，容器型（Dockerfile 云端构建）。版本 `aidesk-console-001`（首次部署，BuildId `2608726626`）→ `002`（配置变更滚动，BuildId `0`）。镜像在 `ccr.ccs.tencentyun.com/tcb-100052796287-zlwy/…`。配置：`Port=80`、`OpenAccessTypes=[PUBLIC]`、`PublicNetStatus=ENABLE`、`CustomLogs=stdout`。
+- **默认域名（免备案、境内直连）**：`https://aidesk-console-312359-12-1485927190.sh.run.tcloudbase.com`。
+- **实测（本机不走代理直连）**：`/` → **200**（SPA，首字节 3.5 s 冷启动）；注入环境变量前 `/api/health` → **503**（`服务端未配置有效加密密钥`，属预期）；用 `SubmitServerConfigChangeDiff` 注入 `EnvParams` 后 → `/api/health` **200**、`/api/auth/me` **401 JSON**；`/assets/index-*.js|css` → **200** 且 content-type 正确；TLS 由平台证书签发，`Invoke-WebRequest` 默认校验证书即通过 ⇒ 固件的 CA 证书包可用。
+- **踩到的坑（已修）：反向代理下所有写请求 403**。容器只收到 http（TLS 在网关终止），而浏览器 `Origin` 是 `https://…`，`trustedOrigin()` 逐字节比较 origin 时把**同源**写请求判成跨源 —— 实测 `Origin: http://<域名>` 注册 → **201**、`Origin: https://<域名>` → **403**，即"读能用、写全挂"。修法见 LEARNINGS「同一台主机换了协议不算跨源」：同主机（忽略协议）即视为同源，`server/origins.ts` 已改，`tests/trust.test.ts` 增加 7 条断言。
+- **数据持久化**：当前**未挂载存储卷**，容器文件系统随发布重置 ⇒ 每次发布都会回到"播种后的初始状态"（账号/设备/模型/语音凭据在，但发布后新增的内容会丢）。要持久化就把 CFS 挂到 `/app/data`（`DB_PATH` 已指向那里）。
+
+### 命令速查（都走已登录的 `tcb`）
+```bash
+tcb cloudrun list                                        # 服务列表
+tcb cloudrun detail -s aidesk-console                    # 服务详情（含 EnvParams/Port/访问类型）
+tcb cloudrun deploy -s aidesk-console --port 80 --source <dir> --open-access-types PUBLIC --wait --force
+tcb cloudrun record list -s aidesk-console               # 部署记录（拿 RunId/BuildId）
+tcb cloudrun logs process --run-id <runId>               # 运行日志（部署步骤；容器 stdout 需自建日志集才会收集）
+tcb api tcbr DescribeEnvBaseInfo --api-version 2022-02-17 --body '{"EnvId":"<envId>"}'
+tcb api tcbr SubmitServerConfigChangeDiff --api-version 2022-02-17 --body '{"EnvId":"<envId>","ServerName":"aidesk-console","Items":[{"Key":"EnvParam","Value":"{\"ENCRYPTION_KEY\":\"…\"}"}]}'
+```
+⚠️ `tcbr` 这类多版本产品**必须带 `--api-version 2022-02-17`**，否则报 `version=undefined … action is invalid`。

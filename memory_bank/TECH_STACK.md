@@ -49,3 +49,4 @@ migrations 现为 0001_initial、0002_limits、0003_generations、0004_devices�
 - **远端形态**：置 `AIDESK_SERVER_URL` 即让窗口加载已有线上服务，与浏览器打开同一地址完全等价；适合把 PC 客户端当浏览器壳用。
 - **打包**：`asar:false`，files 只带 `desktop/main.cjs`／`dist`／`dist-server`／`migrations`／`package.json`／`assets/icons/windows/aidesk-icon.ico`，产物 `desktop/release/win-unpacked/AIDesk.exe`。`portable` 单文件目标在当前网络会卡在下载 `winCodeSign`，暂不作为默认产物。
 - **约束**：不动 `Android`／`MiniProgram`／`Design`，不改 `robot_audio`／`robot_wakeup`。
+同源判定（`server/origins.ts`）在形态 B 下要额外容忍"同主机不同协议"：容器平台把 TLS 终止在网关，应用只看到 `http://`，而浏览器 `Origin` 是 `https://`（详因与实测见 LEARNINGS）。
