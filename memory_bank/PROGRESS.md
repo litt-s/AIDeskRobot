@@ -508,3 +508,9 @@ T001–T017 与 T009 已完成（依据见各任务条目）。**T018 语音对�
 - 修法：新增 `robot_voice_ready()`（`record_buffer != NULL && running`），提示音在开口前**先等它就绪**（最多 3 s、每 50 ms 探一次），保留重试作为兜底。验证：`idf.py build` exit 0、0 warning、`deskemoji_robot.bin` **0x1496d0**。
 - 另：本次手势传感器是 `PAJ init failed at reg 0x5d`（上一次是 `reg 0xef`，寄存器不同）→ 应答不稳定，偏接线/供电；固件按既有设计停用该功能，不影响 OLED/语音/配网。
 - 未验证：真机（下一次开机应看到第一次 `say` 就成功，不再有 `attempt 1 failed`）。
+### 2026-10-15 — T032 验收进展：开机提示音通过、控制台与设备一致
+- **开机提示音 = 通过**：用户确认「正常播报」。新日志时间线干净：`8151 ready prompt` → `8171 voice channel ready` → `9641 announcement finished: 已播报`，**第一次 say 就成功**（不再出现 `cloud ready prompt attempt 1 failed`）——"提示音先等 `robot_voice_ready()`"的修复生效。
+- **控制台 ↔ 设备一致**：本地库 `wake_label=你好小智`、`wake_phrase=ni hao xiao zhi`、`wake_applied=ni hao xiao zhi` ⇒ 「中文输入 → 服务端转拼音 → wake 指令 → 设备生效 → hello 回报 → 界面显示」整条链路打通，且**目标值与设备当前值一致**（不一致时服务端会补发的那条逻辑这次没有触发，因为已经对齐）。
+- 过程小插曲：期间用户先设过「小智小智」（`xiao zhi xiao zhi`），那条命令 ack `done`；后来又设回「你好小智」。有一次补发撞上设备正在重启，ack 为 `failed`／`唤醒引擎未就绪`（设备如实回报，下一次 hello 对账即可再补）。
+- 测试数据清理：删掉本轮我用过的一次性账号（`wake_test_*`／`hello_probe_*`）与遗留设备；复核 `leftover_users=0`、`devices=1`（用户那台 DeepSeek）；`PRAGMA foreign_keys=1`，级联删除符合预期。
+- 仍未验证：**喊「你好小智」能唤醒 / 喊「小飞小飞」不响应**（语音行为层面，只需用户喊一句）；新配网提示音（4.19 s）未进过配网，未听过。
