@@ -423,3 +423,9 @@ Electron 39 二进制、7zip、NSIS 缓存都在时，`electron-builder --win --
 2. **必须带 `{stream:true}` 解码**（并保留未完成的字节到下一片），否则一个汉字正好被切在分片边界上会解出乱码：流式场景下"一次 decode 全部 buffer"是错的写法。
 3. 收尾还要 **flush 解码器**并处理"最后一行不带换行"的尾巴，否则最后那个 `data: {...}` 事件可能整条丢掉。
 **验证手法**：小程序代码在本机跑不起来，但可以**在 Node 里伪造 `wx`**（`request()` 返回一个带 `onChunkReceived` 的 task，再把预先算好的分片喂进去）——用真实 SSE 文本 + 故意切在汉字中间/行中间，就能把解析逻辑测干净（本次三组断言：分片与多字节、非 2xx 带服务端原因、无换行尾行）。
+## electron-builder 两次"卡死"的真正原因（2026-10-16 T037/T041）
+打包桌面端时连续两次像"卡死"，其实是两个完全不同的坑，都值得记：
+1. **别用会提前终止的管道包住它的输出**：`npx electron-builder ... | Select-String ... | Select-Object -First 12` 会在读够 12 条后关掉消费者，electron-builder 还在猛写进度 → **管道缓冲写满，进程永久阻塞**（看起来像死锁，CPU 几乎为 0）。→ 把输出重定向到文件（`*> tmp-pack.log`），跑完再 grep。
+2. **它默认要从 GitHub 下载 Electron**：`⨯ connect ETIMEDOUT 20.205.243.166:443`（GitHub 在国内时常连不上）。本机 `node_modules/electron/dist` 已经有完整的 Electron（`npm run desktop:pack` 装依赖时就下好了），所以离线打包只需覆盖一个字段：
+   `{"electronDist": "node_modules/electron/dist"}` → `npx electron-builder --win --x64 --dir --config=<临时配置>`，**6 秒**就完成（对比在线时的数分钟）。
+3. 顺带：产物目录被正在运行的 `AIDesk.exe` 占用时会报 `EBUSY: resource busy or locked, rmdir ... win-unpacked` —— 打包前先关掉应用。**我这次是先删掉产物目录再打包，结果打包没完成，桌面快捷方式一度指向不存在的 exe**；正确顺序是"先关应用 → 直接打包覆盖"，不要先删。
