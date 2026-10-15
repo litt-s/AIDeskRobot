@@ -306,3 +306,7 @@ URL附加模式preview_start返回本安装不支持，未据此声称T009全状
 - 现象：提示音第一次开口必然失败（`cloud ready prompt attempt 1 failed: ESP_ERR_INVALID_STATE (语音通道未启动)`），0.8 秒后重试才成功。日志时间线显示：提示音任务在 **6661 ms** 开跑，而语音通道在 **6691 ms** 才 `voice channel ready`——**同一台设备上两条启动路径相差约 30 ms，而且先后不保证**（提示音走 TIME_READY 路径，语音通道走 GOT_IP 路径）。
 - 教训：**跨路径的初始化顺序不能靠"我算过应该先 A 后 B"**。要在被依赖的一方暴露一个**就绪判据**（本次新增 `robot_voice_ready()`），使用方**有界等待**它（3 s 上限、50 ms 一探）再干活。失败重试能兜住，但会把"顺序问题"伪装成"偶发失败"，还白等一个退避周期。
 - 复用检查法：凡是"A 的功能需要 B 先初始化"，先问①A、B 是否在同一条路径上？②不同路径时有没有就绪判据？③等待有没有上限（避免依赖缺失时挂死）？
+## 经代理推送时可能报 `cannot lock ref`，但提交其实已经落地（2026-10-15）
+- 现象：`git push` 走本机代理（`http://127.0.0.1:7897`）返回 `! [remote rejected] main -> main (cannot lock ref 'refs/heads/main': is at 0239873… but expected 3f7e00b…)`，看起来像被拒绝。
+- 核实：`git ls-remote origin refs/heads/main` 直接读服务器 —— **远端已经是 0239873（正是这次要推的提交）**；`git fetch` 后 `## main...origin/main` 同步。即：**推送成功，只是客户端收到了过期的 ref 期望错误**（代理重发 POST 之类的行为会产生同样现象）。
+- 纪律：**推送报错先核实远端**（`git ls-remote` 或 `git fetch` + `git status -sb`），确认没上去再重推。盲目重推会把同一批提交再走一遍，还可能叠加出更难看的冲突。
