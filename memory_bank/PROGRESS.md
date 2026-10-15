@@ -593,3 +593,18 @@ T001–T017 与 T009 已完成（依据见各任务条目）。**T018 语音对�
 ### 2026-10-15 — T036 CI 收尾
 - 提交 `736a5e0` 推送后，GitHub Actions Run #45（`38739826306`）完成：`android` job **success**，`gradle assembleDebug` success，`upload-artifact` 已上传 `aidesk-android-debug`；同 run 的 Node `verify` job 也 success（typecheck、build、migrate、test、audit）。
 - 可从 GitHub Actions 该 run 的 Artifacts 下载 `aidesk-android-debug` 安装调试包。真机端到端验收仍未做。
+
+### 2026-10-15 — T037 PC 桌面端
+- **用户要求**：「帮我完成 PC 端的开发，完全移植网页端就行」。与 Android 端一致，PC 端也不做第二套业务 UI/后端：只新增 `desktop/main.cjs` Electron 壳，把同一份 `dist/` 前端与 `dist-server/index.mjs` 后端挂到本机或远端；`server/`、`web/`、`shared/`、`migrations/` 业务代码零改动。
+- **做了什么**：
+  1. `package.json` 新增 `main=desktop/main.cjs`、脚本 `desktop`／`desktop:start`／`desktop:pack`、devDependencies `electron@^39.8.10` 与 `electron-builder@^26.15.3`，以及 `build` 配置（`asar:false`，files 仅包含外壳 / `dist` / `dist-server` / `migrations` / 图标）。
+  2. `desktop/main.cjs` 实现单实例锁、`contextIsolation`+`sandbox`+`nodeIntegration:false`、窗口标题与图标、外链转系统浏览器、本地后端 `spawn` + 心跳等待、远端 `AIDESK_SERVER_URL` 直连、退出时回收子进程。
+  3. 本机数据库 / 密钥路径固定为 `%APPDATA%\aidesk-console\aidesk.sqlite` 与 `%APPDATA%\aidesk-console\encryption.key`（首次启动自动生成 32 字节 base64 后存盘）；机器人端到端地址仍可用 `http://<PC-IP>:45713`，设备密钥/哈希不变。
+  4. `npm run desktop:pack` 生成 `desktop/release/win-unpacked/AIDesk.exe`（约 210 MB，含 Chromium + Node 22 + node:sqlite）。
+- **验证**：
+  - `npm run check` 通过：typecheck、9 文件 78 测试、`vite build`、`esbuild dist-server` 均成功；`npm audit --audit-level=high` 0 漏洞。
+  - `node node_modules\electron\install.js` 在 `ELECTRON_GET_USE_PROXY=1` 下命中本机缓存 `electron-v39.8.10-win32-x64.zip`（136 MB）。
+  - `ELECTRON_RUN_AS_NODE=1` + Electron 39 可加载 `node:sqlite`，`DatabaseSync` 建表/插入/查询实测通过（输出 `sqlite-ok 1`）。
+  - `desktop:pack` 产物启动后窗口可见（`MainWindowTitle='AIDesk · 机器人工作台'`），`GET /` 200 / 576 字节，`GET /api/auth/me` 401（`{error:"请先登录"}`），启动日志确认自动执行 0001–0006 迁移；关闭主窗口后子进程一起退出。
+- **未验证**：用户本人桌面环境下的注册 / 模型 / 角色 / 设备 / 对话 / 语音设置全流程真机验收（本次窗口由本机 Codex 代开，未跑业务流）；以及 "PC 端访问 192.168.x.x 上的机器人" 的跨网段。electron-builder 的 `--win portable` 单文件目标在本机网络下卡在下载 `winCodeSign`，暂不作为默认产物。
+- **文档同步**：PRD REQ13/AC13、TECH_STACK、DESIGN、DATA_MODEL、ARCHITECTURE、TASKS、DEPLOY、LEARNINGS 均已更新。

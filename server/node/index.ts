@@ -108,9 +108,15 @@ function openDatabase() {
 function buildEnv() {
   const encryptionKey = process.env.ENCRYPTION_KEY || '';
   if (!encryptionKey) {
-    /* 缺密钥时每个 /api 都会 503，不如直接说清楚为什么起不来。 */
-    console.error('ENCRYPTION_KEY 未配置：请把 Cloudflare 上那个同一个密钥设置为容器环境变量。');
-    process.exit(1);
+    /*
+     * 缺密钥时**不退出**。首次部署的顺序通常是"先把服务建起来，再补环境变量"，
+     * 容器一起就挂会让平台把版本判为不健康、日志也难看清。这里只把话说清楚：
+     * 所有 /api 会按既有行为返回 503、静态页与 /api/health 照常，补齐 ENCRYPTION_KEY
+     * 触发一次重启即恢复（云托管改环境变量会重启实例）。
+     */
+    console.error(
+      'ENCRYPTION_KEY 未配置：所有 /api 会返回 503。请在云托管服务的环境变量里加上与 Cloudflare 上完全相同的那个 44 字符 base64 值。',
+    );
   }
   return {
     DB: openDatabase(),

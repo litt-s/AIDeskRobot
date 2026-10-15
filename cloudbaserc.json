@@ -1,0 +1,7 @@
+{
+  "envId": "my-base01-d0gacogbi5e4deac3",
+  "$schema": "https://static.cloudbase.net/cli/cloudbaserc.schema.json",
+  "cloudrun": {
+    "name": "aidesk-console"
+  }
+}

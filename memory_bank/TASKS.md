@@ -1,8 +1,8 @@
 # AIDesk 机器人控制台 TASKS
 
-状态：已确认；更新2026-10-15。用户批准连续执行，一次完成一项后同步文档；2026-10-15 已明确授权 T036 新增 Android 端，Hardware/MiniProgram/Design 仍不改。
+状态：已确认；更新2026-10-15。用户批准连续执行，一次完成一项后同步文档；2026-10-15 已明确授权 T036 新增 Android 端、T037 新增 PC 桌面端，Hardware/MiniProgram/Design 仍不改。
 
-当前任务：T036 Android 端——**编码完成，GitHub Actions Android 构建通过**（Run #45 `38739826306`，`gradle assembleDebug` 与 APK 上传均 success）。实现为原生 WebView 控制台壳：完全加载网页端响应式 SPA，共用同源 Cookie、账户、模型、角色、聊天、设备与语音设置；首次启动可选择 Cloudflare/CloudBase/局域网地址。后续仅剩 Android 真机安装与登录验收未做。
+当前任务：T037 PC 桌面端——**编码与本地构建验证完成**。`desktop/main.cjs` 作为 Windows 外壳启动同一份网页控制台与 Node 后端（Electron 39.8.10 + electron-builder 26.15.3，asar=false 适配子进程读 dist/migrations/dist-server），窗口可见、HTTP 200、API 401 均验证通过；用户桌面人工注册/聊天/设备页复验待做。T036 Android 端——**编码完成，GitHub Actions Android 构建通过**（Run #45 `38739826306`，`gradle assembleDebug` 与 APK 上传均 success）。实现为原生 WebView 控制台壳：完全加载网页端响应式 SPA，共用同源 Cookie、账户、模型、角色、聊天、设备与语音设置；首次启动可选择 Cloudflare/CloudBase/局域网地址。后续仅剩 Android 真机安装与登录验收未做。
 
 - T001 基础工程与记忆：已完成。九文档、协作规则、依赖锁、Wrangler/Vite配置、本地D1迁移通过；audit 0漏洞。
 - T002 认证：已完成。公开注册登录退出、PBKDF2、随机hashed session、origin、限流；隔离集成测试通过。
@@ -119,3 +119,18 @@
   - **CI 通过**：`assembleDebug` 在 GitHub Actions Ubuntu runner 上成功并上传 artifact `aidesk-android-debug`（commit `736a5e0`、Run #45）。**未验证**：本机未装 JDK/SDK，无法本地构建；真机安装/登录/聊天/设备页与正式签名发布均待用户实跑。
 
 - T036 收尾（2026-10-15）：推送 `736a5e0` 后 GitHub Actions Run #45（`38739826306`）`android` job **success**；`gradle --no-daemon assembleDebug` 通过，`actions/upload-artifact@v4` 已生成 `aidesk-android-debug`。Node `verify` job 也 success（typecheck/build/test/audit）。仍待真机安装与端到端登录/聊天/设备页验证；正式签名发布未做。
+
+- T037 PC 桌面端完全移植网页端（2026-10-15 用户要求「帮我完成 PC 端的开发，完全移植网页端就行」）：**编码与本地构建验证完成**。`desktop/main.cjs` 作为 Windows 主进程外壳：`npm run desktop:start` 直接打开已构建产物，`npm run desktop:pack` 重新生成 `desktop/release/win-unpacked/AIDesk.exe`（约 210 MB，含 Chromium + Node 22 + node:sqlite）。**业务代码零改动**——同一份 React UI（`dist/`）、同一份 Node 后端（`dist-server/index.mjs`）、同一套迁移（`migrations/`）由 Electron 主进程拉起，并通过 `ELECTRON_RUN_AS_NODE=1` 把渲染进程与 Node 进程隔离。窗口设置 `contextIsolation: true`、`sandbox: true`、`nodeIntegration: false`，所有 API 仍走原 `/api/*`、Cookie、CSRF 路径，不动 `server/` 任何文件。
+  - **本机默认形态**：开窗口即用，自动 `spawn` 子进程 `dist-server/index.mjs`，监听 `0.0.0.0:45713`（端口可用 `AIDESK_PORT` 覆盖），窗口加载 `http://127.0.0.1:45713`；数据库 `%APPDATA%\aidesk-console\aidesk.sqlite`，AES-GCM 密钥 `%APPDATA%\aidesk-console\encryption.key` 首次启动随机生成 32 字节 base64 后存盘（`fs.chmodSync(0o600)`）。**与 CloudBase 容器版等价**：同一份业务代码、同一份前端、同一套迁移；机器人可继续指向 `http://<PC-IP>:45713`，设备密钥在两边一致（`key_hash` 不变）⇒ 改个服务器地址即可换主机，**不必重新配网**。
+  - **远端形态**（不想在 PC 上跑后端）：置 `AIDESK_SERVER_URL=http(s)://<域名>` 后，窗口直接加载该 URL，子进程不再启动；与浏览器开同一地址等价，机器人指向同一个 URL 时与 Web/PC 互通。
+  - **实现要点**：
+    1. `desktop/main.cjs` 负责单实例锁、`setApplicationMenu(null)`、`webPreferences` 三件套、`webContents.setWindowOpenHandler` 把外链交 `shell.openExternal`、`will-navigate` 只允许同源；本地后端启动时先抓 120 次 `GET /` 心跳，失败则用 `dialog.showErrorBox` 弹服务器最近 80 行日志。
+    2. 复用了 `server/node/index.ts` 的环境变量协议（`STATIC_DIR`／`MIGRATIONS_DIR`／`DB_PATH`／`ENCRYPTION_KEY`／`APP_ENV=production`／`PORT`），所以"PC 端启动 Node 后端"与"CloudBase 启动 Node 后端"是**完全相同的代码路径**。
+    3. `build:node` 已把 `server/node/index.ts` 打包成 `dist-server/index.mjs`，Electron 39 自带 Node 22.22.1 与 `node:sqlite`，验证：`ELECTRON_RUN_AS_NODE=1 node_modules\electron\dist\electron.exe -e "require('node:sqlite')"` → `sqlite-ok 1`。
+    4. 图标：复用 T035 通用应用图标资产，`BrowserWindow({icon: 'assets/icons/windows/aidesk-icon.ico'})` + electron-builder `win.icon`；浏览器标签页与 PWA 启动画面也用了 T035 输出的 favicon / apple-touch-icon。
+  - **验证**（代码 / 编译级）：
+    - `node node_modules\electron\install.js` 在 `ELECTRON_GET_USE_PROXY=1` 下命中本机缓存 `electron-v39.8.10-win32-x64.zip`（136 MB）。
+    - `npm run check` 通过（typecheck 9 文件 78 测试 + vite build + esbuild dist-server）；`npm audit --audit-level=high` 0 漏洞。
+    - `npm run desktop:pack` 重新生成 `desktop/release/win-unpacked/AIDesk.exe`（约 210 MB），运行后 `Get-Process AIDesk` `MainWindowTitle='AIDesk · 机器人工作台'`，`Invoke-WebRequest http://127.0.0.1:45713/` → 200/576 字节，`Invoke-WebRequest /api/auth/me` → 401（`{error:"请先登录"}`），自动跑完 0001–0006 迁移；关闭主窗口后 `AIDESK_PORT` 对应 Node 子进程一起退出。
+  - **未验证**：用户本人桌面环境下的注册 / 模型 / 角色 / 设备 / 对话 / 语音设置全流程真机验收（本次窗口由本机 Codex 代开，未跑业务流）；以及 "PC 端访问 192.168.x.x 上的机器人" 的跨网段；electron-builder 的 `--win portable` 单文件目标在本机网络下卡在下载 `winCodeSign`，暂不作为默认产物。
+  - **设计边界**：仅修改根工程、`web/`、`server/`、`shared/` 等新控制台文件，未触碰 Android / MiniProgram / Design / Hardware 任何代码；T035 通用图标资产已就位，新增的 `desktop/main.cjs`、`scripts/generate-icons.py`（T035 已有）均在根工程范围内。

@@ -5,7 +5,8 @@
 FROM node:24-slim AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci
+# 国内构建机走腾讯云 npm 镜像（官方云托管模板也是这么做的），避免拉取 npmjs 抖动
+RUN npm config set registry https://mirrors.cloud.tencent.com/npm/ && npm ci
 COPY . .
 RUN npm run build && npm run build:node
 
@@ -14,7 +15,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=80
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev && npm cache clean --force
+RUN npm config set registry https://mirrors.cloud.tencent.com/npm/ && npm ci --omit=dev && npm cache clean --force
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/dist-server ./dist-server
 COPY migrations ./migrations

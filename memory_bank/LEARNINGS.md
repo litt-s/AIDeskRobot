@@ -360,3 +360,18 @@ SPA 兜底（`not_found_handling: single-page-application`）的常见实现是"
 
 ## 跨端复用响应式控制台比复制业务层更小（2026-10-15 T036）
 Android “完全移植网页端”不需要把 React 组件、SSE 解析、Cookie 鉴权、轮询逻辑再写一遍。WebView 用同一 origin 加载同一个 SPA，天然继承 HttpOnly Cookie、SSE、暂停续写、页面 `pagehide` 暂停请求和响应式布局。原生侧只要管住两件事：**用户指向哪台服务器**（SharedPreferences）和**会话留在哪里**（CookieManager/LocalStorage）。不要为了“更原生”复制鉴权状态，否则 Android 会变成第二套状态机。局域网 HTTP 必须显式声明明文流量，否则用户最稳定的 `192.168.137.1:8787` 形态会静默失败。`n`n### 阶段验收：AGP 8.7.2 / Gradle 8.9 / Java 17 在 GitHub Actions Ubuntu runner 上免 `setup-android` 跑通（2026-10-15 T036）`n`n- 关键步骤是 `gradle/actions/setup-gradle@v4`（提供 Gradle 8.9）+ `actions/setup-java@v4`（Temurin 17）；不需要显式 `setup-android`，runner 自带 platform-35 与 build-tools；命令直接 `gradle --no-daemon assembleDebug` 就能产出 debug APK。`n- `assembleDebug` 走完后接 `actions/upload-artifact@v4` 立刻把 APK 落到 artifact，便于一键下载到真机。`n- 本机无 JDK/SDK 时这是性价比最高的验收路径：代码语法、Manifest、资源、AGP 配置错都会在 `assembleDebug` 阶段直接报错。
+
+## PC 桌面端不是“打包网页”，而是把业务继续留在服务端（2026-10-15 T037）
+“完全移植网页端”最容易做歪的方式是复制一套 React/业务逻辑进 Electron。这里反着做：`desktop/main.cjs` 只做窗口、单实例、安全导航和本机 Node 子进程生命周期；UI 仍是 `dist/`，API 仍是 `/api/*`，数据库/鉴权/设备协议仍是 `server/**`。于是网页、CloudBase、PC 端三者的业务路径完全一致，后续修 bug 不需要三次同步。
+
+## Electron 里跑 `node:sqlite`：用 `ELECTRON_RUN_AS_NODE` + Node 22（2026-10-15 T037）
+Electron 39 自带 Node 22.22.1，主进程里 `ELECTRON_RUN_AS_NODE=1` + `process.execPath dist-server/index.mjs` 可以当成普通 Node 跑；实测 `require('node:sqlite')` 可用。不要让渲染进程碰数据库，也不要把 SQLite 逻辑复制进主进程——这样 Node 容器与桌面端仍共用同一段 `server/node/index.ts`，迁移/播种/静态资源行为都不会分叉。
+
+## `asar:false` 在这里是刻意的（2026-10-15 T037）
+桌面端会 `spawn` 一个真正的 Node 子进程去读 `dist-server/index.mjs`，并从磁盘读 `dist/` 与 `migrations/`。Electron 主进程能“透过 asar”读文件，不代表子进程也能稳定这么做。既然这只是本机私有应用、不是 npm 包，`asar:false` 换来的是“文件路径永远就是普通路径”，代价只有体积和防篡改能力，值得。
+
+## Electron 的 `ready-to-show` 不一定等于“页面一定显示”（2026-10-15 T037）
+打包后的 AIDesk 第一次启动时进程在、HTTP 也在，但窗口句柄为 0；改用 `ready-to-show` + `did-finish-load` 双保险（后者再 `setTimeout(reveal)`）后，`MainWindowTitle` 才变成「AIDesk · 机器人工作台」。这类“服务好了但窗口没出来”的问题，别只盯服务器日志，要用进程列表确认窗口句柄。
+
+## electron-builder 的 `--dir` 是更稳的默认产物（2026-10-15 T037）
+Electron 39 二进制、7zip、NSIS 缓存都在时，`electron-builder --win --x64 --dir` 能稳定产出 `desktop/release/win-unpacked/AIDesk.exe`；而 `portable` 单文件目标会继续拉 `winCodeSign`，本机网络下容易卡住。除非明确要免安装单文件，否则先把“能运行的 unpacked 目录”当默认产物更可控。

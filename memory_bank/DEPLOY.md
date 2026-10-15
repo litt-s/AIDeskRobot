@@ -262,3 +262,20 @@ VOLC_API_KEY=你的key npm run volc:smoke
 代码在 `Android/`。本机要求 JDK 17 + Gradle 8.9 + Android SDK Platform 35；在 `Android/` 目录执行 `gradle assembleDebug`，产物是 `app/build/outputs/apk/debug/app-debug.apk`。GitHub Actions `android` job 已在 Ubuntu runner 上执行同一命令并上传 `aidesk-android-debug` artifact，可直接下载安装调试包。
 
 首次启动 App 要求填写完整控制台地址：Cloudflare/CloudBase 用 `https://...`，局域网 Node 容器可用 `http://192.168.x.x:端口`。更换服务器可通过底部原生「更换服务器」或右上溢出菜单。因为 Android 只保存服务器 URL 和 WebView Cookie，清应用数据即可登出并清除本机会话；服务端账户、模型、设备与密钥不受影响。发布签名 APK 仍需后续提供正式 keystore，当前未配置。
+
+## PC 桌面端构建与分发（T037）
+代码在 `desktop/main.cjs`，依赖 `electron@39.8.10` 与 `electron-builder@26.15.3`（devDependencies）。开发机先 `npm install`，再执行：
+```powershell
+npm run desktop          # build + build:node + electron .
+npm run desktop:start    # 只启动已构建好的桌面壳
+npm run desktop:pack     # build + build:node + electron-builder --win --x64 --dir
+```
+产物路径：`D:\AIDeskRobort\desktop\release\win-unpacked\AIDesk.exe`（当前约 210 MB，含 Chromium + Node 22 + node:sqlite）。`desktop/release/` 已加入 `.gitignore`，产物不入库；要用在别的机器上，复制整个 `win-unpacked` 目录即可，暂未产出免安装单文件或签名安装包。
+
+**运行路径与环境变量**：
+- 默认本机模式：窗口加载 `http://127.0.0.1:45713`，数据库 `%APPDATA%\aidesk-console\aidesk.sqlite`，AES-GCM 密钥 `%APPDATA%\aidesk-console\encryption.key`（首次启动生成 32 字节 base64 后存盘）。备份这两者就等于备份本机账户/模型/设备/会话/语音配置；`encryption.key` 丢失后旧密文无法解密。
+- `AIDESK_PORT=<port>` 覆盖本机端口；`AIDESK_SERVER_URL=https://...` 让窗口直接加载已有线上服务，不启动本地后端；`DB_PATH=<path>` 可覆盖本机 SQLite 路径。
+- 机器人要接 PC 后端时，配网页服务器地址填 `http://<PC-IP>:45713`，Windows 防火墙需放行该端口；账号/设备数据仍在 PC 端 SQLite，不与 Cloudflare/CloudBase 互通。
+- `AIDESK_SERVER_URL` 指向线上时，与浏览器打开同一地址等价；Cookie 仍由 Electron 用户数据目录持久化，不落业务库。
+
+**当前验证与遗留**：`npm run check` 与 `desktop:pack` 已通过；启动后窗口可见、`GET /` 200、`GET /api/auth/me` 401，0001–0006 迁移自动应用。未验证：用户桌面人工注册/聊天/设备页全流程，跨网段机器人接入，`portable` 单文件分发（`electron-builder --win portable --x64` 在当前网络会卡在下载 `winCodeSign`），Windows 代码签名。

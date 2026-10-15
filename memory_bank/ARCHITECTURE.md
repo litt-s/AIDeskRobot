@@ -1,6 +1,6 @@
 # AIDesk 机器人控制台 ARCHITECTURE
 
-状态：已确认；最后更新：2026-10-14。用户已明确批准全方案并连续执行，每项验收及文档同步后进入下一项。禁止部署、推送、创建云资源；不得修改 Hardware、Android、MiniProgram、Design。
+状态：已确认；最后更新：2026-10-15。用户已明确批准全方案并连续执行，每项验收及文档同步后进入下一项。部署、推送与 Cloudflare/CloudBase/PC 桌面等已获授权的范围见 PRD/TASKS/DEPLOY；不得修改 Hardware、MiniProgram、Design；Android 仅按 T036 的明确授权新增。
 
 ## 总体
 web → /api → Hono 鉴权 → D1；聊天由 Worker 解密凭据并请求 HTTPS provider，前端不可访问凭据。
@@ -44,3 +44,8 @@ production 未配置密钥时拒绝服务。开发密钥仅示例或 gitignored 
 
 ## Android 客户端架构（T036）
 `Android/app/src/main/java/cn/aidesk/console/MainActivity.java` 是单 Activity 壳：无地址时渲染原生服务器设置页，有地址后创建 `WebView` 并加载用户保存的控制台 URL。WebView 启用 JavaScript/DOM Storage/Database，CookieManager 接受并 flush Cookie，因此登录态、SPA 状态与网页端完全同源。`shouldOverrideUrlLoading` 只允许当前控制台 origin 内部导航，外部 origin 交给系统浏览器，避免服务器地址被页面任意替换。Activity 生命周期里暂停/恢复 WebView、持久化 Cookie；返回键优先执行 WebView 历史。业务 API、聊天 SSE、设备轮询与语音设置没有任何 Android 副本，仍由 `server/**` 提供。
+
+## PC 桌面端架构（T037）
+`desktop/main.cjs` 是 Windows Electron 壳：`contextIsolation:true`、`sandbox:true`、`nodeIntegration:false`，不做业务计算，只负责单实例、窗口、安全导航、本机 Node 子进程生命周期和远端/本机双模。本机模式用 `ELECTRON_RUN_AS_NODE=1` 启动 `dist-server/index.mjs`，因此复用 T034 的 Node 容器代码路径（同一套 `node:sqlite` 包装、`ws` ASR、静态资源 SPA 回落、迁移与播种逻辑）；窗口同源加载 `http://127.0.0.1:<PORT>`。远端模式置 `AIDESK_SERVER_URL` 后直接加载既有 URL，与浏览器打开同一地址等价。
+
+PC 端把数据库与 AES-GCM 密钥放在 `%APPDATA%\aidesk-console\`：SQLite 文件是本机数据卷，`encryption.key` 首次启动生成 32 字节 base64 后存盘并 `chmod 600`。设备协议仍走 `server/device-routes.ts`，机器人可指向 `http://<PC-IP>:<PORT>`；`server/` 没有任何业务副本。窗口只允许同源内部导航，外部链接交给系统浏览器。

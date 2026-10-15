@@ -1,6 +1,6 @@
 # AIDesk 机器人控制台 TECH_STACK
 
-状态：已确认；最后更新：2026-10-15。用户已明确批准全方案并连续执行 T001–T006，每项验收及文档同步后进入下一项。用户 2026-10-15 已授权 T036 新增 Android 工程；Hardware/MiniProgram/Design 仍不改。
+状态：已确认；最后更新：2026-10-15。用户已明确批准全方案并连续执行 T001–T006，每项验收及文档同步后进入下一项。用户 2026-10-15 已授权 T036 新增 Android 工程、T037 新增 PC 桌面工程；Hardware/MiniProgram/Design 仍不改。
 
 ## 已批准技术
 React TypeScript Vite；Hono Cloudflare Workers；D1 SQLite；单根 package.json。
@@ -10,6 +10,8 @@ Node 24；npm lock；Worker WebCrypto。
 ENCRYPTION_KEY：AES-GCM 32 字节 base64 Worker secret；APP_ENV：development/production。真实密钥不写文档。
 ## 命令
 npm install；npm run setup:local；npm run db:migrate；npm run dev:worker；npm run dev；npm run typecheck；npm test；npm run build；npm audit。2026-10-13 已验证 migrate/typecheck/test/build/audit 通过。Vitest 5.0.4；Wrangler 4.150.0；workers-types 5。
+
+PC 端命令（T037）：`npm run desktop`（build + build:node + electron）、`npm run desktop:start`（只启动 Electron）、`npm run desktop:pack`（build + build:node + `electron-builder --win --x64 --dir`，产物 `desktop/release/win-unpacked/AIDesk.exe`）。
 ## 平台约束
 仅本地验证，不创建云资源。
 
@@ -40,3 +42,10 @@ migrations 现为 0001_initial、0002_limits、0003_generations、0004_devices�
 选择**原生 WebView 控制台壳**而不是复制一套业务 UI：网页端 React/Vite 已经是响应式单页应用，同一 origin 的 HttpOnly Cookie、SSE 流、轮询、暂停续写和 SPA 路由都能被 Android WebView 完整承载。Android 只保留三件原生职责：服务器地址持久化（SharedPreferences）、WebView Cookie/LocalStorage 持久化、加载/更换服务器原生入口。
 
 工程基线：Java 17、Android Gradle Plugin 8.7.2、Gradle 8.9、compileSdk 35、minSdk 26、targetSdk 35；无 AndroidX/第三方运行时依赖。包名 `cn.aidesk.console`。为支持局域网 Node 容器，应用声明允许 HTTP 明文；所有密钥仍只存在服务端，Android 只保存用户选择的服务器 URL 和平台 Cookie。
+
+## PC 桌面端（2026-10-15 T037 新增）
+选择 **Electron 壳 + 既有 React UI + 既有 Node 后端**，不复制业务代码。devDependencies 新增 `electron@^39.8.10` 与 `electron-builder@^26.15.3`；`package.json.main` 指向 `desktop/main.cjs`。主进程仅做单实例锁、窗口、本机 Node 子进程生命周期、远端/本机双模和最小安全配置（`contextIsolation:true` / `sandbox:true` / `nodeIntegration:false`），业务与 UI 仍由 `web/`、`server/`、`shared/` 提供。
+- **本机形态**：`desktop/main.cjs` 用 `ELECTRON_RUN_AS_NODE=1` 启动 `dist-server/index.mjs`，同源加载 `http://127.0.0.1:45713`；数据库 `%APPDATA%\aidesk-console\aidesk.sqlite`，AES-GCM 密钥 `%APPDATA%\aidesk-console\encryption.key`。**业务代码零改动**，迁移/静态资源/D1包装/语音识别路径完全复用 T034。
+- **远端形态**：置 `AIDESK_SERVER_URL` 即让窗口加载已有线上服务，与浏览器打开同一地址完全等价；适合把 PC 客户端当浏览器壳用。
+- **打包**：`asar:false`，files 只带 `desktop/main.cjs`／`dist`／`dist-server`／`migrations`／`package.json`／`assets/icons/windows/aidesk-icon.ico`，产物 `desktop/release/win-unpacked/AIDesk.exe`。`portable` 单文件目标在当前网络会卡在下载 `winCodeSign`，暂不作为默认产物。
+- **约束**：不动 `Android`／`MiniProgram`／`Design`，不改 `robot_audio`／`robot_wakeup`。
