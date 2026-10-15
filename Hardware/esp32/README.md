@@ -1,29 +1,24 @@
-# DeskEmoji AIUI（ESP32-S3 N16R8）
+# DeskEmoji robot（ESP32-S3 N16R8）
 
-DeskEmoji AIUI 是面向赛博太白 DeskEmoji 硬件的 ESP32-S3 固件。工程以讯飞
-AIUI RTOS v3 极速超拟人示例为主链路，结合原 DeskEmoji/XiaoZhi 工程的板级驱动、
-表情、动作、配网资源和 ESP-SR 模型，实现离线唤醒、连续语音对话、流式 TTS、
-音乐播放、表情动作与手势控制。
+面向赛博太白 DeskEmoji 硬件的 ESP32-S3 固件。语音链路只有一条：**本地离线唤醒 → 板载麦克风录一句 → 自建控制台（Cloudflare Worker）做识别、调模型、合成语音 → PCM 流回设备播放**；设备同时通过同一条控制台通道接收**表情、动作、音量、播报**指令。
 
-> 当前目标芯片为 ESP32-S3 N16R8：16 MB Flash、8 MB Octal PSRAM。
-> 工程要求 ESP-IDF 5.5.x，当前验证版本为 5.5.1。
+> 目标芯片：ESP32-S3 N16R8（16 MB Flash、8 MB Octal PSRAM）。
+> 工程要求 ESP-IDF 5.5.x，本机验证版本 5.5.5。
+
+**2026-10-15 起本固件不再包含讯飞 AIUI**：SDK、协议适配、凭据配置、音乐技能、Opus 解码路径与桌面 demo 均已删除（见 §15）。`VERIFICATION.md` 是 AIUI 时期的历史报告，仅供追溯。
 
 ## 1. 当前功能
 
-- 首次启动或已保存 Wi-Fi 在 60 秒内连接失败时，自动进入 SoftAP 配网。
-- 配网页面扫描附近 2.4 GHz Wi-Fi，并支持列表点选或手动输入 SSID。
-- AIUI 的 APPID、APPKEY、APPSECRET 通过配网页面写入 NVS，不写入源码和日志。
-- 联网后先执行 NTP 校时，再初始化 AIUI，避免鉴权时间偏差。
-- ESP-SR MultiNet7 单麦离线唤醒，当前唤醒词为“小飞小飞”。
-- BOOT 键可唤醒、打断 TTS/音乐；仅在 Wi-Fi 正在连接且尚未获得 IP 时用于重新配网。
-- AIUI v3 `continuous_vad` 连续对话，`new_session=false` 保留同一次唤醒会话的上下文。
-- 60 秒无有效活动后播放 7911 结束提示，关闭 AIUI 连接并重新等待离线唤醒。
-- 支持“退下吧”“休息吧”“退出”“再见”等结束引导，进入可再次唤醒的休眠表情。
-- AIUI TTS 使用 `opus-wb` 流式下发、设备端解码和预缓冲播放。
-- 支持 AIUI `musicX` 结果、itemid 换取播放地址，以及已绑定网易云账号的直接搜索兜底。
-- 沿用 `esp32-s3n16r8-emoji` 的 OLED 表情和匹配动作，并支持空闲随机表情动作。
-- 支持 PAJ7620U2 九类手势；OLED 与手势模块共享 I2C 总线并串行访问。
-- 音量按键支持 0～100 调节、NVS 持久化和约 +3 dB 的保护性数字增益。
+- 首次启动，或已保存的 Wi-Fi 在 60 秒内连不上，自动进入 SoftAP 配网。
+- 配网页扫描附近 2.4 GHz Wi-Fi，也可手动输入 SSID；**Wi-Fi、服务器地址、设备码三项互相独立，填哪项写哪项，留空保持原值**。
+- ESP-SR MultiNet7 单麦离线唤醒，当前唤醒词“小飞小飞”。
+- 唤醒词、BOOT 短按、待机时前推手势都能开一轮云端语音；一轮结束后自动回到离线待机并重新武装唤醒词。
+- 云端语音：设备录一句 16 kHz／16 bit／单声道 PCM 上传，服务端做 ASR、模型对话与 TTS，把 PCM 流回来边收边播；说完约 900 ms 自动成句。
+- 一轮进行中再按一次 BOOT 可**立即取消**：正在录就停止录音，正在播就截断回复流，不会“跳一段接着说”。
+- 控制台设备通道：轮询并执行**表情、动作、音量、播报**指令，回报 ack 与状态；控制台的“播报”走 `/api/device/say`，不经唤醒词。
+- 沿用 `esp32-s3n16r8-emoji` 的 OLED 表情与匹配动作，空闲时约每 10 秒随机做一个行为。
+- PAJ7620U2 九类手势；OLED 与手势模块共享 I2C 总线并串行访问。
+- 音量按键 0～100 调节、NVS 持久化、约 +3 dB 保护性数字增益。
 
 ## 2. 硬件与引脚
 
@@ -39,161 +34,111 @@ AIUI RTOS v3 极速超拟人示例为主链路，结合原 DeskEmoji/XiaoZhi 工
 | 音量加 | 低电平按键 | GPIO40 |
 | 音量减 | 低电平按键 | GPIO39 |
 
-OLED 在机构中倒装，初始化时同时启用 X/Y 镜像。舵机中心角均为 90°；当前安全范围为
-水平 50°～130°、垂直 70°～110°。若机构安装方向不同，只调整
-`components/robot_motion/robot_motion.c` 中的映射和限位，不要直接扩大角度范围。
+OLED 在机构中倒装，初始化时同时启用 X/Y 镜像。舵机中心角均为 90°；当前安全范围为水平 50°～130°、垂直 70°～110°。若机构安装方向不同，只调整 `components/robot_motion/robot_motion.c` 中的映射和限位，不要直接扩大角度范围。
+
+**舵机供电**：只用烧录口（USB）供电带不动舵机，必须接独立电源口。排查“舵机不动”时先确认供电，再查引脚与固件。
 
 ## 3. 启动与交互流程
 
-1. 初始化 OLED、动作队列、NVS/Wi-Fi、I2S 音频和按键。
-2. 没有 Wi-Fi 配置时立即进入配网；有配置时尝试连接，默认超时 60 秒。
-3. 获得 IP 后关闭 Wi-Fi 省电，完成 NTP 校时。
-4. 从 NVS 读取 AIUI 凭据，初始化 AIUI、离线唤醒和手势传感器。
-5. 播放“已联网，可以通过喊小飞小飞唤醒我”提示，进入离线待机。
-6. 听到“小飞小飞”、短按 BOOT，或待机时识别到前推手势后，播放唤醒提示并连接 AIUI。
-7. 单麦音频经本地 VAD 分轮次发送；收到 IAT、语义、NLP 和 TTS 后执行回复、表情和动作。
-8. TTS 或音乐播放时暂停上传麦克风；播放队列排空后恢复连续收音。
-9. 超时、明确退出指令、网络错误或不可恢复的 AIUI 错误会关闭在线会话并重新启用离线唤醒。
-
-云端语义字段 `shouldEndSession=true` 只表示当前技能轮次结束，不会直接结束本地连续
-对话；只有明确退出、空闲超时或错误恢复路径才真正关闭本地 AIUI 会话。
+1. 初始化 OLED、动作队列、NVS/Wi-Fi、I2S 音频与按键。
+2. 没有 Wi-Fi 配置立即进入配网；有配置则尝试连接，默认超时 60 秒。
+3. 获得 IP 后关闭 Wi-Fi 省电、完成 NTP 校时，随后启动控制台设备通道。
+4. 初始化 ESP-SR 离线唤醒与手势传感器，播放“已联网”提示音，进入离线待机（`offline wake ready`）。
+5. 唤醒词、BOOT 短按或待机时前推手势 → 开一轮云端语音：暂停唤醒词、独占麦克风录音。
+6. 说完（连续静音约 900 ms）后上传整段音频；服务端返回识别文本、回复文本与 PCM，设备边收边播。
+7. 播完或取消后恢复采集、重新武装唤醒词，回到待机。
+8. 音量键、配网页与控制台指令在任何状态下都可用；**BOOT 长按随时可进配网**。
 
 ## 4. 按键操作
 
-| 状态 | BOOT 短按 |
-| --- | --- |
-| 已保存 Wi-Fi 正在连接、尚未获得 IP | 立即停止连接并进入本地配网 |
-| 离线待唤醒 | 唤醒并开启 AIUI 会话 |
-| 正在播放 TTS 或音乐 | 立即打断播放；保持当前对话上下文并恢复收音 |
-| 已在普通收音阶段 | 不重复创建新会话 |
+| 按键 | 短按 | 长按（约 800 ms） |
+| --- | --- | --- |
+| BOOT | ① 已保存 Wi-Fi 正在连接、尚无 IP → 停止连接并进配网；② 一轮云端语音进行中 → **取消这一轮**；③ 否则唤醒并开一轮 | **进入配网页面**（已联网也生效）；在配网状态下长按 = 重启离开配网 |
+| 音量 + | +10 | 直接到 100 |
+| 音量 − | −10 | 静音 |
 
-音量按键：
+默认音量 80，改动保存在 NVS 的 `robot_audio/volume`，重启后仍然有效。
 
-- 音量 `+` 短按：增加 10；长按约 0.8 秒：设为 100。
-- 音量 `-` 短按：减少 10；长按约 0.8 秒：静音。
-- 默认音量为 80，修改后保存在 NVS 的 `robot_audio/volume`，重启后仍然有效。
-
-## 5. 配网与 AIUI 凭据
+## 5. 配网与控制台凭据
 
 ### 5.1 进入配网
 
-以下任一情况会进入配网：
+- NVS 中没有保存 Wi-Fi SSID；
+- 保存的 Wi-Fi 在 `CONFIG_ROBOT_STA_CONNECT_TIMEOUT_SECONDS`（默认 60 秒）内未连接成功；
+- Wi-Fi 正在连接但还没获得 IP 时短按 BOOT；
+- **任何时候长按 BOOT 约 800 ms**（给“已经配过网、想改配置”用，这是 2026-10-15 补上的入口）。
 
-- NVS 中没有保存 Wi-Fi SSID。
-- 保存的 Wi-Fi 在 `CONFIG_ROBOT_STA_CONNECT_TIMEOUT_SECONDS` 内未连接成功。
-- Wi-Fi 正在连接但还没有获得 IP 时短按 BOOT。
-- AIUI 凭据缺失或格式无效。
-
-设备创建开放热点 `DeskEmoji-XXXX`，OLED 滚动显示连接方式，并播放预先合成的
-“小飞”配网提示。该音频经过 16 kHz、单声道、16-bit PCM 和响度匹配处理后保存在
-`assets/provisioning.wav`，无需联网即可播放，并与联网提示保持一致的音色和音量。
-手机连接该热点后访问：
+设备创建开放热点 `DeskEmoji-XXXX`，OLED 滚动显示连接方式，并播放预置的配网提示音 `assets/provisioning.wav`（16 kHz 单声道，离线可播）。手机连接该热点后访问：
 
 ```text
 http://192.168.4.1
 ```
 
-页面会自动扫描最多 20 个附近 Wi-Fi。仅支持 ESP32-S3 可连接的 2.4 GHz 网络。
-选择网络、填写密码，并在“AIUI 凭据”中填写已经发布应用的三项凭据，保存后设备重启。
+页面自动扫描最多 20 个附近 Wi-Fi（仅 2.4 GHz），也可以手动输入 SSID。
 
-若只修改 Wi-Fi，可以把 AIUI 三项留空，原凭据会保留；若要更换 AIUI 应用，必须同时
-填写完整的 APPID、APPKEY、APPSECRET。凭据保存位置：
+### 5.2 三个字段互相独立
 
-| NVS 命名空间 | 键 |
-| --- | --- |
-| `wifi_cfg` | `ssid`、`password` |
-| `aiui_secret` | `appid`、`appkey`、`appsecret` |
+**页面上只有一个保存按钮**：三项一起提交，但服务端只写“这次真的填了”的那一项，留空的一律不写——所以不会出现“改设备码顺手把密码清空”的情况。
 
-设备已经联网后，BOOT 保持唤醒/打断功能，不会切换到配网。需要强制重新配置时，可先
-关闭已保存的路由器并重启，在连接阶段按 BOOT；最后手段是执行 `idf.py erase-flash`
-后重新完整烧录，此操作会清除固件、模型、资源和全部 NVS 数据。
-
-### 5.2 安全要求
-
-- 不要把真实 APPID、APPKEY、APPSECRET 写入源码、README、`sdkconfig`、构建命令或 Git。
-- 配网页面仅在设备本地 SoftAP 中提供，热点为开放网络，配网时应避免无关人员接入。
-- 日志只允许打印“credentials redacted”，不得输出凭据明文或完整鉴权 URL。
-
-## 6. AIUI 平台与固件配置
-
-当前默认配置：
-
-| 参数 | 值 | 说明 |
+| 想做的事 | 怎么填 | 结果 |
 | --- | --- | --- |
-| `aiui_ver` | `3` | RTOS 极速超拟人链路 |
-| `scene` | `main` | 已审核发布应用的正式场景 |
-| `voice_name` / VCN | `x6_wuyediantai_mini` | 当前发音人 |
-| TTS 编码 | `opus-wb` | 16 kHz 单声道 Opus 流 |
-| 交互模式 | `continuous_vad` | 连续语音轮次 |
-| `new_session` | `false` | 同一次唤醒内保留上下文 |
-| `uid` / SN | Wi-Fi STA MAC 派生 | 稳定设备标识 |
+| 只改 Wi-Fi | 填 Wi-Fi（和密码） | 服务器地址与设备码原样保留 |
+| 只改设备码 | 只填设备码 | Wi-Fi 与已保存密码不受影响 |
+| 只改服务器地址 | 只填服务器地址 | 其余不动 |
 
-可通过 `idf.py menuconfig` 的 `DeskEmoji AIUI` 菜单修改：
+NVS 落点：
 
-- `ROBOT_AIUI_SCENE`：发布应用通常使用 `main`；`main_box` 是开发测试场景，不能作为
-  已发布应用报错时的通用修复方式。
-- `ROBOT_AIUI_VCN`：TTS 发音人，当前为 `x6_wuyediantai_mini`。
-- `ROBOT_SESSION_IDLE_TIMEOUT_SECONDS`：在线会话空闲超时，默认 60 秒。
-- `ROBOT_STA_CONNECT_TIMEOUT_SECONDS`：已保存 Wi-Fi 的连接等待时间，默认 60 秒。
-- ESP-SR、表情标签、手势、随机动画和双舵机功能开关。
+| 命名空间 | 键 | 内容 |
+| --- | --- | --- |
+| `wifi_cfg` | `ssid`、`password` | Wi-Fi |
+| `cloud_cfg` | 服务器地址、设备码 | 控制台通道 |
 
-修改 VCN 或 scene 后需要重新编译并烧录应用。平台侧也必须为当前 APPID 开通对应
-发音人和能力；否则即使 WebSocket 连接成功，TTS 仍可能返回授权错误。正常启动日志应包含：
+服务器地址**不含 `://` 时自动补 `http://`**；写入端与读取端各做一次规范化，所以 NVS 里的旧裸 host 也不会继续报 `Error parse url`。
 
-```text
-cfg loaded: ver=3, scene=main, uid=..., vcn=x6_wuyediantai_mini
-offline wake ready: 小飞小飞 or BOOT short press
-```
+### 5.3 安全要求
 
-## 7. 音频与连续对话
+- 设备码只在控制台签发一次，库内只存哈希与掩码；填进 `sdkconfig` 会被编译进二进制，**带真实设备码的 `sdkconfig` 不得入库**。
+- 配网页只在设备本地 SoftAP 提供，热点是开放网络，配网时避免无关人员接入。
+- 普通日志不打印设备码明文，配网页只显示掩码。
 
-- 麦克风输入：16 kHz、单声道、S16 PCM；INMP441 以 32-bit I2S 左声道采集后转为 S16。
-- I2S 采集回调：640 samples / 40 ms。
-- AIUI 上传：拆成 320 samples / 640 bytes / 20 ms，满足 RTOS WebSocket 单包限制。
-- 本地 VAD：参考 7911 的起止策略，检测到语音结束后发送本轮音频 EOS。
-- TTS：WebSocket 流式接收 `opus-wb`，在独立任务中解码，按实际 PCM 约 1 秒预缓冲后播放。
-- 短回复收到流结束标记后可以提前开播；异常缺失终帧时由超时恢复逻辑回收连接。
-- 播放为半双工：TTS/音乐期间暂停麦克风上传，避免单麦、无 AEC 设备自激。
-- AIUI 意外断开时最多重试 3 次，退避约 1/2/3 秒；重试失败后回到离线唤醒。
+## 6. 固件配置（`idf.py menuconfig`）
 
-## 8. 音乐技能
+主菜单 `DeskEmoji robot`：离线唤醒、手势、空闲随机动画、双舵机、舵机引脚、舵机自检、麦克风声道／采样率／增益（`ROBOT_MIC_SHIFT`，默认 16）、已保存 Wi-Fi 连接超时。
 
-音乐链路按以下顺序处理：
+另一个菜单 `DeskEmoji cloud device channel`：
 
-1. 解析 AIUI `musicX`、`media` 或 `drama` 语义结果。
-2. 若结果带可播放 URL，直接加入播放列表。
-3. 若结果只有 `itemid`，通过讯飞音乐服务换取签名播放地址。
-4. 若 `musicX` 返回空曲目或 `rc=3`，提取用户查询词，通过已绑定网易云账号直接搜索。
-5. 兜底搜索成功后抑制“歌曲走丢了”等失败 TTS，改为播放本地正常播报并启动歌曲。
-6. 搜索失败也保持连续对话，不因技能 `shouldEndSession=true` 强制休眠。
+| 选项 | 默认 | 说明 |
+| --- | --- | --- |
+| `ROBOT_CLOUD_ENABLE` | n | 打开控制台设备通道 |
+| `ROBOT_CLOUD_URL` | 空 | 服务器地址的**编译期兜底**；配网页填了就用配网页的 |
+| `ROBOT_CLOUD_KEY` | 空 | 设备码的编译期兜底；同上。**建议留空**，让固件镜像不带任何凭据 |
+| `ROBOT_CLOUD_POLL_INTERVAL_S` | 3 | 指令轮询间隔 |
+| `ROBOT_CLOUD_STATUS_INTERVAL_S` | 60 | 状态上报间隔 |
+| `ROBOT_CLOUD_VOICE` | n | 打开云端语音对话 |
+| `ROBOT_CLOUD_VOICE_MAX_RECORD_MS` | 10000 | 单句录音上限 |
+| `ROBOT_CLOUD_VOICE_SILENCE_MS` | 900 | 说完多久算一句结束 |
+| `ROBOT_CLOUD_VOICE_THRESHOLD` | 700 | 静音判定阈值，**与 `ROBOT_MIC_SHIFT` 联动**：改增益要同步改它 |
 
-音乐服务请求会使用当前 APPID、APPKEY/APPSECRET 生成的 HMAC-SHA256 鉴权、Wi-Fi
-STA MAC 派生序列号和局域网 IP。使用前必须在讯飞平台完成音乐技能开通、账号登录与
-设备绑定，并确保设备时间已经同步。不要在日志中输出完整签名参数。
+优先级是「**配网页填了用配网页，没填才用固件里的 `ROBOT_CLOUD_URL` / `ROBOT_CLOUD_KEY`**」。上线后域名固定，写进 Kconfig 更省事（量产不必逐台填）；开发期建议留空、在配网页填。
 
-歌曲通常是 44.1 kHz、双声道 MP3；ESP-GMF 会解码并转换为 16 kHz、单声道、16 bit
-后送入统一播放队列。出现下面警告但随后进入 `ESP_AUD_SIMPLE_PLAYER_RUNNING` 时，
-只是解码器把输出缓冲区从 1024 扩到 4608 字节，不影响播放：
+## 7. 音频与云端对话
 
-```text
-ESP_GMF_ASMP_DEC: Not enough memory for out, need:4608, old: 1024, new: 4608
-```
+- 采集：INMP441 → I2S，16 kHz、单声道、S16 PCM；32-bit 槽右移 `ROBOT_MIC_SHIFT`（默认 16 就是把该麦克风的 24 位正确对齐）后钳到 16 bit。
+- 采集回调 640 samples／40 ms；日志约每秒打印一次 `microphone peak=… samples=640`。
+- 成句判据：RMS 低于 `ROBOT_CLOUD_VOICE_THRESHOLD` 的帧算静音，连续 `SILENCE_MS`（默认 900 ms）后结束这一句；开头一小段忽略静音检测，避免把第一个字当停顿。
+- 成句前会把**长内部静音压缩**（≥400 ms 的内部停顿压到约 300 ms，短停顿不动），这是“识别断断续续”的修法。
+- 每轮结束打印 `capture report`：音频时长、占用墙钟、有声时长、最长停顿、≥400 ms 停顿个数。**先看这份报告再猜**：`audio ≈ wall` 说明没有丢帧，剩下的停顿是音频里真实存在的。
+- 播放是半双工：播放期间暂停采集，避免单麦、无 AEC 的自激。
+- 取消：`robot_voice_cancel()` 同时置停止与取消标志，读取循环据此截断流、丢弃队列、恢复采集——这是“长回答按一次停不下来”的修法。
 
-播放音乐或 TTS 时短按 BOOT 可以打断，并继续当前对话，不主动清除 AIUI 上下文。
+## 8. 表情、动作与手势
 
-## 9. 表情、动作与手势
+OLED 表情沿用 `esp32-s3n16r8-emoji/emoji_controller.cc` 的风格：中性、开心、难过、生气、惊讶、思考、困惑、尴尬、哭、大笑、搞怪、爱心、震惊、酷、放松、美味、亲吻、自信、调皮、睡眠。
 
-OLED 表情沿用 `esp32-s3n16r8-emoji/emoji_controller.cc` 的风格，包括：中性、开心、
-难过、生气、惊讶、思考、困惑、尴尬、哭、大笑、搞怪、爱心、震惊、酷、放松、美味、
-亲吻、自信、调皮和睡眠。
+动作支持：眨眼、左看、右看、抬头、低头、回中、点头、摇头、转圈、跳舞、唤醒、休眠。动作、舵机与对应表情统一进入一个队列执行，避免屏幕动作与机械动作错位。
 
-动作支持：眨眼、左看、右看、抬头、低头、回中、点头、摇头、转圈、跳舞、唤醒和
-休眠。动作、舵机与对应表情统一进入一个队列执行，避免屏幕动作与机械动作错位。
-空闲时每约 10 秒随机执行一次行为，当前概率为：60% 眨眼、18% 左看、18% 右看、
-1% 转圈、3% 困惑。
-
-语音文本和 AI 回复中的表情/动作标签均可触发动作；没有结构化标签时使用中文关键词
-回退，例如“点头”“摇头”“向左看”“跳舞”“开心”“难过”“思考”等。
+动作的来源有三处：**空闲随机行为**（约每 10 秒一次；约 60% 眨眼、18% 左看、18% 右看、1% 转圈、3% 困惑）、**手势映射**、**控制台下发的表情／动作指令**。
+（旧版“从 AI 回复文本里解析表情／动作标签”的能力已随 AIUI 一起删除，代码中不再有文本到动作的解析。）
 
 PAJ7620U2 手势映射：
 
@@ -209,44 +154,33 @@ PAJ7620U2 手势映射：
 | 前推 | 惊讶；离线待机时同时唤醒 |
 | 后拉 | 眨眼 |
 
-方向手势按设备上 PAJ7620U2 的实际安装角度进行了坐标换算。为避免手停留在传感器前
-造成连续误触，单次动作后有 900 ms 冷却，并且传感器连续安静约 200 ms 后才会重新
-接收下一次手势；同时会丢弃一次上报多个方向的模糊结果。连续点头/摇头手势须在 4 秒
-内完成。传感器使用完整官方寄存器表初始化，连续通信失败时会自动停用，避免与其共用
-I2C 总线的 OLED 被故障传感器拖住。
+方向手势按设备上 PAJ7620U2 的实际安装角度做了坐标换算。为避免手停在传感器前连续误触，单次动作后有 900 ms 冷却，传感器安静约 200 ms 后才接收下一次；一次上报多个方向的模糊结果会被丢弃；连续点头／摇头须在 4 秒内完成。传感器连续通信失败会自动停用，避免把共用 I2C 的 OLED 一起拖住。
 
-## 10. 语音退出与节能
+## 9. 控制台设备通道（T016/T018）
 
-以下识别文本会直接结束在线对话、关闭 WebSocket、显示休眠表情，并重新启用离线
-唤醒：“你退下吧”“退下吧”“退下”“你休息吧”“去休息吧”“休息吧”“退出吧”
-“退出”“闭嘴”“再见”“拜拜”“结束”。
+- 周期性 `POST /api/device/hello` 与 `GET /api/device/commands`，用设备码鉴权（库内只存哈希）。
+- 支持指令：表情、动作、音量、播报、重启；每条回报 ack。
+- 在线判定与状态上报（固件版本、音量）默认每 60 秒一次。
+- 播报与对话共用同一条云端语音通道，所以“正在对话中”时下发播报会被拒绝，并把原因如实回报给控制台。
+- 语音能力需要控制台侧配置（语音设置里的供应商凭据 + 该设备选定语音角色），否则服务端返回 409，设备在**不录音**的情况下回报原因。
 
-在线会话默认 60 秒无有效活动后也会自动结束，并播放 `assets/aiui_exit.wav`。待机时
-AIUI WebSocket 不连接，只保留本地麦克风采集和离线唤醒，降低网络与云端功耗。
+## 10. 构建
 
-## 11. 构建
-
-在已导出 ESP-IDF 5.5.1 环境的终端进入本目录：
+在已导出 ESP-IDF 5.5.x 环境的终端进入本目录：
 
 ```powershell
 cd esp32
 idf.py build
 ```
 
-首次构建、修改 Kconfig 后配置未刷新时执行：
+首次构建、或改过 Kconfig 后：
 
 ```powershell
 idf.py reconfigure
 idf.py build
 ```
 
-一般不需要 `fullclean`。只有构建目录跨 IDF 版本、工具链或目标芯片后出现无法解释的
-CMake 缓存冲突时才使用：
-
-```powershell
-idf.py fullclean
-idf.py build
-```
+一般不需要 `fullclean`；只有构建目录跨 IDF 版本、工具链或目标芯片后出现无法解释的 CMake 缓存冲突时才用。
 
 主要构建产物：
 
@@ -258,9 +192,9 @@ idf.py build
 | `build/srmodels/srmodels.bin` | ESP-SR/MultiNet 模型 |
 | `build/assets.bin` | SPIFFS 提示音资源 |
 
-当前应用约 1.91 MiB，应用分区为 8 MiB，空间充足；实际大小以每次构建末尾输出为准。
+当前应用约 1.28 MiB（`0x148640` 字节），应用分区 8 MiB，空闲约 84%；实际大小以每次构建末尾输出为准。
 
-## 12. 烧录、监视和合并固件
+## 11. 烧录、监视和合并固件
 
 将 `COMx` 替换为设备实际串口：
 
@@ -268,112 +202,81 @@ idf.py build
 idf.py -p COMx flash monitor
 ```
 
-`flash` 会按项目清单同时烧录应用、分区表、模型和资源。新设备不要只单独写入
-`deskemoji_robot.bin`，否则会缺少离线唤醒模型或提示音。
+`flash` 会按项目清单同时写入应用、分区表、模型与资源。**新设备不要只单独烧 `deskemoji_robot.bin`**，否则会缺离线唤醒模型或提示音。
 
-生成量产合并固件：
+## 12. 关键启动日志
 
-```powershell
-idf.py merge-bin
-```
-
-`build/merged-binary.bin` 为完整 16 MB 是正常现象，与 N16R8 的 Flash 容量一致，并非
-应用超出分区。它包含各分区在固定偏移处的数据和空白填充。烧录合并固件时从地址 0
-写入；开发调试仍优先使用 `idf.py flash`。
-
-当前分区布局：
-
-| 分区 | 偏移 | 大小 | 内容 |
-| --- | ---: | ---: | --- |
-| `nvs` | `0x009000` | `0x006000` | Wi-Fi、AIUI 凭据和音量 |
-| `phy_init` | `0x00F000` | `0x001000` | RF 数据 |
-| `factory` | `0x010000` | `0x800000` | 应用 |
-| `model` | `0x810000` | `0x300000` | ESP-SR 模型 |
-| `assets` | `0xB10000` | `0x4F0000` | SPIFFS 提示音 |
-
-## 13. 关键启动日志
-
-正常冷启动应依次看到：
+以真机记录为准，下面这些行在 2026-10-14/15 的实机日志里出现过：
 
 ```text
-[init 1/5] OLED
-[init 2/5] motion queue
-[init 3/5] NVS and Wi-Fi
-[init 4/5] I2S audio
-[init 5/5] buttons
 sta ip: ...
-[online 1/3] AIUI credentials and runtime
-cfg loaded: ver=3, scene=main, uid=..., vcn=x6_wuyediantai_mini
-[online 2/3] ESP-SR MultiNet custom wake
-custom wake phrase ready: 小飞小飞
-[online 3/3] gesture sensor
 offline wake ready: 小飞小飞 or BOOT short press
+robot_cloud: device channel online
+robot_app: microphone peak=... samples=640
+robot_voice: capture report: ... ms of audio over ... ms wall, voiced ... ms, longest mid-speech gap ... ms, gaps >= 400 ms: N
+robot_voice: sending ... bytes of audio
+robot_voice: heard: ...
+robot_audio: playback stream start: buffered=... ms waited=... ms
+robot_voice: answer: ...
+robot_voice: cloud voice turn finished: 对话完成
 ```
 
-唤醒和一轮正常对话通常包含：
+两条按键路径会额外打印：
 
 ```text
-offline wake word detected
-AIUI connected
-local VAD: speech started
-local VAD: speech ended; AIUI audio end sent
-AIUI recognized: ...
-result sub=nlp ...
-result sub=tts ...
-AIUI Opus stream complete
+BOOT long press detected
+provisioning requested from BOOT long press
 ```
 
-## 14. 常见问题
+## 13. 常见问题
 
-| 日志/现象 | 判断与处理 |
+| 日志／现象 | 判断与处理 |
 | --- | --- |
-| `err(20002) ... app config not exists` | 当前 APPID/凭据/scene 找不到应用配置。已发布应用使用 `scene=main`，确认三项凭据来自同一应用。 |
-| `err(20019)`、`LiccCheck failed`、`11200` | 发音人未授权、额度受限或 VCN 不属于当前应用。确认平台为当前 APPID 开通 `x6_wuyediantai_mini`。 |
-| WebSocket `101 Switching Protocols` 后无结果 | 只代表连接成功。继续检查麦克风峰值、VAD、音频 EOS、IAT/NLP/TTS 日志。 |
-| `getaddrinfo() returns 202` | DNS/网络不可用，不是 APPKEY 错误；检查网关、DNS、信号和网络时间。 |
-| TLS connect/read/write timeout | 网络抖动或服务端连接中断。会话内会自动重试 3 次；持续发生时检查 Wi-Fi RSSI、路由器和时间同步。 |
-| `playback buffer underrun` | TTS 分片到达速度低于播放消耗，会产生可听断音；当前已有约 1 秒预缓冲，若连续出现需保留完整 TTS chunk 时间日志排查网络。 |
-| `TTS final frame missing` / `TTS stream stalled` | 云端未及时下发最终状态帧；固件会回收残留音频并重连。频繁出现时记录完整 SID 和分片序列。 |
-| `I2C transaction failed` / `gesture sensor unavailable` | PAJ7620U2 NACK、供电/接线或初始化表不兼容。OLED 可继续运行，但手势功能降级。检查 GPIO41/42、地址 `0x73` 和模组电压。 |
-| `ESP_GMF_ASMP_DEC: Not enough memory for out` | 解码器动态扩容警告。随后若出现播放器 RUNNING 且音乐正常，可忽略。 |
-| 音乐技能说“歌曲走丢了” | 检查 AIUI 音乐技能、网易云绑定、同一 APPID/设备 SN、NTP 和讯飞音乐接口响应；固件会尝试直接搜索兜底。 |
-| 音乐搜索失败后无法对话 | 当前代码会强制保持本地连续会话；若仍复现，请从 IAT 到播放结束/断连保留完整日志。 |
-| 休眠后无法唤醒 | 正常应看到 `offline wake re-armed; microphone capture resumed`。检查是否仍在播放、麦克风是否暂停以及 ESP-SR 是否已启动。 |
-| `merged-binary.bin` 恰好 16 MB | 正常，是整片 Flash 镜像，不代表应用大小为 16 MB。 |
+| `Error parse url 192.168.x.x:8787/api/device/hello` | 服务器地址缺 scheme。配网页会自动补 `http://`，但**旧 NVS 里的值不会自己变**——重开配网页保存一次即可。同时确认填的是控制台地址（本地 `:8787`），**不是**前端页面的 `:5173` |
+| `Failed to set URL`、设备通道一直不在线 | 地址不可达或设备码不对。先在同一 Wi-Fi 下用手机／电脑打开该地址，再确认设备已绑定 |
+| 唤醒没反应 | 看有没有 `offline wake ready`；一轮对话进行中麦克风被独占，唤醒词是关闭的，属正常 |
+| 识别断断续续 | 先看 `capture report`：`audio ≈ wall` 且有 `gaps >= 400 ms` → 是音频里真实的停顿；`audio` 明显小于 `wall` → 采集丢帧 |
+| 识别不到／听不清 | 看 `microphone peak`：长期只有几十 → 麦克风没接或 `ROBOT_MIC_SHIFT` 不对；长期钉在 32768、RMS 过半 → 增益过大，语音被钳成方波 |
+| 长回答按一次停不下来 | 已修（`robot_voice_cancel`）。若复现，请保留 `robot_voice:` 前后的完整日志 |
+| 播报回报“设备未配置语音服务” | 控制台「语音设置」没配供应商凭据，或该设备没选语音角色（服务端 409） |
+| 舵机不动 | 先查供电（必须用独立电源口），再用 `ROBOT_SERVO_SELFTEST` 自检：自检也不动就是硬件侧（供电／接线／舵机） |
+| `I2C transaction failed`／手势失效 | PAJ7620U2 NACK、供电或接线问题。OLED 仍可用，手势降级；查 GPIO41/42 与地址 `0x73` |
+| `merged-binary.bin` 恰好 16 MB | 正常，是整片 Flash 镜像，不代表应用大小为 16 MB |
 
-## 15. 代码结构
+## 14. 代码结构
 
 ```text
 esp32/
-├─ main/                         应用状态机、AIUI 结果和媒体编排
-├─ components/aiui_sdk/          AIUI RTOS v3 协议与结果解析
-├─ components/aiui_port/         FreeRTOS、Socket、TLS 平台适配
-├─ components/robot_network/     Wi-Fi、配网页面、NTP、音乐鉴权
-├─ components/robot_audio/       单麦采集、I2S 播放、Opus 解码和缓冲
-├─ components/robot_wakeup/      ESP-SR MultiNet 离线唤醒
-├─ components/robot_ui/          SSD1306 表情、动画和配网滚动显示
-├─ components/robot_motion/      舵机、动作队列和随机行为
-├─ components/robot_gesture/     PAJ7620U2 手势
-├─ assets/                       本地提示音
-├─ partitions.csv                16 MB 分区表
-├─ sdkconfig.defaults            默认构建配置
+├─ main/                          应用状态机、事件与按键（robot_app）
+├─ components/robot_cloud/        控制台设备通道 + 云端语音（robot_voice.c）
+├─ components/robot_network/      Wi-Fi、配网页、NTP、凭据 NVS
+├─ components/robot_audio/        单麦采集、I2S 播放与缓冲
+├─ components/robot_wakeup/       ESP-SR MultiNet 离线唤醒
+├─ components/robot_ui/           SSD1306 表情、动画与配网滚动显示
+├─ components/robot_motion/       舵机、动作队列与随机行为
+├─ components/robot_gesture/      PAJ7620U2 手势
+├─ assets/                        本地提示音（SPIFFS，整目录打包）
+├─ partitions.csv                 16 MB 分区表
 ```
+
+注意 `assets/` 是用 `spiffs_create_partition_image` **整目录打包**的：任何放进去的文件都会被烧进 `assets` 分区。目前只有 4 个文件被代码引用（`key_wakeup.wav`、`network_ready.wav`、`provisioning.wav`、`wakeup_ack.wav`），另外 4 个（`aiui_exit.wav`、`kws_enable.wav`、`ready.ogg`、`wificonfig.ogg`，合计约 166 KB）已无引用却仍在烧录，**待清理**。
+
+## 15. 与旧版 AIUI 固件的差异（T028，2026-10-15）
+
+删除的内容：`aiui_sdk`／`aiui_port` 组件、`Hardware/include/aiui` 与 `Hardware/src/aiui` 源码、`robot_app` 的 AIUI 会话层、`robot_audio` 的 Opus 解码路径、配网页「AIUI 凭据」段与 `aiui_secret` NVS、音乐／媒体子系统（`robot_music`）、桌面 AIUI demo，以及 Kconfig 的 `ROBOT_AIUI_*`／`ROBOT_ALLOW_VOICELESS`／`ROBOT_SESSION_IDLE_TIMEOUT_SECONDS`／`ROBOT_ENABLE_EXPRESSION_TAG`。
+
+保留并成为**唯一**语音链路的是：控制台云端语音（`robot_voice`）+ 设备通道（`robot_cloud`）。工程名由 `aiui_demo` 改为 `deskemoji_robot`；`robot_app.cpp` 从 4045 行降到 995 行。
 
 ## 16. 实板验收清单
 
-- [ ] 无 NVS 时自动进入配网，OLED 和语音提示正确。
-- [ ] 网页能扫描并选择附近 2.4 GHz Wi-Fi，保存后自动重启。
-- [ ] 凭据不出现在源码和普通日志中。
-- [ ] 联网后先校时，再初始化 AIUI；启动日志中的 scene 和 VCN 正确。
-- [ ] “小飞小飞”、BOOT 和前推手势均可从离线待机唤醒。
-- [ ] 单轮识别、连续上下文、流式 TTS 和播完恢复收音正常。
-- [ ] 播放期间 BOOT 能打断，不丢失本地连续对话状态。
-- [ ] 60 秒空闲后播放结束提示、断开 AIUI，并能再次唤醒。
-- [ ] 退出类语音进入睡眠表情后仍可通过唤醒词或 BOOT 唤醒。
-- [ ] 音量加减、长按最大/静音和重启持久化正常。
-- [ ] AIUI 音乐 URL、itemid 解析和网易云搜索兜底均可播放。
-- [ ] 表情与舵机动作同步，随机行为与原 DeskEmoji 风格一致。
-- [ ] PAJ7620U2 九类手势与动作映射正确，无持续 I2C NACK。
+- [ ] 无 NVS 时自动进配网；配网页能扫到并连上 2.4 GHz Wi-Fi。
+- [ ] **只填设备码保存：Wi-Fi 仍然连得上**（密码没被清空）；**只填 Wi-Fi：设备码不变**。
+- [ ] 已联网状态下**长按 BOOT 约 800 ms 进入配网**；配网中长按可重启离开。
+- [ ] “小飞小飞”、BOOT 短按、待机时前推手势都能开一轮对话。
+- [ ] 一轮识别—回复—播放完整；播完自动回待机并重新武装唤醒词。
+- [ ] 长回答播到一半按一次 BOOT 就能停（不“跳一段接着说”）。
+- [ ] 音量加减、长按最大／静音与重启持久化正常。
+- [ ] 控制台下发表情／动作／音量／播报四条指令都能执行并回报 ack。
+- [ ] 表情与舵机动作同步，空闲随机行为正常。
+- [ ] PAJ7620U2 九类手势映射正确，无持续 I2C NACK。
 - [ ] 长时间运行无任务栈溢出、播放队列卡死或无法重新唤醒。
-
-更详细的历史静态验证记录见 `VERIFICATION.md`；实板日志始终以当前构建版本为准。

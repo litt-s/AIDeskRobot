@@ -207,3 +207,14 @@ URL附加模式preview_start返回本安装不支持，未据此声称T009全状
 - 报错二（加上代理后）：`In a non-interactive environment, it's necessary to set a CLOUDFLARE_API_TOKEN …` —— 这不是“缺 API token”，而是“**OAuth 已失效，而当前会话弹不出浏览器**”的说法。直接 `npx wrangler login` 就好，不必去后台建 token。
 - `wrangler login` 的本地回调（`127.0.0.1:8976`）**只等 120 秒**：日志里的 `durationMs: 120141` 就是这条超时。浏览器弹出后要立刻点 Allow；失败了重跑一次即可，不会留下半截状态。
 - 教训：交互式登录不要“先把链接发给用户、自己转去写别的”，要在同一个回合里盯着会话等回调。
+## 记忆文档是混合换行，按 CRLF 切行会「整段找不到」（2026-10-15）
+- 现象：脚本按 `t.split("\r
+")` 取行后查找「以某条任务开头的行」，断言 `bullet not found`——但 `Select-String` 明明能搜到。
+- 真因：`memory_bank/TASKS.md` 是**混合换行**（90 个 CRLF + 11 个裸 LF）。按 CRLF 切分时，裸 LF 处不会断行，几行被并成一个"行"，于是条目藏在超大字符串里。
+- 改法：不要按某一种换行切分。用 `i = t.index(marker)` 定位子串，再 `j = t.find("\n", i)` 找行尾，看 `t[j-1]` 是不是 `\r` 决定该行的换行样式，然后只在该处插入——**不动其它行的换行**，`git diff` 才干净。
+- 顺带一条纪律：这类插入脚本要先断言「锚点出现且仅出现一次」再写盘；断言失败发生在写盘之前，文件不会被改坏（本轮踩坑时正是如此）。
+
+## 改了 `sdkconfig.defaults` 之后，`idf.py build` 不会验证它（2026-10-15）
+- `sdkconfig.defaults` 不在 ninja 的依赖图里。改完直接 `idf.py build`，ninja 判定"无事可做"，**CMake 根本不会重新加载 defaults**，Kconfig 的 `unknown kconfig symbol` 警告也就不会打印——于是"0 警告"看起来像通过，其实那次什么都没检查（本轮真踩到：第一次构建只跑了 5 个任务、用时 3 秒）。
+- 判据：想验证 defaults 的改动，必须显式 `idf.py reconfigure`，并在日志里看到 `Loading defaults file ... sdkconfig.defaults`，再看警告计数。这一次 reconfigure 后 `unknown kconfig symbol` 为 **0**（此前 9）。
+- 删除一个组件时，除了删组件与调用代码，**还要清 `sdkconfig.defaults` 里对应的 `CONFIG_*`**：残留的 7 个 `*SIMPLE_PLAYER*`（已删的 esp_audio_simple_player）与 `ROBOT_ENABLE_EXPRESSION_TAG`／`ROBOT_AIUI_VCN`（已删的 AIUI Kconfig）会在**每次构建**刷 9 条警告，长期掩盖真正的警告。

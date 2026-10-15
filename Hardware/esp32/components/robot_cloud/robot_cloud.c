@@ -251,10 +251,10 @@ static esp_err_t apply_command(const char *type, const char *payload, char *resu
             esp_err_t spoken = ESP_ERR_NOT_SUPPORTED;
 #if CONFIG_ROBOT_CLOUD_VOICE
             /*
-             * Prefer the cloud voice channel. It synthesises the sentence and
-             * streams PCM back, so it works on a build with no AIUI session to
-             * speak through - which is exactly where the AIUI route can only
-             * answer "no voice service configured".
+             * The cloud voice channel is the only way to speak: the server
+             * synthesises the sentence and streams the PCM back.  There is no
+             * second route to fall back on, so a failure is reported as the
+             * command result instead of being retried on another stack.
              */
             if (!robot_voice_busy()) {
                 spoken = robot_voice_say(text->valuestring);

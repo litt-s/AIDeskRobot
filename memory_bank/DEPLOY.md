@@ -26,7 +26,7 @@ npm run build && wrangler deploy             # 已执行
 - **提交节奏（项目规则）**：每过一个阶段提交并推送一次——一个编号任务完成、或一次验收与文档同步结束即提交；提交信息写明任务号与要点。这不只是留痕：`git diff` 是小阶段验收之外最便宜的一次"改动全貌复查"，也是回滚的粒度单位。
 - **提交信息约定（便于按任务回溯）**：`T0xx <阶段>：<要点1>；<要点2>`，例如 `T023 验收：真机 capture report 无丢帧；长静音压缩生效`。要点写"改了什么／验证到什么"，空话（如"更新了文件"）不写；未验证项必须写明（如"未验证：真机"）。一个提交只归一个任务号；规则/流程类改动也给一个任务号，便于日后 `git log --grep T0xx` 直接回溯。
 - 后续更新流程：`git add -A` → 密钥扫描 → `git commit -m …` → `git push`。本机 `github.com` 直连不通，git 通过 `http.https://github.com.proxy=http://127.0.0.1:7897` 走本地代理（代理需在运行）；凭据由系统级 `credential.helper=manager` 提供。
-- 未验证：`.github/workflows/verify.yml` 尚未在 GitHub 上实际运行。
+- **CI 一直在跑且是绿的（2026-10-15 核实，推翻此前「尚未实际运行」的说法）**：`GET /repos/litt-s/AIDeskRobot/actions/runs` → `total_count = 13`，自首个提交 `09a5800` 到 `012daeb` **全部 `conclusion=success`**；workflow `Verify console` 状态 `active`，每次推送约 30 秒（首次 `2026-10-14T16:29:56Z`）。手动查历史：`curl -sS --proxy http://127.0.0.1:7897 https://api.github.com/repos/litt-s/AIDeskRobot/actions/runs`。CI 步骤：`npm ci` / typecheck / build / 本地迁移 / 起 `dev:worker` 跑 `npm test` / `npm audit --audit-level=high`。
 ## 备份与回滚（2026-10-15 实测）
 **纪律：每次 `wrangler d1 migrations apply DB --remote` 之前、以及每次上线前，先导出一份快照。** 线上库现在虽是空的，但机器人一旦开始上报数据，误改就没得救。
 - **导出快照**（本机经代理；`wrangler` 必须能连上 `dash.cloudflare.com`，登录有效期见本节末）：

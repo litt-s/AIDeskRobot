@@ -458,8 +458,8 @@ static esp_err_t voice_turn(void)
 }
 
 /*
- * Speak one sentence without recording anything. Used by the console's
- * announcement button on builds that have no AIUI session to speak through.
+ * Speak one sentence without recording anything.  This is what the console's
+ * announcement button uses; no wake word and no session are involved.
  */
 esp_err_t robot_voice_say(const char *text)
 {

@@ -383,3 +383,17 @@ T001–T017 与 T009 已完成（依据见各任务条目）。**T018 语音对�
 - 意义：这批验收**顺带把 T028（移除 AIUI）的真机复验补上了**——配网页已无 AIUI 凭据段、唤醒词→云端语音闭环正常、BOOT 短按取消与长按配网都正常。此前 T028 各步的“未验证：真机未烧录”至此闭合。
 - 仍未单独复验：控制台设备页的四条指令（播报 `/api/device/say`、表情、动作、音量）在 T028 之后没有重跑一遍；`robot_cloud.c`/`robot_voice.c` 里“播报回落”的注释文字已随 T028-7 改为现状，但这条链路本身缺一次真机记录。
 - 附带核实（原以为要修的“CI 从未跑过”）：`GET /repos/litt-s/AIDeskRobot/actions/runs` → `total_count 13`，从首个提交 `09a5800` 到 `012daeb` **全部 conclusion=success**，workflow `Verify console` 状态 active，每次推送约 30 秒（2026-10-14T16:29:56Z 首次）。**结论：CI 一直在跑且是绿的**，文档里“尚未实际运行”的说法是错的，已更正。
+### 2026-10-15 — T028 遗留清理：固件 README 重写、AIUI 注释清除、CI 状态核实
+- 起因：按用户「其他的按步骤执行」，接着做第 1 项（原以为是「CI 从未跑过 + 小尾巴」）。
+- **CI 的结论与预期相反**：`GET /repos/litt-s/AIDeskRobot/actions/runs` → `total_count 13`，从首个提交 `09a5800` 一路到 `012daeb` **全部 conclusion=success**，workflow `Verify console` 状态 active、每次推送约 30 秒。也就是说 **CI 一直在跑而且是绿的**，旧文档里「尚未在 GitHub 上实际运行」是从未核实过的错误记录，已在 DEPLOY 更正。
+- 小尾巴的实际规模比记录的大：不止两三处注释。`Hardware/esp32/README.md`（379 行）**整篇仍在描述已删除的 AIUI 固件**——标题 `DeskEmoji AIUI`，含「AIUI 凭据写入 NVS」「AIUI 平台与固件配置」「音乐技能」「Opus 流式 TTS」「aiui_sdk/aiui_port 代码结构」等章节，照它操作会找不到任何对应界面。已**全文重写**为当前链路（离线唤醒 → 云端语音 `robot_voice` → 控制台设备通道 `robot_cloud`），保留仍然成立的硬件引脚表、手势映射表、构建/烧录段落，另加 §15「与旧版 AIUI 固件的差异」把历史讲清楚，§16 换成当前实板验收清单。
+- 代码注释：`robot_cloud.c`（播报回落分支）与 `robot_voice.c`（`robot_voice_say`）两处「在没有 AIUI 会话的构建上…」的措辞改写为现状描述。
+- `VERIFICATION.md`：顶部加「历史文件（2026-10-15 标注）」，声明它验证的 AIUI 对象已在 T028 删除、不要照它核对当前固件。
+- **新发现（待清理）**：`assets/` 由 `spiffs_create_partition_image(assets ...)` **整目录打包**，而代码真正引用的只有 4 个文件（`key_wakeup.wav`、`network_ready.wav`、`provisioning.wav`、`wakeup_ack.wav`）；`aiui_exit.wav`（106 KB）、`kws_enable.wav`（47 KB）、`ready.ogg`、`wificonfig.ogg` 共约 166 KB 已无引用却仍被烧进 assets 分区。删除会改变烧录镜像，留作独立小任务。
+- 编辑方法学（本轮踩到两次）：`memory_bank/*.md` 是**混合换行**（TASKS.md：90 个 CRLF + 11 个裸 LF），按 `split("
+")` 取行会漏掉裸 LF 处的条目、断言直接失败；定位插入点改用 `t.index(marker)` + `t.find("
+", i)` 判断行尾是 `
+` 还是 `
+`，不动其它行的换行。
+- 未验证：README 重写后的内容未逐条在真机复核（其中「三字段互相独立」「长按进配网」「一键取消」三项已由用户 2026-10-15 真机验收覆盖）；assets 清理未执行。
+- 同一轮内追加（构建验证的副产品）：①**注释改动已用完整构建验证**——`idf.py build` exit 0、`deskemoji_robot.bin` 仍是 `0x148640`（与改动前同尺寸，84% 空闲），说明只动了注释、没碰代码；②构建暴露出更新的残留：`Hardware/esp32/sdkconfig.defaults` 里还留着 9 个已删除符号（7 个 `CONFIG_ESP_AUDIO_SIMPLE_PLAYER_*`／`CONFIG_AUDIO_SIMPLE_PLAYER_*` 来自已删的 esp_audio_simple_player；`CONFIG_ROBOT_ENABLE_EXPRESSION_TAG`、`CONFIG_ROBOT_AIUI_VCN` 来自已删的 AIUI Kconfig），**每次构建刷 9 条 `warning: unknown kconfig symbol`**，已删除；③验证时踩到坑：改完 `sdkconfig.defaults` 直接 `idf.py build`，ninja **没有重跑 CMake**（该文件不在 ninja 依赖图里），那次「0 警告」是假证据——必须 `idf.py reconfigure` 才会真正 `Loading defaults file`，重跑后警告数为 0，重建产物尺寸不变；④确认本地 `sdkconfig` 的 `CONFIG_ROBOT_CLOUD_ENABLE=y`／`CONFIG_ROBOT_CLOUD_VOICE` 等开关未被这两次构建改动。
