@@ -144,9 +144,7 @@
     - **仍未验证**：真机——需再烧一次，看那行是否 ≥32 KB/s（预期上行 320 KB 从 18 s 降到约 4~6 s）。若仍不足，下一步是把录音上限从 10 s 降下来（本机 `VOICE_MAX_RECORD_MS`）或把窗口继续放大到 64 KB（代价是内存占用）。
     - **追加 2（同日，用户要求"再优化一下回复速度"）**：把**上传从等待路径上拿掉——边录边传**。原来"录满一整段 → 再整段上传"，320 KB 在公网要传好几秒，全落在用户等待里；现在录制期间就按 `Transfer-Encoding: chunked` 把音频分块写上去（每攒够 100 ms 一帧），录完只剩"读回复"。实现要点：①`esp_http_client` 在 `write_len = -1` 时**只加 chunked 头，分块框架（长度前缀 + 结尾 0 块）要调用方自己写**（读 IDF 源码确认；`esp_http_client.c` 里没有任何自动分块代码）——新增 `voice_chunk_write()` / `voice_chunk_finish()`；②第一次写入时才建连（含 TLS 握手），**没人说话就不连**，不白花一次往返；③任何一步失败（建连失败/写入失败）都置 `stream_failed` 退回原来的整段上传，行为不退化；④取消 / 没听到声音 / 录音过短这三条提前返回都会 `voice_stream_abort()` 收掉半开的请求。
     - **验证**：`idf.py build` exit 0（bin `0x149d50`）；**分块上传端到端实测**——本地起服务后用模拟器按"边录边传"的节奏（每 20 ms 写 100 ms 音频）POST：HTTP **200**、识别事件正常返回（`asr` 文本正确）；**线上网关也接受分块请求体**（对 `/api/auth/register` 发分块的非法用户名 → **400 用户名无效**，说明请求体被正常解析）；线上 `/api/device/voice` 拿到 401 只是因为设备码不对（该设备行已不在线上库里），与分块无关。
-    - **未验证**：真机（需烧录）。预期串口出现 `streamed N bytes while recording (M ms); no separate upload` 而不再出现 `sending N bytes of audio`，且"说完话到开口"少掉整段上传的几秒。
+    - **未验证**：真机（需烧录）。预期串口出现 `streamed N bytes while recording (M ms); no separate upload` 而不再出现 `sending N bytes of audio`，且"说完话到开口"少掉整段上传的几秒。
+    - **追加（同日，体验版没有持久卷）**：用户反馈"没看到有存储"——确认**体验版云托管的服务配置页只有 基本信息/自定义域名/生效版本，环境设置页只有出口 IP 与镜像仓库**，没有挂载卷入口（我上一轮给的路径不成立，已更正）。因此把"发布后仍然可用"收敛到**种子**上：新增 `scripts/export-seed.mjs`（从本地 D1 导出该用户的 users/models/roles/conversations/messages/devices/voice_settings，并**按 `sdkconfig` 的 `CONFIG_ROBOT_CLOUD_KEY` 额外补一台"固件默认码"设备**——配网页设备码填的就是它，缺了必然 401；输出只打印条数与掩码）；`server/node/index.ts` 的播种日志改为**逐表报数**并在 `devices=0` 时显式告警（种子对不对一眼可见）。本地实测：重建后的种子落库 `users=1 devices=2 models=1 roles=2 voice_settings=1 messages=120`，用固件默认码 `hello` → **200**。**未决**：真正的持久化方案 A（SQLite 快照到云存储）/ B（换 CloudBase SQL 型数据库）待用户选择。
 
 已完成本地编码与服务端 Bearer token 支持；网页 Cookie 行为不变，网页 typecheck/test/build/build:node 通过；未验证微信开发者工具/真机全链路。
-
-
-- T040 追加部署（2026-10-15）：用户复看时仍显示旧四字导航，定位为 Android WebView 正在加载 CloudBase 旧版前端产物。已用 `git archive 0df70b9` 生成干净部署源并补入本机 `seed/seed.sql`，重新部署既有 CloudBase 服务 `aidesk-console`。部署记录 **005 / BuildId 2608739705 / 流量 100%**；线上 `index.html` 引用 `assets/index-Bx3hjYFg.js` 和 `assets/index-C75e6vgW.css`，CSS 200 且包含 `nav-short`/`nav-long`。待用户在 Android 内点「重新加载」或清理应用数据后确认短标签单行效果。

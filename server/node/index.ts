@@ -90,7 +90,18 @@ function applySeed(db: DatabaseSync, dbPath: string) {
     db.exec('ROLLBACK');
     throw error;
   }
-  console.log(`seed applied: ${file} (users=${(db.prepare('SELECT COUNT(*) AS n FROM users').get() as {n: number}).n})`);
+  /*
+   * 播种不是"悄悄跑一下就完事"：库里到底有哪些东西，直接决定机器人和控制台能不能用。
+   * 逐表报数，缺设备时额外提醒一句 —— 没有设备的库等于机器人必然 401。
+   */
+  const count = (table: string) => (db.prepare(`SELECT COUNT(*) AS n FROM ${table}`).get() as {n: number}).n;
+  const devices = count('devices');
+  console.log(
+    `seed applied: ${file} (users=${count('users')} devices=${devices} models=${count('models')} roles=${count('roles')} voice_settings=${count('voice_settings')} messages=${count('messages')})`,
+  );
+  if (!devices) {
+    console.error('播种里没有任何设备：机器人会 401。请按 DEPLOY「重建种子」重新导出。');
+  }
 }
 
 function openDatabase() {

@@ -317,6 +317,23 @@ tcb api tcbr SubmitServerConfigChangeDiff --api-version 2022-02-17 --body '{"Env
 - **再量服务端**：`SEED_DB=<含 voice_settings 的 SQLite> node scripts/voice-stream-sim.mjs 800`（第 2 个参数是模拟设备的队列上限 ms）打印"音频总长 / 出流墙钟 / 饿死次数与时刻"；对**运行中的服务**做端到端剖析用 `node scripts/voice-profile.mjs <wav>`（打印每帧到达时刻与事件顺序，明细写 `data/voice-profile.json`）。
 - **已知的两个杠杆**：设备侧 `VOICE_READ_CHUNK` 与 `esp_http_client_config_t.buffer_size`（读吞吐）；`robot_audio` 的 `PLAYBACK_FAST/SAFE_PREBUFFER_SAMPLES` 与队列深度（抗抖动能力）。服务端目前**不做限速**，能多快发多快，让设备尽量缓冲。
 
+### 重建种子（发布前必做，2026-10-15 起）
+**为什么必须**：云托管容器**没有持久盘**，每次发布/重启都是空库 + 播种；而**体验版控制台里没有"挂载卷"入口**（服务配置页只有 基本信息 / 自定义域名 / 生效版本；环境设置页只有出口 IP 与镜像仓库）⇒ 库里有什么，完全由**代码包里那份 `seed/seed.sql`** 决定。**实测教训**：23:00 有人重新发布了一次（版本 005），用户 21:5x 在控制台新建的设备随之消失，机器人立刻 401 设备凭据无效。
 
-### T040 导航短标签部署记录（2026-10-15）
-已把 `0df70b9` 的导航双标签修复部署到既有 CloudBase 服务 `aidesk-console`：DeployId 005、BuildId 2608739705、流量 100%。线上 CSS hash `index-C75e6vgW.css`，已确认包含 `nav-short`/`nav-long`。部署源用 `git archive 0df70b9` 生成，避免带入其他未提交改动；另补入本机 ignored `seed/seed.sql` 以维持既有播种行为。
+**怎么重建**（本机，源数据是 `wrangler dev` 用的那份本地 D1）：
+```bash
+node scripts/export-seed.mjs                        # 默认导出"有设备的那位用户"
+SEED_USERNAME=li6679 node scripts/export-seed.mjs    # 指定用户
+D1_FILE=<path.sqlite> node scripts/export-seed.mjs    # 指定源库（默认自动挑带 wake_label 列的那个）
+```
+脚本会导出该用户的 `users/models/roles/conversations/messages/devices/voice_settings`，并**额外补一台"固件编译期默认设备码"的设备**（读 `Hardware/esp32/sdkconfig` 的 `CONFIG_ROBOT_CLOUD_KEY`）——配网页设备码填的就是那把码，种子里没有它，发布之后机器人必然 401。输出只打印条数与掩码，**不打印任何密钥**。
+
+**验收**：本地起一次服务看那行日志，条数要对得上、且必须 `devices>=1`：
+```
+seed applied: …/seed.sql (users=1 devices=2 models=1 roles=2 voice_settings=1 messages=120)
+```
+（缺设备时会额外打一行 `播种里没有任何设备：机器人会 401`。）
+
+**纪律**：在持久化落地之前，**控制台里改的任何东西（模型 key、语音凭据、唤醒词、新设备、账号）都只活到下一次发布**。改完要同步进种子——要么告诉我，我重新导出；要么自己跑上面那条命令，然后重新部署（部署源固定用 `data/cr-deploy`，它带着种子）。
+
+**还没做的持久化方案**（等用户选）：A. 定期把 SQLite 快照到云存储（启动时拉回，代价是可能丢最后几分钟）；B. 换成 CloudBase「SQL 型数据库」（真持久，改动较大）。
