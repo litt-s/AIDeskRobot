@@ -56,3 +56,4 @@
 .voice-layout .modal-actions{margin-top:18px}
 .voice-layout .hint{margin:16px 2px 0;max-width:640px}
 @media(max-width:540px){.voice-state{padding:17px}.voice-layout .command-row>span{min-width:0}}
+.turn-actions .rewind:disabled{opacity:.5;cursor:not-allowed}
