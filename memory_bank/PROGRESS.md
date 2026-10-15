@@ -405,3 +405,10 @@ T001–T017 与 T009 已完成（依据见各任务条目）。**T018 语音对�
 - 改法（用户选择"滑杆松手即下发"）：新增 `queueVolume()`——`onChange` 里 350 ms 防抖，**停手即自动下发**；`applyVolume()` 用 `volumeSent` 保证同值不重复发；按钮保留并改名「立即下发 N」兜底（点击前先清记录）；`selectDevice()` 换设备时重置，避免"给另一台设备设同值却不发"。
 - 验证：`npm run typecheck` exit 0；`vite build` exit 0（1578 模块；`dist/index.html` + `index-BKOxVkud.css` + `index-B40FuXIA.js`）。**未验证：浏览器拖拽体验、真机音量听感**（等用户复测后补验收记录）。
 - 附带查清一条固件语义：音量是**软件数字增益**，`robot_audio.c: volume_to_gain_q16` 里 `gain = volume² × 1.414`（`PLAYBACK_MAX_GAIN_Q16=92682` ⇒ 上限 +3 dB）。对应关系：30 → 0.13×、60 → 0.51×、70（默认）→ 0.69×、100（最大）→ 1.41×；**60→100 只差约 9 dB，往下调则非常明显**。
+### 2026-10-15 — T029 追加：音量滑杆改为「真正松手才下发」，并完成设备页四条指令真机验收
+- 用户复测反馈：**音量调节好使了**（问题解决），但发现新毛病——"鼠标没松开、停了一下就发出去了"，微调参数时一次刷出好几条指令（截图与库里都能看到 `15:53:29` 的 61／59／60 三条）。
+- 根因：第一版把 350 ms 防抖挂在 `onChange` 上，**"停手"不等于"松手"**——按住不放停顿同样会触发。这正是微调场景最痛的误发。
+- 改法：滑杆改用指针事件——`onPointerDown` 里 `setPointerCapture(e.pointerId)`（保证鼠标移出控件后 `pointerup` 仍回到该元素）并置 `volumeDragging=true`；`onPointerUp`／`onLostPointerCapture` 调 `endVolumeDrag()` 下发当前值；拖动过程中 `onChange` 只 `setVolume` 更新显示，**不发请求**；键盘等非指针来源（`volumeDragging` 为 false）仍走 300 ms 防抖。`volumeSent` 去重继续保留，按钮「立即下发 N」保留为兜底。
+- 验证：`npm run typecheck` exit 0；`vite build` exit 0（1578 模块，`dist/assets/index-BIHMzdBi.js`）。
+- **设备页四条指令真机验收完成**：表情（2026-10-14 验证）、动作（2026-10-14 验证）、**播报**（2026-10-15，5 条 `speak` 全 `done`／`已播报`）、**音量**（2026-10-15，8 条 `volume` 全 `done`／`音量已设为 50/84/89/91/19/61/59/60`）。T028 移除 AIUI 之后遗留的复验缺口至此全部清零。
+- 未验证：松手单发的实际手感（等用户复测确认不再刷条）。
