@@ -492,3 +492,19 @@ T001–T017 与 T009 已完成（依据见各任务条目）。**T018 语音对�
 - 根因：`robot_voice_say()` 的三处**提前返回**（`record_buffer==NULL`／`!running`＝通道没启动、文本为空、`busy`＝正在对话）**不写 `last_result`**，而提示音代码只打印 `robot_voice_last_result()` ⇒ 日志只剩空冒号；同时 GOT_IP 里 `robot_voice_init()/start()` 的返回值**被静默忽略**，若启动失败（如 10 KB 栈的任务创建遇内存紧张）"会说话"的能力整体消失而日志毫无线索；兜底又只是 0.58 s 提示音（不含词），听感上就是"没提示音"。
 - 修法：①三个提前返回各自写明原因（语音通道未启动／播报文本为空／正在对话中）；②GOT_IP 里 init/start 失败显式告警；③开机提示音**重试 3 次**（间隔 800 ms），每次失败后再调一次幂等的 `robot_voice_start()`（自愈"开机瞬间没起来"），仍失败才退回提示音并打印 `falling back to the cue`。
 - 验证：`idf.py build` exit 0、0 warning、`deskemoji_robot.bin` **0x149690**。**未验证**：真机（烧录后看开机前 10 秒日志）。
+### 2026-10-15 — T032 追加 5：开机提示音改为"先等语音通道就绪"（根因：两条启动路径竞争）
+- 用户贴出完整开机日志，时间线把根因钉死：
+  | 时刻 | 事件 |
+  | --- | --- |
+  | 2931 | 拿到 IP（`sta ip: 192.168.137.250`） |
+  | 4841→6531 | `SetupOnlineServices` 里加载 MultiNet（1.7 s），6531 `custom wake phrase ready: ni hao xiao zhi` |
+  | 6661 | **提示音任务开始**（TIME_READY 路径）→ `ready prompt: network connected, wake word enabled` |
+  | 6671 | 第一次 `say` 失败：`cloud ready prompt attempt 1 failed: ESP_ERR_INVALID_STATE (语音通道未启动)` |
+  | 6671 | **`device channel target: …`** ← 语音/控制台通道其实是在 **GOT_IP 路径**里、此刻才开始建 |
+  | 6681 | 我那句自愈的 `robot_voice_start()` 也早了 10 ms：`voice channel start retry failed: ESP_ERR_INVALID_STATE` |
+  | 6691 | `robot_voice: voice channel ready: up to 10000 ms per utterance, 320000-byte buffer` |
+  | 8941 | **`robot_voice: announcement finished: 已播报`** ← 0.8 s 后的重试成功，提示音**确实播出来了** |
+- 结论：①**上一版的重试自愈是有效的**（这次开机提示音是播了的）；②根因是**初始化顺序假设错了**——提示音走 TIME_READY 路径、语音通道走 GOT_IP 路径，两者相差约 30 ms 且先后不保证，不该用"先失败再重试"来处理。
+- 修法：新增 `robot_voice_ready()`（`record_buffer != NULL && running`），提示音在开口前**先等它就绪**（最多 3 s、每 50 ms 探一次），保留重试作为兜底。验证：`idf.py build` exit 0、0 warning、`deskemoji_robot.bin` **0x1496d0**。
+- 另：本次手势传感器是 `PAJ init failed at reg 0x5d`（上一次是 `reg 0xef`，寄存器不同）→ 应答不稳定，偏接线/供电；固件按既有设计停用该功能，不影响 OLED/语音/配网。
+- 未验证：真机（下一次开机应看到第一次 `say` 就成功，不再有 `attempt 1 failed`）。

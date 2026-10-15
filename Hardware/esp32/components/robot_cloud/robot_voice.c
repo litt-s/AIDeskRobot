@@ -1057,6 +1057,11 @@ bool robot_voice_busy(void)
     return s_voice.busy;
 }
 
+bool robot_voice_ready(void)
+{
+    return s_voice.record_buffer != NULL && s_voice.running;
+}
+
 const char *robot_voice_last_result(void)
 {
     return s_voice.last_result;

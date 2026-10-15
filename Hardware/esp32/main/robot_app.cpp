@@ -63,6 +63,9 @@ constexpr int kPromptDrainWaitSteps = 500;
  * 任务的 xTaskCreate 会因内存不足失败），所以给几次重试机会。 */
 constexpr int kReadyPromptAttempts = 3;
 constexpr uint32_t kReadyPromptRetryMs = 800;
+/* 提示音要等语音通道就绪：GOT_IP 里初始化它、TIME_READY 里播提示音，先后不保证。 */
+constexpr uint32_t kReadyPromptVoiceWaitMs = 50;
+constexpr int kReadyPromptVoiceWaitSteps = 60;
 const char *TAG = "robot_app";
 std::atomic<bool> s_provisioning_prompt_running{false};
 std::atomic<bool> s_ready_prompt_running{false};
@@ -248,6 +251,14 @@ void ready_prompt_task(void *arg)
     if (label[0] != '\0') {
         char line[96];
         snprintf(line, sizeof(line), "网络连接成功，喊%s就能唤醒我", label);
+        /*
+         * 先等语音通道就绪（最多 3 秒）。实测两条启动路径可以差几十毫秒：
+         * 日志里提示音 6661 ms 开跑、第一次 say 撞上"语音通道未启动"，
+         * 而通道 6691 ms 才 ready —— 等一下就绪比"失败重试"干净，也不会白等 0.8 秒。
+         */
+        for (int step = 0; step < kReadyPromptVoiceWaitSteps && !robot_voice_ready(); ++step) {
+            vTaskDelay(pdMS_TO_TICKS(kReadyPromptVoiceWaitMs));
+        }
         for (int attempt = 0; attempt < kReadyPromptAttempts && !spoke; ++attempt) {
             esp_err_t err = robot_voice_say(line);
             if (err == ESP_OK) {

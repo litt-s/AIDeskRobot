@@ -81,6 +81,12 @@ void robot_voice_cancel(void);
  */
 void robot_voice_interrupt_listen(void);
 bool robot_voice_busy(void);
+/*
+ * 语音通道是否已经初始化并启动（可以接受 say/trigger）。
+ * 存在的理由：初始化它的是 GOT_IP 路径，而开机提示音走 TIME_READY 路径，
+ * 两者的先后顺序不保证——实测提示音会先跑起来，第一次 say 必然撞上"通道未启动"。
+ */
+bool robot_voice_ready(void);
 /* Result of the last turn, for the command acknowledgement. */
 const char *robot_voice_last_result(void);
 
