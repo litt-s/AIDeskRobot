@@ -596,6 +596,15 @@ static esp_err_t voice_turn(void)
  */
 static void voice_stream_start(void)
 {
+#if !CONFIG_ROBOT_CLOUD_VOICE_STREAM_UPLOAD
+    /*
+     * 默认走"整段上传"：这条链路上分块请求体拿不到边传边回（响应头要等 body 结束才到），
+     * 45 秒超时 + 上传卡住把录音管线一起饿死，最后发出去的音频还有洞。理由与实测数据见 Kconfig。
+     */
+    s_voice.stream_failed = true;
+    ESP_LOGD(TAG, "streaming upload disabled by config; recording goes in one piece");
+    return;
+#endif
     esp_http_client_handle_t client = NULL;
     /* body_bytes = -1：长度未知，用分块编码边录边写。 */
     if (voice_open_request("/api/device/voice", "application/octet-stream",

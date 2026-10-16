@@ -147,3 +147,24 @@ menu "DeskEmoji cloud device channel"
             cuts off people who think before they speak.
 
 endmenu
+
+config ROBOT_CLOUD_VOICE_STREAM_UPLOAD
+    bool "Upload audio while recording (chunked request body)"
+    depends on ROBOT_CLOUD_VOICE
+    default n
+    help
+        On: start the HTTP request before the recording ends and write the audio
+        as it is captured, so "recognise + think + synthesise" is all that is
+        left after the user stops talking.
+
+        Off (default): record first, then upload the whole utterance in one
+        request.
+
+        Why the default is Off (measured 2026-10-16): on the CloudBase CloudRun
+        path the chunked request body does not get read while it is being
+        written -- the response headers only arrive after the body ends -- so
+        the device sat in its 45 s read timeout on every single turn. Worse than
+        the wasted seconds: the stalled upload starved the capture pipeline (10 s
+        of audio took 47 s of wall clock and dropped frames), so the audio that
+        finally arrived had holes and the recogniser returned nothing. One-shot
+        upload measured ~35 KB/s on the same link and finishes a turn in ~9 s.
