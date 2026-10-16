@@ -89,6 +89,26 @@ async function readInput() {
   }
 }
 
+/**
+ * 把 `request_permissions` 的载荷压成一句人话：申请哪些目录的读/写、要不要联网。
+ * 认不出来就返回空串 —— 宁可少提醒，也不要拿原始 JSON 去念。
+ */
+function permissionRequestSummary(tool, payload) {
+  const permissions = payload?.permissions || payload || {};
+  const fileSystem = permissions.file_system || permissions.fileSystem;
+  const parts = [];
+  const list = value => (Array.isArray(value) ? value.map(item => (typeof item === 'string' ? item : item && item.path)).filter(Boolean) : []);
+  if (fileSystem) {
+    const write = list(fileSystem.write);
+    const read = list(fileSystem.read);
+    if (write.length) parts.push('写 ' + write.join('、'));
+    if (read.length) parts.push('读 ' + read.join('、'));
+  }
+  if (permissions.network) parts.push('联网');
+  if (parts.length) return 'Codex 申请权限：' + parts.join('；');
+  return tool === 'request_permissions' ? 'Codex 在申请额外权限' : '';
+}
+
 /** 同步上报并把事件 id 拿回来（最多等 20 秒）：只有拿到 id 才谈得上「等远程批准」。 */
 function reportAndGetId(extraArgs) {
   const target = resolve(repoRoot, 'scripts', 'report-agent-event.mjs');
@@ -227,8 +247,20 @@ try {
      * 再决定过滤规则（绝不能变成「每次改文件都提醒」）。
      * 它是 async 的：绝不能让 App 等我们，所以这里不输出任何东西。
      */
-    const tool = firstString(input.tool_name, input.tool?.name, input.tool_input?.tool, '(未知工具)');
-    trace('pretool: ' + tool + ' | ' + JSON.stringify(input.tool_input || input.arguments || {}).slice(0, 400));
+    const tool = firstString(input.tool_name, input.tool?.name, '(未知工具)');
+    const payload = input.tool_input || input.arguments || {};
+    trace('pretool: ' + tool + ' | ' + JSON.stringify(payload).slice(0, 400));
+    /* 只有"申请额外权限"这类才提醒；Bash 等由 PermissionRequest 那条管，别重复打扰。 */
+    const summary = permissionRequestSummary(tool, payload);
+    if (summary) {
+      trace('上报权限申请：' + summary);
+      report([
+        '--kind', 'needs_confirmation',
+        '--source', 'Codex',
+        '--title', clip(summary, 120),
+        '--detail', clip(JSON.stringify(payload), 400),
+      ]);
+    }
   } else if (event === 'permission') {
     /*
      * Codex 的「需要批准」事件。两步走：
