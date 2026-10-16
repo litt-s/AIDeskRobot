@@ -263,6 +263,17 @@ VOLC_API_KEY=你的key npm run volc:smoke
 
 首次启动 App 要求填写完整控制台地址：Cloudflare/CloudBase 用 `https://...`，局域网 Node 容器可用 `http://192.168.x.x:端口`。更换服务器可通过底部原生「更换服务器」或右上溢出菜单。因为 Android 只保存服务器 URL 和 WebView Cookie，清应用数据即可登出并清除本机会话；服务端账户、模型、设备与密钥不受影响。发布签名 APK 仍需后续提供正式 keystore，当前未配置。
 
+### 手机提醒（T042 第一期续项，2026-10-16）
+App 右上角菜单新增「开启手机提醒 / 关闭手机提醒」。开启后由**前台常驻服务** `AgentAlertService` 每 30 秒问一次 `GET /api/agent/events?status=open`（凭据直接用 WebView 的会话 Cookie，不引入第二套设备令牌），有新事件就发系统通知：**标题行 = `<软件名> 待批准｜任务中断｜任务完成`；正文 = 标题 / 内容 / 可选**。语音那头只报一句"软件名 + 状态"，细节看手机或控制台——三处的数据是同一份（服务端 `agent_events.title/detail/options`）。去重按事件 id 记在本机，重启服务不会重复弹；每轮最多弹 5 条，剩下的留到下一轮。
+
+出问题时按这几条排查：
+- **权限**：Android 13+ 首次开启会要通知权限；拒绝后服务照跑但通知不出现，再点一次菜单可重新申请，或去系统设置放行。
+- **前台服务类型是 `specialUse`，不是 `dataSync`**：dataSync 从 Android 15 起有"每 24 小时最多 6 小时"上限，到点会被系统停掉。
+- **重启后自动接回**：`BootReceiver` 监听 `BOOT_COMPLETED`；Android 12+ 若不允许后台启动前台服务，会安静放弃（日志 `开机自启被系统拒绝`），下次打开 App 自动接回。
+- **没登录不打扰**：取不到会话 Cookie（未登录/刚换过服务器）时静默跳过。
+- 关闭方式：通知里的「停止」按钮，或 App 菜单「关闭手机提醒」。
+- **本轮未验证**：真机通知弹出、开机自启、拒绝权限后再开启——需装一次 Actions `android` job 产出的 APK。
+
 ## PC 桌面端构建与分发（T037）
 代码在 `desktop/main.cjs`，依赖 `electron@39.8.10` 与 `electron-builder@26.15.3`（devDependencies）。开发机先 `npm install`，再执行：
 ```powershell

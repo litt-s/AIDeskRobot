@@ -447,3 +447,9 @@ Electron 39 二进制、7zip、NSIS 缓存都在时，`electron-builder --win --
 - 定案：**语音只承担"有事发生"这一个信号**，正文（标题、细节、批准选项）留在控制台与手机看板上。理由有两条，都来自这台机器人本身的脾气：它对"念长句"很敏感（此前多次反馈等待久、卡顿、打断难），而长句还会把"到底是哪件事"念糊——用户听到一半就分不清了。
 - 实现上把"信号"和"正文"分开：`announcementText(source,kind)` 只产出 `${source} 待批准｜任务中断｜任务完成`（≤40 字），而 `agent_events.title/detail/options` 照旧落库并在控制台显示。**字段留着、语音不用**，比删字段好：第二期做远程批准时，那几个选项还要拿来渲染按钮。
 - 可迁移的判断：给"声音通道"设计通知时，先问"这条消息要传达的是一个**信号**，还是一份**内容**"。信号型（有事发生）→ 极短、结构化、可连续播；内容型（要读的东西）→ 交给屏幕。混在一起做，两头都不好用。
+
+## 常驻监听别用 dataSync 前台服务：Android 15 给它设了"每天 6 小时"上限（2026-10-16 T042 手机提醒）
+- 需求是"手机常驻盯着 Codex，有事就弹通知"。第一反应会选 `foregroundServiceType="dataSync"`（看起来最贴切：我在同步数据），但 Android 15（API 35）对 dataSync 加了**每 24 小时最多 6 小时**的运行上限，到点系统会停掉服务并回调 `Service.onTimeout`——对"一整天都得开着"的用法等于没有提醒，而且**用半天才暴露**，最难排查的那种。
+- 定案：用 `specialUse` + `android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE`（"盯着某个外部任务有没有新状态"这类长驻服务不属于系统预置的任何一类），并声明 `FOREGROUND_SERVICE_SPECIAL_USE` 权限。代价是上架 Google Play 要写清用途；自用/侧载无此问题。
+- 两条同源的坑：①`POST_NOTIFICATIONS` 是 Android 13+ 的**运行时**权限，用户拒绝后前台服务照跑但通知不显示，表现成"开了但没反应"——必须给"去设置里放行"的提示；②在 `BOOT_COMPLETED` 里启动前台服务，Android 12+ 有条件限制，`startForegroundService` 可能抛异常，**要 try/catch 安静放弃**，别让一条开机广播把 App 崩掉。
+- 顺带一条 WebView 的：原生服务想复用网页会话时，`CookieManager.getCookie()` 归主线程所有（WebView provider 的初始化对线程有要求），在轮询线程里直接调有"某些机型抛异常、日志还看不出"的风险。做法是 `Handler(getMainLooper()).post` + `CountDownLatch` 取值，超时就当没登录。

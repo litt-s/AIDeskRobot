@@ -1,5 +1,6 @@
 package cn.aidesk.console;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
@@ -8,6 +9,7 @@ import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.Menu;
@@ -39,6 +41,7 @@ import android.widget.Toast;
 public class MainActivity extends Activity {
     private static final String PREFS = "aidesk_console";
     private static final String KEY_SERVER_URL = "server_url";
+    private static final int REQUEST_NOTIFICATIONS = 10;
 
     private SharedPreferences preferences;
     private LinearLayout rootLayout;
@@ -62,6 +65,10 @@ public class MainActivity extends Activity {
         addNavigationBar();
 
         serverUrl = preferences.getString(KEY_SERVER_URL, "");
+        /* 上次开着手机提醒就把它接回来（服务自己也带 START_STICKY）。 */
+        if (preferences.getBoolean(AgentAlertService.KEY_ALERTS_ENABLED, false)) {
+            startAlertService(false);
+        }
         if (serverUrl.isEmpty()) {
             showServerSetup("");
         } else {
@@ -263,7 +270,67 @@ public class MainActivity extends Activity {
             changeServer();
             return true;
         }
+        if (id == R.id.action_toggle_alerts) {
+            toggleAlerts();
+            return true;
+        }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        MenuItem item = menu.findItem(R.id.action_toggle_alerts);
+        if (item != null) {
+            item.setTitle(preferences.getBoolean(AgentAlertService.KEY_ALERTS_ENABLED, false)
+                    ? R.string.alerts_disable
+                    : R.string.alerts_enable);
+        }
+        return super.onPrepareOptionsMenu(menu);
+    }
+
+    /**
+     * 手机提醒开关。开着的时候由常驻服务每 30 秒问一次"有没有新的 agent 事件"，
+     * 通知里给全标题、内容与批准选项——语音那边只报一句"软件名 + 状态"，细节看手机。
+     */
+    private void toggleAlerts() {
+        boolean enabled = preferences.getBoolean(AgentAlertService.KEY_ALERTS_ENABLED, false);
+        if (enabled) {
+            preferences.edit().putBoolean(AgentAlertService.KEY_ALERTS_ENABLED, false).apply();
+            stopService(new Intent(this, AgentAlertService.class));
+            toast(R.string.alerts_disabled);
+        } else {
+            requestNotificationPermission();
+            preferences.edit().putBoolean(AgentAlertService.KEY_ALERTS_ENABLED, true).apply();
+            startAlertService(true);
+        }
+        invalidateOptionsMenu();
+    }
+
+    private void requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            return;
+        }
+        if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, REQUEST_NOTIFICATIONS);
+        }
+    }
+
+    private void startAlertService(boolean announce) {
+        Intent intent = new Intent(this, AgentAlertService.class);
+        intent.setAction(AgentAlertService.ACTION_START);
+        startForegroundService(intent);
+        if (announce) {
+            toast(R.string.alerts_enabled);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        if (requestCode == REQUEST_NOTIFICATIONS && grantResults.length > 0
+                && grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+            toast(R.string.alerts_denied);
+        }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
     private void reloadConsole() {
         if (webView != null) {

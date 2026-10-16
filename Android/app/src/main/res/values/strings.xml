@@ -11,4 +11,23 @@
     <string name="error_empty">请先填写控制台地址</string>
     <string name="error_invalid">地址无效，请填写 http:// 或 https:// 开头的完整地址</string>
     <string name="error_page">无法加载控制台，请检查网络或地址是否正确</string>
+    <string name="alerts_enable">开启手机提醒</string>
+    <string name="alerts_disable">关闭手机提醒</string>
+    <string name="alerts_enabled">手机提醒已开启：需要批准、失败或完成时会通知你</string>
+    <string name="alerts_disabled">手机提醒已关闭</string>
+    <string name="alerts_denied">通知权限被拒绝：请到系统设置里允许 AIDesk 发通知，否则收不到提醒</string>
+    <string name="alert_channel_events">Codex 任务提醒</string>
+    <string name="alert_channel_events_desc">需要批准、任务中断、任务完成</string>
+    <string name="alert_channel_watch">手机提醒常驻</string>
+    <string name="alert_channel_watch_desc">保持监听所需的常驻通知（可随时停止）</string>
+    <string name="alert_running_title">AIDesk 手机提醒已开启</string>
+    <string name="alert_running_text">盯着 Codex：需要批准、失败或完成时通知你</string>
+    <string name="alert_stop">停止</string>
+    <string name="alert_no_title">（无标题）</string>
+    <string name="alert_label_title">标题</string>
+    <string name="alert_label_detail">内容</string>
+    <string name="alert_label_options">可选</string>
+    <string name="alert_state_approval">待批准</string>
+    <string name="alert_state_failed">任务中断</string>
+    <string name="alert_state_finished">任务完成</string>
 </resources>
