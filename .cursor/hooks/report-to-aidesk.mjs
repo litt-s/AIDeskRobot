@@ -121,39 +121,48 @@ function waitForDecision(id) {
   }
   const budgetMs = Math.max(0, Number(process.env.AIDESK_APPROVAL_WAIT_SEC || 80)) * 1000;
   const deadline = Date.now() + budgetMs;
+  let loggedFailure = false;
   while (Date.now() < deadline) {
     const remaining = deadline - Date.now();
-    const wait = Math.min(15, Math.max(1, Math.round(remaining / 1000)));
+    /* 单次等待：服务端封顶 20 秒，问 20 秒能少一半请求。 */
+    const wait = Math.min(20, Math.max(1, Math.round(remaining / 1000)));
     const answer = askDecision(id, wait);
-    if (answer === 'allow' || answer === 'deny') return answer;
+    if (answer.decision === 'allow' || answer.decision === 'deny') return answer.decision;
+    /* 失败只记一次：一轮里同一件事刷三遍日志没有信息量，只有噪音。 */
+    if (answer.failed && !loggedFailure) {
+      loggedFailure = true;
+      trace('查询远程表态失败（后面还会继续重试，不再重复记录）');
+    }
+    sleepMs(1000);
   }
   return null;
 }
 
+/** 问一次服务端：返回 {decision, failed}；decision 为 null 表示还没人表态。 */
 function askDecision(id, waitSeconds) {
   const key = agentKey();
   if (!key) {
     trace('没有上报凭据，问不了远程表态');
-    return null;
+    return {decision: null, failed: true};
   }
   const url = `${remoteBase()}/api/agent/events/${encodeURIComponent(id)}/decision?wait=${waitSeconds}`;
   try {
     const done = fetch(url, {
       headers: {Authorization: `Agent ${key}`, Accept: 'application/json'},
-      signal: AbortSignal.timeout((waitSeconds + 15) * 1000),
+      signal: AbortSignal.timeout((waitSeconds + 30) * 1000),
     })
       .then(response => (response.ok ? response.json() : null))
-      .then(body => (body && body.decision) || null)
-      .catch(error => {
-        trace('查询远程表态失败：' + String(error));
-        return null;
-      });
-    /* hook 必须阻塞等待，所以这里同步地把它等完（顶层没法用 await）。 */
-    return waitFor(done, waitSeconds);
+      .then(body => ({decision: (body && body.decision) || null, failed: false}))
+      .catch(() => ({decision: null, failed: true}));
+    /* hook 必须阻塞等待，所以这里同步地把它等完。 */
+    return waitFor(done, waitSeconds) || {decision: null, failed: true};
   } catch (error) {
     trace('查询远程表态异常：' + String(error));
-    return null;
+    return {decision: null, failed: true};
   }
+}
+function sleepMs(ms) {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
 }
 
 /** 极简的「等 Promise」：用一个 Atomics.wait 轮询，避免把整个脚本改成异步。 */
