@@ -23,6 +23,7 @@
  *   echo '{"command":"rm -rf dist"}' | node .cursor/hooks/report-to-aidesk.mjs --event shell --dry-run
  */
 import {spawn} from 'node:child_process';
+import {appendFileSync, mkdirSync} from 'node:fs';
 import {dirname, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
@@ -45,6 +46,19 @@ const RISKY = [
   /\b(?:DROP|TRUNCATE)\s+TABLE\b/i,
   /deploy-cloudbase\.mjs/,
 ];
+
+/*
+ * 被调用就往 data/hook.log 写一行：出问题时最怕的是「到底有没有跑」——
+ * 日志能一眼分开「hook 没加载」和「跑了但上报失败」这两种完全不同的故障。data/ 不入库。
+ */
+function trace(line) {
+  try {
+    mkdirSync(resolve(repoRoot, 'data'), {recursive: true});
+    appendFileSync(resolve(repoRoot, 'data', 'hook.log'), `${new Date().toISOString()} ${line}\n`, 'utf8');
+  } catch {
+    /* 日志失败不影响任何事 */
+  }
+}
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, '..', '..');
@@ -98,6 +112,7 @@ function report(extraArgs) {
 try {
   const event = value('event');
   const input = await readInput();
+  trace(`event=${event} stdin=${JSON.stringify(input).slice(0, 300)}`);
 
   if (event === 'shell') {
     const command = firstString(
@@ -108,6 +123,7 @@ try {
       input.input?.command,
     );
     if (command && RISKY.some(pattern => pattern.test(command))) {
+      trace(`risky=yes 上报待批准：${command.slice(0, 120)}`);
       report([
         '--kind', 'needs_confirmation',
         '--source', 'Codex',
@@ -125,11 +141,14 @@ try {
       } else {
         process.stdout.write(JSON.stringify(answer));
       }
+    } else {
+      /* 没命中：不输出任何东西 = 不改变 Codex 自己的判定。 */
+      trace(`risky=no 不输出（命令：${(command || '(空)').slice(0, 120)}）`);
     }
-    /* 没命中：不输出任何东西 = 不改变 Codex 自己的判定。 */
   } else if (event === 'tool-failure') {
     const tool = firstString(input.tool_name, input.toolName, input.tool?.name, '工具');
     const reason = firstString(input.error, input.error_message, input.stderr, input.message);
+    trace(`上报失败事件：${tool}`);
     report([
       '--kind', 'failed',
       '--source', 'Codex',
@@ -137,12 +156,14 @@ try {
       '--detail', clip(reason, 400),
     ]);
   } else if (event === 'stop') {
+    trace('stop 事件（默认静默）');
     if (REPORT_FINISHED) {
       report(['--kind', 'finished', '--source', 'Codex', '--title', '本轮回复结束']);
     }
   }
-} catch {
+} catch (error) {
   /* 一律吞掉：hook 崩了不能把 Codex 搞挂。 */
+  trace('异常：' + String(error));
 }
 
 /* 用 exitCode 而不是 process.exit()：让 stdout 有机会冲刷完（写过 JSON 的那条路径尤其重要）。 */
