@@ -79,3 +79,22 @@ describe('agent event options',()=>{
   expect(list.events[0].options).toEqual(['允许一次','拒绝']);
  });
 });
+
+describe('console test alert',()=>{
+ it('fires a test event through the very same path',async()=>{
+  const {call,speaks,sayOf}=fixture();
+  const response=await call('/api/agent/events/test',{method:'POST',body:'{}'});
+  expect(response.status).toBe(201);
+  const body=await response.json() as any;
+  expect(body.event.source).toBe('测试');
+  expect(body.event.options).toEqual(['允许一次','本次会话都允许','拒绝']);
+  expect(body.say).toBe('测试 待批准');
+  expect(body.announced).toBe(1);
+  expect(speaks()).toHaveLength(1);
+  expect(sayOf()).toBe('测试 待批准');
+  const list=await (await call('/api/agent/events')).json() as any;
+  expect(list.events[0].title).toContain('测试提醒');
+  expect(list.events[0].detail).toContain('手机');
+  expect(list.events[0].status).toBe('open');
+ });
+});

@@ -67,6 +67,18 @@ export function agentRoutes(app:any){
     return row;
   }
 
+  /** 走和控制台"播报"按钮同一条通道：给该用户每台设备排一条 speak。 */
+  async function announceToDevices(c:any,userId:string,say:string,t:string){
+    const devices=(await c.env.DB.prepare('SELECT id FROM devices WHERE user_id=?').bind(userId).all()).results as any[];
+    let announced=0;
+    for(const device of devices){
+      await c.env.DB.prepare('INSERT INTO device_commands (id,device_id,user_id,type,payload,status,result,created_at,updated_at,acked_at) VALUES (?,?,?,?,?,?,?,?,?,?)')
+        .bind(crypto.randomUUID(),device.id,userId,'speak',JSON.stringify({text:say}),'pending',null,t,t,null).run();
+      announced+=1;
+    }
+    return announced;
+  }
+
   app.post('/api/agent/events',async(c:any)=>{
     const key=await agentAuth(c);
     const b=await c.req.json().catch(()=>({}));
@@ -80,18 +92,32 @@ export function agentRoutes(app:any){
     /* 先落库：机器人可能离线，播报只是尽力而为，事件本身不能丢。 */
     await c.env.DB.prepare('INSERT INTO agent_events (id,user_id,key_id,source,kind,title,detail,options,status,announced,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)')
       .bind(id,key.user_id,key.id,source,kind,title||null,detail||null,options.length?JSON.stringify(options):null,'open',0,t).run();
-    /* 走和控制台"播报"按钮同一条通道：device_commands 里排一条 speak。 */
-    const devices=(await c.env.DB.prepare('SELECT id FROM devices WHERE user_id=?').bind(key.user_id).all()).results as any[];
     /* 播报只说"哪个软件、什么状态"；标题与选项留给控制台/手机。 */
     const say=announcementText(source,kind);
-    let announced=0;
-    for(const device of devices){
-      await c.env.DB.prepare('INSERT INTO device_commands (id,device_id,user_id,type,payload,status,result,created_at,updated_at,acked_at) VALUES (?,?,?,?,?,?,?,?,?,?)')
-        .bind(crypto.randomUUID(),device.id,key.user_id,'speak',JSON.stringify({text:say}),'pending',null,t,t,null).run();
-      announced+=1;
-    }
+    const announced=await announceToDevices(c,key.user_id,say,t);
     if(announced)await c.env.DB.prepare('UPDATE agent_events SET announced=1 WHERE id=?').bind(id).run();
     return c.json({event:{id,source,kind,title:title||null,options,status:'open',created_at:t},announced,say},201);
+  });
+
+  /*
+   * 控制台里的"发一条测试提醒"。整条链路（手机常驻服务 → 会话 Cookie → 通知权限 → 配网页设备码）
+   * 是这套东西最难自测的一环：PC 上没接 hook、或手边没电脑时，用户没有任何办法知道"手机到底会不会响"。
+   * 所以给会话鉴权留一个入口，它走的是和真实事件**完全相同**的落库 + 排队播报路径，
+   * 只把来源固定成"测试"，收到的人一眼能看出这不是真的。
+   */
+  app.post('/api/agent/events/test',async(c:any)=>{
+    const userId=c.get('user').id;
+    const id=crypto.randomUUID(),t=now();
+    const source='测试',kind='needs_confirmation';
+    const title='测试提醒：能收到就说明链路通了';
+    const detail='这条是控制台手动发的测试，用来确认手机能不能弹通知；机器人也会念一句"测试 待批准"。';
+    const options=['允许一次','本次会话都允许','拒绝'];
+    await c.env.DB.prepare('INSERT INTO agent_events (id,user_id,key_id,source,kind,title,detail,options,status,announced,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)')
+      .bind(id,userId,null,source,kind,title,detail,JSON.stringify(options),'open',0,t).run();
+    const say=announcementText(source,kind);
+    const announced=await announceToDevices(c,userId,say,t);
+    if(announced)await c.env.DB.prepare('UPDATE agent_events SET announced=1 WHERE id=?').bind(id).run();
+    return c.json({event:{id,source,kind,title,detail,options,status:'open',created_at:t},announced,say},201);
   });
 
   app.get('/api/agent/events',async(c:any)=>{
