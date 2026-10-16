@@ -163,3 +163,15 @@ describe('remote approval',()=>{
   expect(list.events[0]).toMatchObject({decision:'allow',decided_from:'mini'});
  });
 });
+describe('session-free paths',()=>{
+ it('lets the device channel, agent reports and the decision poll through without a session',async()=>{
+  const {isSessionFreeRequest}=await import('../server/public-paths');
+  expect(isSessionFreeRequest('/api/device/hello','POST')).toBe(true);
+  expect(isSessionFreeRequest('/api/device/commands','GET')).toBe(true);
+  expect(isSessionFreeRequest('/api/agent/events','POST')).toBe(true);
+  expect(isSessionFreeRequest('/api/agent/events/0f0f/decision','GET')).toBe(true);
+  expect(isSessionFreeRequest('/api/agent/events','GET')).toBe(false);
+  expect(isSessionFreeRequest('/api/agent/events/0f0f/decision','POST')).toBe(false);
+  expect(isSessionFreeRequest('/api/devices','GET')).toBe(false);
+ });
+});
