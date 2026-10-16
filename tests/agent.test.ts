@@ -24,8 +24,9 @@ function fixture(){
  const mint=async()=>((await (await call('/api/agent/keys',{method:'POST',body:'{}'})).json()) as any).secret as string;
  const report=(key:string,body:any)=>app.request('http://localhost/api/agent/events',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Agent '+key},body:JSON.stringify(body)},env);
  const speaks=()=>sqlite.prepare("SELECT payload FROM device_commands WHERE type='speak'").all() as any[];
+ const agentGet=(key:string,path:string)=>app.request('http://localhost'+path,{headers:{Authorization:'Agent '+key}},env);
  const sayOf=()=>JSON.parse(speaks()[0].payload).text as string;
- return {sqlite,call,mint,report,speaks,sayOf};
+ return {sqlite,call,mint,report,speaks,sayOf,agentGet};
 }
 
 describe('agent announcement text',()=>{
@@ -118,5 +119,47 @@ describe('phone watch heartbeat',()=>{
   const body=await (await call('/api/agent/watch')).json() as any;
   expect(body.watch.notified_count).toBe(5);
   expect(body.watch.last_error).toBeNull();
+ });
+});
+describe('remote approval',()=>{
+ it('lets the phone decide once and only once',async()=>{
+  const {call,mint,report,sqlite}=fixture();
+  const key=await mint();
+  const created=await (await report(key,{kind:'needs_confirmation',source:'Codex',title:'rm -rf dist',options:['允许一次','拒绝']})).json() as any;
+  const id=created.event.id;
+  const first=await call(`/api/agent/events/${id}/decision`,{method:'POST',body:JSON.stringify({decision:'deny',from:'phone'})});
+  expect(first.status).toBe(200);
+  expect(await first.json()).toMatchObject({decision:'deny',decided_from:'phone'});
+  const again=await call(`/api/agent/events/${id}/decision`,{method:'POST',body:JSON.stringify({decision:'allow'})});
+  expect(again.status).toBe(409);
+  expect(sqlite.prepare('SELECT decision,decided_from,status FROM agent_events WHERE id=?').get(id)).toMatchObject({decision:'deny',decided_from:'phone',status:'acked'});
+ });
+ it('refuses a decision that arrives after Codex stopped waiting',async()=>{
+  const {call,mint,report,sqlite}=fixture();
+  const key=await mint();
+  const created=await (await report(key,{kind:'needs_confirmation',source:'Codex',title:'x'})).json() as any;
+  const id=created.event.id;
+  sqlite.prepare('UPDATE agent_events SET created_at=? WHERE id=?').run(new Date(Date.now()-10*60*1000).toISOString(),id);
+  const late=await call(`/api/agent/events/${id}/decision`,{method:'POST',body:JSON.stringify({decision:'allow'})});
+  expect(late.status).toBe(409);
+  expect(sqlite.prepare('SELECT decision FROM agent_events WHERE id=?').get(id)).toMatchObject({decision:null});
+ });
+ it('hands the decision to the waiting hook, and says null when nobody answered',async()=>{
+  const {agentGet,mint,report,sqlite}=fixture();
+  const key=await mint();
+  const created=await (await report(key,{kind:'needs_confirmation',source:'Codex',title:'x'})).json() as any;
+  const id=created.event.id;
+  expect(await (await agentGet(key,`/api/agent/events/${id}/decision?wait=0`)).json()).toMatchObject({decision:null});
+  expect((await agentGet('not-a-real-key',`/api/agent/events/${id}/decision?wait=0`)).status).toBe(401);
+  sqlite.prepare("UPDATE agent_events SET decision='allow',decided_at=?,decided_from='phone' WHERE id=?").run(new Date().toISOString(),id);
+  expect(await (await agentGet(key,`/api/agent/events/${id}/decision?wait=0`)).json()).toMatchObject({decision:'allow',decided_from:'phone'});
+ });
+ it('carries the decision back to the console list',async()=>{
+  const {call,mint,report}=fixture();
+  const key=await mint();
+  const created=await (await report(key,{kind:'needs_confirmation',source:'Codex',title:'x'})).json() as any;
+  await call(`/api/agent/events/${created.event.id}/decision`,{method:'POST',body:JSON.stringify({decision:'allow',from:'mini'})});
+  const list=await (await call('/api/agent/events')).json() as any;
+  expect(list.events[0]).toMatchObject({decision:'allow',decided_from:'mini'});
  });
 });

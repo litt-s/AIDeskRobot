@@ -22,8 +22,8 @@
  * 手动试（不会真的发通知）：`--dry-run` 只打印它打算报什么。
  *   echo '{"command":"rm -rf dist"}' | node .cursor/hooks/report-to-aidesk.mjs --event shell --dry-run
  */
-import {spawn} from 'node:child_process';
-import {appendFileSync, mkdirSync} from 'node:fs';
+import {execFileSync, spawn} from 'node:child_process';
+import {appendFileSync, mkdirSync, readFileSync} from 'node:fs';
 import {dirname, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
@@ -89,6 +89,96 @@ async function readInput() {
   }
 }
 
+/** 同步上报并把事件 id 拿回来（最多等 20 秒）：只有拿到 id 才谈得上「等远程批准」。 */
+function reportAndGetId(extraArgs) {
+  const target = resolve(repoRoot, 'scripts', 'report-agent-event.mjs');
+  if (dryRun) {
+    console.error('[dry-run] 会同步上报并拿事件 id（跳过）');
+    return '';
+  }
+  try {
+    const text = execFileSync(process.execPath, [target, ...extraArgs, '--return-id'], {
+      encoding: 'utf8',
+      timeout: 20000,
+      windowsHide: true,
+    });
+    return String(text || '').trim();
+  } catch (error) {
+    trace('同步上报失败：' + String(error));
+    return '';
+  }
+}
+
+/**
+ * 等远程表态：每轮向服务端要 15 秒（单次等待封顶 20 秒，网关对长请求不友好），
+ * 直到总预算（AIDESK_APPROVAL_WAIT_SEC，默认 80 秒）用完 —— 容器冷启动可能吃掉十几秒，
+ * 所以预算要留够，同时必须短于 hooks.json 里的 timeout（120 秒）。返回 'allow' / 'deny' / null。
+ */
+function waitForDecision(id) {
+  if (dryRun) {
+    console.error('[dry-run] 会等待远程表态（跳过）');
+    return null;
+  }
+  const budgetMs = Math.max(0, Number(process.env.AIDESK_APPROVAL_WAIT_SEC || 80)) * 1000;
+  const deadline = Date.now() + budgetMs;
+  while (Date.now() < deadline) {
+    const remaining = deadline - Date.now();
+    const wait = Math.min(15, Math.max(1, Math.round(remaining / 1000)));
+    const answer = askDecision(id, wait);
+    if (answer === 'allow' || answer === 'deny') return answer;
+  }
+  return null;
+}
+
+function askDecision(id, waitSeconds) {
+  const key = agentKey();
+  if (!key) {
+    trace('没有上报凭据，问不了远程表态');
+    return null;
+  }
+  const url = `${remoteBase()}/api/agent/events/${encodeURIComponent(id)}/decision?wait=${waitSeconds}`;
+  try {
+    const done = fetch(url, {
+      headers: {Authorization: `Agent ${key}`, Accept: 'application/json'},
+      signal: AbortSignal.timeout((waitSeconds + 15) * 1000),
+    })
+      .then(response => (response.ok ? response.json() : null))
+      .then(body => (body && body.decision) || null)
+      .catch(error => {
+        trace('查询远程表态失败：' + String(error));
+        return null;
+      });
+    /* hook 必须阻塞等待，所以这里同步地把它等完（顶层没法用 await）。 */
+    return waitFor(done, waitSeconds);
+  } catch (error) {
+    trace('查询远程表态异常：' + String(error));
+    return null;
+  }
+}
+
+/** 极简的「等 Promise」：用一个 Atomics.wait 轮询，避免把整个脚本改成异步。 */
+function waitFor(promise, seconds) {
+  let settled = false, value = null;
+  promise.then(result => { value = result; settled = true; });
+  const deadline = Date.now() + (seconds + 20) * 1000;
+  const buffer = new Int32Array(new SharedArrayBuffer(4));
+  while (!settled && Date.now() < deadline) Atomics.wait(buffer, 0, 0, 50);
+  return value;
+}
+
+function remoteBase() {
+  return (process.env.AIDESK_EVENT_URL || 'https://aidesk-console-312359-12-1485927190.sh.run.tcloudbase.com').replace(/\/+$/, '');
+}
+
+function agentKey() {
+  if (process.env.AIDESK_AGENT_KEY) return process.env.AIDESK_AGENT_KEY.trim();
+  try {
+    return readFileSync(process.env.AIDESK_AGENT_KEY_FILE || resolve(repoRoot, 'data', 'agent-key.txt'), 'utf8').trim();
+  } catch {
+    return '';
+  }
+}
+
 /** 交给上报脚本：默认后台跑，不阻塞 Codex。 */
 function report(extraArgs) {
   const target = resolve(repoRoot, 'scripts', 'report-agent-event.mjs');
@@ -116,8 +206,10 @@ try {
 
   if (event === 'permission') {
     /*
-     * Codex 自己的"需要批准"事件：App 已经会弹它自己的确认框，我们只负责播报 + 推送手机，
-     * **不输出任何东西**（不改变它的判定）。
+     * Codex 的「需要批准」事件。两步走：
+     *  ① 同步上报（要拿到事件 id 才谈得上等）；
+     *  ② 在预算时间内轮询「手机/控制台表态了吗」——有就返回决定，替人把这次批准点掉；
+     *     没有就什么都不输出，Codex 照旧弹它自己的确认框（与没接这个功能时完全一致）。
      */
     const command = firstString(
       input.tool_input?.command,
@@ -128,13 +220,30 @@ try {
     );
     const tool = firstString(input.tool_name, input.tool?.name, input.tool_input?.tool, '命令');
     trace(`permission 事件（工具 ${tool}）：${(command || '(无命令)').slice(0, 120)}`);
-    report([
+    const id = reportAndGetId([
       '--kind', 'needs_confirmation',
       '--source', 'Codex',
       '--title', clip(command || `${tool} 需要你批准`, 120),
       '--detail', 'Codex 正在等你批准',
       '--options', APPROVAL_OPTIONS,
     ]);
+    const decision = id ? waitForDecision(id) : null;
+    if (decision === 'allow' || decision === 'deny') {
+      trace(`远程表态：${decision}（事件 ${id}）`);
+      if (!dryRun) {
+        process.stdout.write(JSON.stringify({
+          hookSpecificOutput: {
+            hookEventName: 'PermissionRequest',
+            decision: {
+              behavior: decision,
+              message: decision === 'allow' ? '来自 AIDesk 的远程批准' : '来自 AIDesk 的远程拒绝',
+            },
+          },
+        }));
+      }
+    } else {
+      trace('预算内没人表态（或拿不到事件 id）：不干预，交给 Codex 自己的确认框');
+    }
   } else if (event === 'shell') {
     const command = firstString(
       input.command,

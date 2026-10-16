@@ -20,6 +20,8 @@ const parseStoredOptions=(value:unknown):string[]=>{
   try{return normalizeOptions(JSON.parse(value));}catch{return [];}
 };
 const KINDS=['needs_confirmation','failed','finished'];
+/* 远程批准的有效期：超时之后 Codex 那边早就不等了，再来"补票"最危险，直接拒。 */
+const APPROVAL_WINDOW_MS=5*60*1000;
 
 const clip=(text:string,max:number)=>text.length>max?`${text.slice(0,max-1)}…`:text;
 
@@ -122,7 +124,7 @@ export function agentRoutes(app:any){
 
   app.get('/api/agent/events',async(c:any)=>{
     const onlyOpen=c.req.query('status')==='open';
-    const rows=(await c.env.DB.prepare(`SELECT id,source,kind,title,detail,options,status,announced,created_at,acked_at FROM agent_events WHERE user_id=?${onlyOpen?" AND status='open'":''} ORDER BY created_at DESC LIMIT 50`).bind(c.get('user').id).all()).results as any[];
+    const rows=(await c.env.DB.prepare(`SELECT id,source,kind,title,detail,options,decision,decided_at,decided_from,status,announced,created_at,acked_at FROM agent_events WHERE user_id=?${onlyOpen?" AND status='open'":''} ORDER BY created_at DESC LIMIT 50`).bind(c.get('user').id).all()).results as any[];
     /* options 在库里是 JSON 文本，给前端就成了数组，免得每处读的人各自 JSON.parse。 */
     const events=rows.map(row=>({...row,options:parseStoredOptions(row.options)}));
     return c.json({events});
@@ -144,6 +146,48 @@ export function agentRoutes(app:any){
     await c.env.DB.prepare('INSERT INTO agent_watch (user_id,label,last_seen_at,notified_count,last_error) VALUES (?,?,?,?,?) ON CONFLICT(user_id) DO UPDATE SET label=excluded.label,last_seen_at=excluded.last_seen_at,notified_count=excluded.notified_count,last_error=excluded.last_error')
       .bind(userId,label||null,t,notified,error).run();
     return c.json({ok:true,last_seen_at:t});
+  });
+
+  /*
+   * 远程批准（T043）：手机或控制台在一条"待批准"事件上表态，PC 上的 hook 正在轮询等它。
+   *
+   * 纪律：①只认第一个决定，后来的返回 409；②超过有效期不接受（Codex 那边早就不等了，
+   * "补票式批准"最危险）；③没人表态就什么都不做 —— hook 放弃等待，Codex 自己弹确认框，
+   * 和没接这个功能时一模一样。
+   */
+  app.post('/api/agent/events/:id/decision',async(c:any)=>{
+    const b=await c.req.json().catch(()=>({}));
+    const decision=b.decision==='allow'?'allow':b.decision==='deny'?'deny':null;
+    if(!decision)fail('决定只能是 allow 或 deny');
+    const from=typeof b.from==='string'&&b.from.trim()?b.from.trim().slice(0,20):'console';
+    const id=c.req.param('id'),userId=c.get('user').id,t=now();
+    const event=await c.env.DB.prepare('SELECT id,status,decision,created_at FROM agent_events WHERE id=? AND user_id=?').bind(id,userId).first() as any;
+    if(!event)fail('事件不存在',404);
+    if(event.decision)fail('这条批准已经有结果了',409);
+    if(event.status!=='open')fail('这条事件已处理，不能再批准',409);
+    if(Date.now()-Date.parse(event.created_at)>APPROVAL_WINDOW_MS)fail('这条批准已过期（Codex 那边不等了）',409);
+    const written=await c.env.DB.prepare("UPDATE agent_events SET decision=?,decided_at=?,decided_from=?,status='acked',acked_at=? WHERE id=? AND user_id=? AND decision IS NULL")
+      .bind(decision,t,from,t,id,userId).run();
+    if(!written.meta.changes)fail('这条批准已经有结果了',409);
+    return c.json({ok:true,id,decision,decided_at:t,decided_from:from});
+  });
+
+  /*
+   * PC 上的 hook 用这个接口等表态。单次等待封顶 20 秒（网关/平台对长请求不友好），
+   * hook 自己循环调用直到它的总预算用完；超时就返回 null，让 Codex 走自己的流程。
+   */
+  app.get('/api/agent/events/:id/decision',async(c:any)=>{
+    await agentAuth(c);
+    const requested=Number(c.req.query('wait')||0)||0;
+    const wait=Math.max(0,Math.min(20,requested));
+    const deadline=Date.now()+wait*1000;
+    for(;;){
+      const row=await c.env.DB.prepare('SELECT decision,decided_at,decided_from FROM agent_events WHERE id=?').bind(c.req.param('id')).first() as any;
+      if(!row)fail('事件不存在',404);
+      if(row.decision)return c.json({decision:row.decision,decided_at:row.decided_at,decided_from:row.decided_from});
+      if(Date.now()>=deadline)return c.json({decision:null});
+      await new Promise(done=>setTimeout(done,1000));
+    }
   });
 
   app.get('/api/agent/watch',async(c:any)=>{

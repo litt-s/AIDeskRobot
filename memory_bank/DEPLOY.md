@@ -263,21 +263,45 @@ VOLC_API_KEY=你的key npm run volc:smoke
 
 首次启动 App 要求填写完整控制台地址：Cloudflare/CloudBase 用 `https://...`，局域网 Node 容器可用 `http://192.168.x.x:端口`。更换服务器可通过底部原生「更换服务器」或右上溢出菜单。因为 Android 只保存服务器 URL 和 WebView Cookie，清应用数据即可登出并清除本机会话；服务端账户、模型、设备与密钥不受影响。发布签名 APK 仍需后续提供正式 keystore，当前未配置。
 
-### 接 Codex hook（T042 第一期收尾，2026-10-16）
+### 接 Codex hook + 远程批准（T042/T043，2026-10-16 实测）
 
-**先说结论：这个 Codex 桌面版读的是 `C:\Users\15163\.codex\hooks.json`，不是 `.cursor/hooks.json`。**
-（`create-hook` skill 写的是 Cursor 那套；本仓库里那份 `.cursor/hooks.json` 对这个 App 完全无效——App 自己甚至带"从别的 agent 迁移配置"的逻辑，Cursor 是**被迁移的一方**。）
+**位置**：`C:\Users\15163\.codex\hooks.json`（**不是** `.cursor/hooks.json` —— 那是 Cursor 的源格式，这个 App 只把它当"迁移来源"，写了也不执行）。
+**入口**：App 设置 → `Coding → Hooks`。页面会列出 `From Config → User config`，逐条显示 Hook type / Command / Matcher / Timeout，右侧开关＝启用/信任；**hooks.json 的解析错误也只显示在这一页**（不写日志库）。
 
-**这个 App 真正认识的（从它的二进制里读出来的，2026-10-16）：**
-- 位置：`~/.codex/hooks.json`（`C:\Users\15163\.codex\hooks.json`）。
-- 引擎：`codex_core::hook_runtime`；RPC 是 `hooks/list`（设置页据此显示）。
-- 事件名：`PreToolUse` / `PermissionRequest` / `PostToolUse` / `PreCompact` / `PostCompact` / `SessionStart` / `SessionEnd` / `UserPromptSubmit` / `SubagentStart` / `SubagentStop` / `Stop` / `Interrupt`。**没有 `beforeShellExecution`**（那是 Cursor 的名字）。
-- 条目字段：`eventName`、`matcher`、`timeoutSec`、`handler`（`{type:"command"|"mcpTool"}`）；另有**信任**概念（`HookTrustStatus`：受管／未信任／已信任／已修改）——**未信任的 hook 很可能不会被执行，需要在 App 的 Hooks 页里确认**。
-- hook 的 stdin 是 Claude Code 风格：`hook_event_name`、`tool_input`、`permission_mode`、`transcript_path`、`stop_hook_active` 等。
+**实测可用的 schema（按事件顺序的槽位数组）**：
+```json
+{
+  "hooks": [
+    [],
+    [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node D:/AIDeskRobort/.cursor/hooks/report-to-aidesk.mjs --event permission",
+            "timeout": 120,
+            "statusMessage": "正在等 AIDesk 的批准（手机/控制台可点允许或拒绝）"
+          }
+        ]
+      }
+    ],
+    [], [], [], [], [], [], [], [], [], []
+  ]
+}
+```
+外层 12 个槽位按事件枚举顺序对应：`PreToolUse`、`PermissionRequest`、`PostToolUse`、`PreCompact`、`PostCompact`、`SessionStart`、`SessionEnd`、`UserPromptSubmit`、`SubagentStart`、`SubagentStop`、`Stop`、`Interrupt`（上面填的是第 2 个＝`PermissionRequest`）。元素必须是**数组**（一组 `MatcherGroup`）；`MatcherGroup = { matcher, hooks }`；handler 是内部标签枚举 `{type:"command"|"prompt"|"agent"|"mcpTool", …}`，command 变体字段：`command` / `timeout` / `async` / `statusMessage` / `additionalContextLimit`。
+**踩过的三个报错**（正好当语法检查器）：`invalid type: map, expected a sequence`＝`hooks` 的元素写成了对象（必须是数组）；`invalid type: string "X", expected struct MatcherGroup`＝数组里放了字符串（要放 `{matcher,hooks}`）；`failed to parse hooks config`＝JSON 本身不合法。
 
-**排查用的两个抓手**：
-1. `data/hook.log`——我们的 hook 脚本每次被调用都会追加一行（事件名 + stdin 摘要 + 判定）。文件不存在／为空＝**根本没被调用**（配置没加载、或没信任）。
-2. `~/.codex/logs_2.sqlite` 的 `logs` 表——App 自己的结构化日志，查询 `feedback_log_body LIKE '%hook%'` 能看到 `codex_core::hook_runtime` 的告警（例如解析 hooks.json 失败的原因、hook 执行失败）。2026-10-16 实测：配置写好之前，表里只有 `legacy_after_agent_hook ... hook_name=legacy_notify` 的告警（来自 `config.toml` 的 `notify = [...]`，与本方案无关）。
+**信任/启用**：新加或改动过的 hook 会在这一页以开关形式出现（状态来自 `HookStateToml{enabled, trusted_hash}`）——**改了命令哈希就会变，需要在页面上重新确认一次**，否则不会执行。
+
+**远程批准（T043）**：`permission` 分支会**同步上报 → 拿事件 id → 在预算内（默认 80 秒，`AIDESK_APPROVAL_WAIT_SEC` 可调）轮询"手机/控制台表态了吗"**：拿到决定就返回
+`{"hookSpecificOutput":{"hookEventName":"PermissionRequest","decision":{"behavior":"allow"|"deny","message":…}}}`，替人在 Codex 里把这次批准点掉；**没人表态就什么都不输出**，Codex 照旧弹它自己的确认框（与没接这个功能时完全一致，绝不自动放行）。
+用法：控制台「代理」页 →「最近事件」里待批准那条 →「允许」/「拒绝」（**手机浏览器打开控制台同样可以**，不必等新 APK）。决定写进事件（`decision`/`decided_at`/`decided_from`）并在列表显示。
+三条纪律：①没人表态＝不干预；②一个决定只对一次批准生效（第二个决定 409）；③超过 5 分钟有效期不接受（"补票式批准"最危险）。
+等待期间 App 会显示上面那句 `statusMessage`，看起来像卡住是正常的（最多 80 秒；hook 的 `timeout` 是 120 秒，比预算长，保证不会被外部超时打断）。
+
+**排查抓手**：①`data/hook.log`——hook 每次被调用写一行（事件名 + stdin 摘要 + 判定；含 `远程表态：allow/deny` 或「预算内没人表态」）；**文件不存在/为空＝根本没被调用**。②Runtime 错误（hook 执行失败）会进 `~/.codex/logs_2.sqlite` 的 `logs` 表（`feedback_log_body LIKE '%hook%'`），但 **hooks.json 的解析错误只在设置页**。
 
 ### 手机提醒（T042 第一期续项，2026-10-16）
 App 右上角菜单新增「开启手机提醒 / 关闭手机提醒」。开启后由**前台常驻服务** `AgentAlertService` 每 30 秒问一次 `GET /api/agent/events?status=open`（凭据直接用 WebView 的会话 Cookie，不引入第二套设备令牌），有新事件就发系统通知：**标题行 = `<软件名> 待批准｜任务中断｜任务完成`；正文 = 标题 / 内容 / 可选**。语音那头只报一句"软件名 + 状态"，细节看手机或控制台——三处的数据是同一份（服务端 `agent_events.title/detail/options`）。去重按事件 id 记在本机，重启服务不会重复弹；每轮最多弹 5 条，剩下的留到下一轮。
