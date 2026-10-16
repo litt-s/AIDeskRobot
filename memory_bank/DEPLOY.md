@@ -264,20 +264,20 @@ VOLC_API_KEY=你的key npm run volc:smoke
 首次启动 App 要求填写完整控制台地址：Cloudflare/CloudBase 用 `https://...`，局域网 Node 容器可用 `http://192.168.x.x:端口`。更换服务器可通过底部原生「更换服务器」或右上溢出菜单。因为 Android 只保存服务器 URL 和 WebView Cookie，清应用数据即可登出并清除本机会话；服务端账户、模型、设备与密钥不受影响。发布签名 APK 仍需后续提供正式 keystore，当前未配置。
 
 ### 接 Codex hook（T042 第一期收尾，2026-10-16）
-让"需要批准 / 执行失败"**自动**上报，不用再手点控制台的测试按钮：
-```
-.cursor/hooks.json                      # 项目级 hook 配置（Codex 会监听并热加载）
-.cursor/hooks/report-to-aidesk.mjs      # hook 脚本：读 stdin 的 JSON → 调 scripts/report-agent-event.mjs
-```
-- `beforeShellExecution`：命中危险命令（`rm -rf`、`git push --force`、`git reset --hard`、`npm publish`、`gh pr merge`、`curl|sh`、`sudo`、`chmod 777`、`DROP/TRUNCATE TABLE`、`deploy-cloudbase.mjs`）→ 返回 `permission:"ask"` 让 Codex 弹确认框，**同时**上报一条 `needs_confirmation`（标题＝命令、选项＝弹窗那几项）。命中清单在脚本顶部的 `RISKY` 里，想加就加一行。
-- `postToolUseFailure` → 上报 `failed`（标题＝工具名，细节＝错误摘要）。
-- `stop` **默认不报**（每轮回复结束都会触发，会变成"每聊一句念一句"）；想开就把脚本里的 `REPORT_FINISHED` 改成 `true`。
-- **安全约定（改这个 hook 前必读）**：只有命中危险命令时才往 stdout 写 JSON，其余一律不输出——**不输出就是不改变 Codex 原有的判定**。绝不能图省事返回 `permission:"allow"`，那等于把我们没判断过的命令统统放行。上报走 detached 子进程，不拖慢 Codex 的每一步；脚本任何异常都吞掉并 exit 0。
-- 手动试（不会真发通知）：`echo '{"command":"rm -rf dist"}' | node .cursor/hooks/report-to-aidesk.mjs --event shell --dry-run`（干跑结果走 stderr，stdout 留给真正返回给 Codex 的 JSON）。
-- 批准选项文案如需改成和 Codex 弹窗逐字一致：设环境变量 `AIDESK_APPROVAL_OPTIONS="允许一次|本次会话都允许|拒绝"`，或直接改脚本里的常量。
-- hooks.json 保存后 Codex 会自动重载；若没生效，重启一次 Codex。
-- **排查用**：hook 每次被调用都会往 `data/hook.log` 追加一行（事件名 + stdin 摘要 + 判定结果，`data/` 不入库）。出问题时先看这个文件：**文件不存在/为空**＝hook 根本没被调用（配置没加载，重启 Codex 再试；也可以对着 Codex 的 Hooks 设置页看它有没有列出我们的 hook）；**有 `event=shell` 但没有 `risky=yes`**＝跑了但我们的危险命令清单没命中这个命令。2026-10-16 实测：文件放好、命令跑过之后日志仍为空 ⇒ 当时确实没加载。
 
+**先说结论：这个 Codex 桌面版读的是 `C:\Users\15163\.codex\hooks.json`，不是 `.cursor/hooks.json`。**
+（`create-hook` skill 写的是 Cursor 那套；本仓库里那份 `.cursor/hooks.json` 对这个 App 完全无效——App 自己甚至带"从别的 agent 迁移配置"的逻辑，Cursor 是**被迁移的一方**。）
+
+**这个 App 真正认识的（从它的二进制里读出来的，2026-10-16）：**
+- 位置：`~/.codex/hooks.json`（`C:\Users\15163\.codex\hooks.json`）。
+- 引擎：`codex_core::hook_runtime`；RPC 是 `hooks/list`（设置页据此显示）。
+- 事件名：`PreToolUse` / `PermissionRequest` / `PostToolUse` / `PreCompact` / `PostCompact` / `SessionStart` / `SessionEnd` / `UserPromptSubmit` / `SubagentStart` / `SubagentStop` / `Stop` / `Interrupt`。**没有 `beforeShellExecution`**（那是 Cursor 的名字）。
+- 条目字段：`eventName`、`matcher`、`timeoutSec`、`handler`（`{type:"command"|"mcpTool"}`）；另有**信任**概念（`HookTrustStatus`：受管／未信任／已信任／已修改）——**未信任的 hook 很可能不会被执行，需要在 App 的 Hooks 页里确认**。
+- hook 的 stdin 是 Claude Code 风格：`hook_event_name`、`tool_input`、`permission_mode`、`transcript_path`、`stop_hook_active` 等。
+
+**排查用的两个抓手**：
+1. `data/hook.log`——我们的 hook 脚本每次被调用都会追加一行（事件名 + stdin 摘要 + 判定）。文件不存在／为空＝**根本没被调用**（配置没加载、或没信任）。
+2. `~/.codex/logs_2.sqlite` 的 `logs` 表——App 自己的结构化日志，查询 `feedback_log_body LIKE '%hook%'` 能看到 `codex_core::hook_runtime` 的告警（例如解析 hooks.json 失败的原因、hook 执行失败）。2026-10-16 实测：配置写好之前，表里只有 `legacy_after_agent_hook ... hook_name=legacy_notify` 的告警（来自 `config.toml` 的 `notify = [...]`，与本方案无关）。
 
 ### 手机提醒（T042 第一期续项，2026-10-16）
 App 右上角菜单新增「开启手机提醒 / 关闭手机提醒」。开启后由**前台常驻服务** `AgentAlertService` 每 30 秒问一次 `GET /api/agent/events?status=open`（凭据直接用 WebView 的会话 Cookie，不引入第二套设备令牌），有新事件就发系统通知：**标题行 = `<软件名> 待批准｜任务中断｜任务完成`；正文 = 标题 / 内容 / 可选**。语音那头只报一句"软件名 + 状态"，细节看手机或控制台——三处的数据是同一份（服务端 `agent_events.title/detail/options`）。去重按事件 id 记在本机，重启服务不会重复弹；每轮最多弹 5 条，剩下的留到下一轮。

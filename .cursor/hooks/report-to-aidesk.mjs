@@ -114,7 +114,28 @@ try {
   const input = await readInput();
   trace(`event=${event} stdin=${JSON.stringify(input).slice(0, 300)}`);
 
-  if (event === 'shell') {
+  if (event === 'permission') {
+    /*
+     * Codex 自己的"需要批准"事件：App 已经会弹它自己的确认框，我们只负责播报 + 推送手机，
+     * **不输出任何东西**（不改变它的判定）。
+     */
+    const command = firstString(
+      input.tool_input?.command,
+      input.tool_input?.cmd,
+      input.command,
+      input.tool_input?.description,
+      input.permission_request?.command,
+    );
+    const tool = firstString(input.tool_name, input.tool?.name, input.tool_input?.tool, '命令');
+    trace(`permission 事件（工具 ${tool}）：${(command || '(无命令)').slice(0, 120)}`);
+    report([
+      '--kind', 'needs_confirmation',
+      '--source', 'Codex',
+      '--title', clip(command || `${tool} 需要你批准`, 120),
+      '--detail', 'Codex 正在等你批准',
+      '--options', APPROVAL_OPTIONS,
+    ]);
+  } else if (event === 'shell') {
     const command = firstString(
       input.command,
       input.shell_command,

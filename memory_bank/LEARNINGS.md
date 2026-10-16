@@ -472,3 +472,12 @@ Electron 39 二进制、7zip、NSIS 缓存都在时，`electron-builder --win --
 - 落地：只在"命中我们认识的危险命令"这一条路径上输出（`permission:"ask"` + 上报），其余路径**一个字都不输出**。判断标准很简单：**我能为这条命令的安全负责吗？**不能，就闭嘴。
 - 配套三条：①上报走 `spawn(detached:true)` + `unref()`，不拖慢 agent 的每一步（hook 是每一步都要过的关卡，慢一点就是整体慢）；②脚本顶层 `try/catch` + 永远 `exit 0`，hook 崩了不能把 agent 搞挂；③用 `process.exitCode = 0` 而不是 `process.exit()`——后者可能把还没冲刷完的 stdout（也就是要返回给 agent 的 JSON）丢掉。
 - 顺带：hook 的 stdin 形状不保证稳定，取值时按"多个候选字段里挑第一个非空字符串"来写（`input.command ?? input.tool_input?.command ?? …`），比赌某一个字段名结实。
+
+## 别的产品的配置格式，不能当成这个产品的（2026-10-16 T042 hook）
+- 事故：要接"Codex 的 hook"，我照着环境里的 `create-hook` skill 写了 `.cursor/hooks.json`（skill 里明说位置就是它，事件名 `beforeShellExecution` 等）。配置合法、脚本可用、真实批准弹框也复现了，**但 hook 一次都没被调用**。
+- 真相：这个 Codex 桌面版把 hook 配置放在 `~/.codex/hooks.json`，事件名是 `PreToolUse` / `PermissionRequest` / `Stop` 这一套（**二进制里根本没有 `beforeShellExecution` 这个字符串**）。它甚至内置了"从别的 agent 迁移配置"的逻辑——Cursor 正是**被迁移的一方**，也就是说那份 skill 描述的是**源格式**，不是这个 App 的**目标格式**。
+- 教训：**"文档/skill 说 X"与"这台机器上这个版本真的读 X"是两件事**。涉及"配置文件放哪、字段叫什么"，先做一次**低成本的存在性验证**：①在二进制里搜关键字符串（`grep` 事件名/字段名，几十毫秒就能证伪）；②翻这台机器的一手配置目录（`~/.codex/config.toml`、`~/.codex/logs_2.sqlite`）；③看 App 自己的日志有没有"解析失败"。三者任一都比"照着另一份文档写完就等结果"省一个来回。
+- 附带（安全卫生）：为了找配置位置，我读了用户的 `~/.codex/config.toml`，里面有**明文的路由密钥**。这类文件读归读，**绝不能进日志、文档、提交**；这次没泄漏，但要当成纪律：读用户配置前先想好"我会不会把它打印出来"。
+
+## 结论没证据时，"没反应"要先分清"没加载"还是"跑了但失败"（2026-10-16 T042 hook）
+- 做法：给 hook 脚本加**本地调用日志**（`data/hook.log`：每次被调用写一行，含事件名、stdin 摘要、判定结果），再配一条自证实验：清空日志 → 跑任意一条命令 → 看日志。空了就是**没加载**（配置位置/格式/信任问题），有 `event=...` 但没 `risky=yes` 才是**跑了但没命中**。两种故障的修法完全不同，靠猜会浪费好几轮。
