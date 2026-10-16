@@ -122,6 +122,7 @@ function waitForDecision(id) {
   const budgetMs = Math.max(0, Number(process.env.AIDESK_APPROVAL_WAIT_SEC || 80)) * 1000;
   const deadline = Date.now() + budgetMs;
   let loggedFailure = false;
+  warmUp();
   while (Date.now() < deadline) {
     const remaining = deadline - Date.now();
     /* 单次等待：服务端封顶 20 秒，问 20 秒能少一半请求。 */
@@ -136,6 +137,21 @@ function waitForDecision(id) {
     sleepMs(1000);
   }
   return null;
+}
+
+/**
+ * 先敲一下 /api/health 把容器叫醒：CloudBase 容器闲时会缩到零，冷启动十几秒，
+ * 第一轮轮询很容易整轮超时（我们就是因为这个丢掉过一条真实的拒绝决定）。
+ */
+function warmUp() {
+  try {
+    const done = fetch(`${remoteBase()}/api/health`, {signal: AbortSignal.timeout(45000)})
+      .then(() => null)
+      .catch(() => null);
+    waitFor(done, 20);
+  } catch {
+    /* 预热失败不影响后面重试 */
+  }
 }
 
 /** 问一次服务端：返回 {decision, failed}；decision 为 null 表示还没人表态。 */
@@ -167,9 +183,11 @@ function sleepMs(ms) {
 
 /** 极简的「等 Promise」：用一个 Atomics.wait 轮询，避免把整个脚本改成异步。 */
 function waitFor(promise, seconds) {
+  /* 同步等待必须比请求自身的超时（wait+30）更长，否则会把已经到了的决定丢掉：
+     ——2026-10-16 实测踩过：容器冷启动慢，第一轮整轮作废，真实的拒绝决定就这么丢了。 */
   let settled = false, value = null;
   promise.then(result => { value = result; settled = true; });
-  const deadline = Date.now() + (seconds + 20) * 1000;
+  const deadline = Date.now() + (seconds + 45) * 1000;
   const buffer = new Int32Array(new SharedArrayBuffer(4));
   while (!settled && Date.now() < deadline) Atomics.wait(buffer, 0, 0, 50);
   return value;
