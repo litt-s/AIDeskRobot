@@ -1,0 +1,771 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AIDesk 机器人工作台 · 交互原型</title>
+<style>
+:root{
+  --paper:#f7fafc; --white:#fff; --ink:#183243; --blue:#126b82; --blue2:#1769aa;
+  --line:#dbe6ec; --coral:#ed7867; --muted:#5b7286;
+  --ok:#2f9e6e; --warn:#d97706; --err:#c0453a;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);
+  font:14px/1.55 "Microsoft YaHei","PingFang SC",-apple-system,system-ui,sans-serif}
+button{font:inherit;cursor:pointer}
+a{color:var(--blue)}
+input,select,textarea{font:inherit;color:var(--ink);background:#fff;
+  border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%}
+textarea{resize:vertical;min-height:64px}
+code{font-family:"SF Mono",Consolas,monospace;font-size:12px;background:#eef4f7;
+  border-radius:4px;padding:1px 6px}
+.bar{position:sticky;top:0;z-index:50;background:#fff;border-bottom:1px solid var(--line);
+  padding:10px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.bar .logo{display:flex;align-items:center;gap:9px;font-weight:700}
+.bar .logo .mark{width:28px;height:28px;border-radius:8px;
+  background:linear-gradient(135deg,#126b82,#1a8aa8);color:#fff;display:flex;
+  align-items:center;justify-content:center;font-size:14px}
+.bar .logo small{color:var(--muted);font-weight:400;margin-left:6px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-left:6px}
+.tabs button{border:1px solid var(--line);background:#fff;color:var(--ink);
+  border-radius:999px;padding:5px 12px;font-size:12.5px}
+.tabs button.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.bar .meta{margin-left:auto;font-size:12px;color:var(--muted)}
+.stage{max-width:1260px;margin:18px auto 60px;padding:0 16px}
+.screen{display:none;animation:fade .22s ease}
+.screen.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.head{display:flex;align-items:baseline;gap:10px;margin:6px 2px 12px;flex-wrap:wrap}
+.head h1{font-size:19px}
+.head .sub{color:var(--muted);font-size:12.5px}
+.head .right{margin-left:auto;display:flex;gap:8px}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;
+  box-shadow:0 1px 2px rgba(24,50,67,.04)}
+.btn{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);
+  background:#fff;color:var(--ink);border-radius:8px;padding:6px 12px;font-size:12.5px}
+.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn.ghost{border-color:transparent;background:transparent}
+.btn.danger{color:var(--err);border-color:#f0c9c4}
+.btn.tiny{padding:3px 9px;font-size:11.5px}
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;
+  border-radius:999px;padding:1px 9px;border:1px solid var(--line);color:var(--muted)}
+.chip.ok{color:var(--ok);border-color:#bfe3d2;background:#effaf4}
+.chip.warn{color:var(--warn);border-color:#f2ddb8;background:#fdf6ec}
+.chip.err{color:var(--err);border-color:#f0c9c4;background:#fdf2f0}
+.chip.coral{color:var(--coral);border-color:#f3c5bd;background:#fdeeec}
+</style>
+</head>
+<body>
+<div class="bar">
+  <div class="logo">
+    <span class="mark">A</span>
+    <span>AIDesk 交互原型<small>v1.0 &middot; 2026-10-16</small></span>
+  </div>
+  <div class="tabs" id="tabs">
+    <button data-s="login" class="on">登录注册</button>
+    <button data-s="chat">对话工作台</button>
+    <button data-s="models">模型连接</button>
+    <button data-s="roles">角色设定</button>
+    <button data-s="devices">设备管理</button>
+    <button data-s="meetings">会议纪要</button>
+    <button data-s="voice">语音设置</button>
+    <button data-s="agent">Agent 动态</button>
+    <button data-s="multi">多端形态</button>
+    <button data-s="design">设计规范</button>
+  </div>
+  <div class="meta">点击标签切换 &middot; 部分按钮可点击演示</div>
+</div>
+<div class="stage" id="stage">
+
+<!-- 1 登录注册 -->
+<section class="screen on" id="s-login">
+  <div class="head"><h1>登录 / 注册</h1><span class="sub">未登录的公共入口</span></div>
+  <div class="card auth">
+    <div class="story">
+      <div>
+        <div class="brand"><span class="mark">A</span>AIDesk <small style="color:var(--muted);font-weight:400;margin-left:6px">机器人工作台</small></div>
+        <div class="robot"><div class="ant"></div><div class="head"><span class="eye l"></span><span class="eye r"></span></div><div class="base"></div></div>
+        <h2>给你的机器人，<br/>一个会思考的伙伴。</h2>
+        <p>接入你信任的模型，设定专属角色，让每一次对话都有自己的方向。</p>
+        <div class="row"><span class="chip">独立账户与私密会话</span><span class="chip">灵活连接多种模型</span><span class="chip">设备语音闭环</span></div>
+      </div>
+      <small style="color:var(--muted)">从一次对话开始，连接更多可能。</small>
+    </div>
+    <div class="acard">
+      <span class="chip welcome">欢迎来到 AIDesk</span>
+      <h3>很高兴再次见到你</h3>
+      <p class="desc">登录后继续你的角色与对话。</p>
+      <label class="f" style="font-size:12.5px"><b>用户名</b><input type="text" placeholder="输入用户名" autocomplete="username"></label>
+      <label class="f" style="font-size:12.5px"><b>密码</b><input type="password" placeholder="至少 10 位密码" autocomplete="current-password"></label>
+      <button class="btn primary wide">登录工作台 &rarr;</button>
+      <div class="switch">还没有账户？<button onclick="this.textContent='登录';this.previousSibling.textContent='已有账户？'">创建账户</button></div>
+      <small class="small">API 密钥在服务端加密保存，只属于你的账户。</small>
+    </div>
+  </div>
+</section>
+
+<style>
+.auth{display:grid;grid-template-columns:1.05fr .95fr;gap:20px;min-height:560px}
+.story{padding:34px 36px;display:flex;flex-direction:column;justify-content:space-between;gap:18px}
+.story .brand{display:flex;align-items:center;gap:9px;font-weight:700}
+.story .brand .mark{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#126b82,#1a8aa8);color:#fff;display:flex;align-items:center;justify-content:center}
+.story h2{font-size:28px;line-height:1.35}
+.story p{color:var(--muted);max-width:34em}
+.story .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.story .row .chip{background:#fbfdfe}
+.robot{margin:6px auto;width:150px}
+.robot .ant{width:5px;height:18px;background:var(--coral);margin:0 auto;border-radius:3px}
+.robot .head{width:110px;height:84px;border:3px solid var(--ink);border-radius:26px;background:#fff;position:relative;margin:5px auto 0}
+.robot .head::after{content:"";position:absolute;left:32px;right:32px;bottom:14px;height:9px;border:3px solid var(--blue);border-top:0;border-radius:0 0 10px 10px}
+.robot .eye{position:absolute;top:28px;width:13px;height:13px;background:var(--blue);border-radius:50%}
+.robot .eye.l{left:28px}.robot .eye.r{right:28px}
+.robot .base{width:60px;height:8px;border:3px solid var(--ink);border-top:0;border-radius:0 0 10px 10px;margin:2px auto 0}
+.acard{padding:34px 32px;align-self:center;display:flex;flex-direction:column;gap:12px}
+.acard h3{font-size:21px}
+.acard .desc{color:var(--muted);font-size:12.5px}
+.acard .wide{width:100%;justify-content:center;padding:10px}
+.acard .switch{text-align:center;color:var(--muted);font-size:12.5px;margin-top:4px}
+.acard .switch button{background:none;border:0;color:var(--blue)}
+.acard .small{color:var(--muted);font-size:11.5px}
+.app{display:grid;grid-template-columns:200px 1fr;min-height:620px;overflow:hidden;border-radius:12px}
+.side{background:#0f2938;color:#cfe3ee;padding:16px 10px;display:flex;flex-direction:column;gap:2px}
+.side .brand{display:flex;align-items:center;gap:9px;color:#fff;font-weight:700;padding:4px 8px 14px}
+.side .brand .mark{width:24px;height:24px;border-radius:7px;background:var(--coral);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px}
+.side nav{display:flex;flex-direction:column;gap:2px;flex:1}
+.side nav button{display:flex;align-items:center;gap:9px;background:0;border:0;color:#b9cfdb;padding:8px 10px;border-radius:8px;font-size:13px;text-align:left;width:100%}
+.side nav button.on{background:rgba(255,255,255,.10);color:#fff}
+.side nav svg{width:16px;height:16px}
+.side .foot{margin-top:auto;font-size:11px;color:#7e97a6;padding:10px 8px 0;display:flex;justify-content:space-between;align-items:center}
+.side .foot button{background:0;border:0;color:#7e97a6;font-size:11px}
+.main{padding:20px 22px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.chat{display:grid;grid-template-columns:220px 1fr;flex:1;min-height:0;gap:0}
+.history{border-right:1px solid var(--line);padding:14px 12px;display:flex;flex-direction:column;gap:8px}
+.history h5{font-size:11.5px;color:var(--muted);font-weight:600;margin-top:6px;text-transform:uppercase;letter-spacing:.5px}
+.conv{padding:7px 9px;border-radius:8px;font-size:12.5px;cursor:pointer}
+.conv:hover{background:#f1f6f8}
+.conv.on{background:#eaf4f7;color:var(--blue);font-weight:600}
+.role{border-top:1px dashed var(--line);padding-top:10px;margin-top:auto;font-size:12px;color:var(--muted)}
+.role b{color:var(--ink)}
+.cmsgs{display:flex;flex-direction:column;min-width:0;background:#fff}
+.msgs{flex:1;overflow:auto;padding:18px 22px;display:flex;flex-direction:column;gap:14px;min-height:280px}
+.msg{display:flex;gap:9px;max-width:78%}
+.msg .ava{width:28px;height:28px;border-radius:50%;background:#eaf4f7;color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:11px;flex:none;font-weight:600}
+.msg .bub{background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px 13px;font-size:13.5px;line-height:1.6}
+.msg .bub p{margin:3px 0}
+.msg.me{align-self:flex-end;flex-direction:row-reverse}
+.msg.me .ava{background:#fdf0ee;color:var(--coral)}
+.msg.me .bub{background:#eaf4f7;border-color:#d3e8f0}
+.msg .ops{display:flex;gap:6px;margin-top:4px}
+.msg .ops button{background:#fff;border:1px solid var(--line);border-radius:6px;padding:2px 8px;font-size:11.5px;color:var(--muted)}
+.typing{display:inline-flex;gap:4px;align-items:center;color:var(--muted);font-size:12px}
+.typing i{width:5px;height:5px;border-radius:50%;background:var(--blue);animation:bl 1s infinite}
+.typing i:nth-child(2){animation-delay:.15s}
+.typing i:nth-child(3){animation-delay:.3s}
+@keyframes bl{0%,100%{opacity:.25}50%{opacity:1}}
+.band{margin:0 22px;padding:6px 12px;border:1px dashed #e5b8a9;background:#fdf3ef;color:#a1543f;border-radius:8px;font-size:12px;display:flex;align-items:center;gap:6px}
+.composer{border-top:1px solid var(--line);padding:12px 22px;display:flex;flex-direction:column;gap:8px;background:#fff}
+.composer .row{display:flex;gap:8px;align-items:flex-end}
+.composer textarea{height:58px}
+.composer .hint{font-size:11px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap}
+.res-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.res{padding:14px 16px;display:flex;gap:12px;align-items:center}
+.res .ic{width:38px;height:38px;border-radius:10px;background:#eaf4f7;color:var(--blue);display:flex;align-items:center;justify-content:center;flex:none}
+.res .ic svg{width:18px;height:18px}
+.res .bd{flex:1;min-width:0}
+.res .bd h4{font-size:14px;margin-bottom:2px}
+.res .bd p{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.res .bd small{color:var(--muted);font-size:11.5px}
+.res .ops{display:flex;flex-direction:column;gap:5px}
+.devlist{display:flex;flex-direction:column;gap:10px}
+.dev{padding:13px 16px;display:flex;align-items:center;gap:14px}
+.dev .st{width:9px;height:9px;border-radius:50%;flex:none}
+.dev .st.on{background:var(--ok);box-shadow:0 0 0 4px #e2f4ea}
+.dev .st.off{background:#c3d2da}
+.dev .bd{flex:1;min-width:0}
+.dev .bd h4{font-size:14px;display:flex;gap:8px;align-items:center;margin-bottom:3px}
+.dev .bd p{font-size:12px;color:var(--muted)}
+.dev .ops{display:flex;gap:6px}
+.cmdpanel{padding:18px}
+.cmdhead{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.cmdhead .ttl{font-size:14.5px;font-weight:600}
+.cmdhead .sp{flex:1}
+.cmdgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:14px}
+.cmdgrid h6{font-size:11.5px;color:var(--muted);font-weight:600;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.tags{display:flex;flex-wrap:wrap;gap:5px}
+.tag{border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:11.5px;background:#fbfdfe;cursor:pointer}
+.tag:hover{border-color:var(--blue);color:var(--blue)}
+.vol{display:flex;align-items:center;gap:9px}
+.vol input[type=range]{flex:1;accent-color:var(--blue)}
+.vol b{font-size:12.5px;width:24px;text-align:right}
+.wake{display:flex;gap:6px;margin-top:4px}
+.wake input{flex:1}
+.say{display:flex;gap:6px;margin-top:10px}
+.say input{flex:1}
+.log{border-top:1px dashed var(--line);padding-top:10px}
+.log h6{font-size:11.5px;color:var(--muted);margin-bottom:6px}
+.lrow{display:flex;align-items:center;gap:10px;font-size:12px;padding:4px 0;border-bottom:1px solid #f1f5f8}
+.lrow .t{color:var(--muted);width:60px;flex:none;font-family:"SF Mono",Consolas,monospace;font-size:11px}
+.lrow .s{margin-left:auto}
+.mgrid{display:grid;grid-template-columns:260px 1fr;gap:14px}
+.mlist{display:flex;flex-direction:column;gap:8px}
+.mitem{padding:12px 14px;cursor:pointer}
+.mitem h4{font-size:13.5px}
+.mitem p{font-size:11.5px;color:var(--muted);margin-top:2px}
+.mitem.on{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue)}
+.mdetail{padding:20px 22px}
+.mdetail h3{font-size:16px;margin-bottom:6px}
+.mdetail .meta{display:flex;gap:12px;color:var(--muted);font-size:11.5px;margin-bottom:14px;flex-wrap:wrap}
+.mdetail h4{font-size:13px;margin:12px 0 5px}
+.mdetail li{font-size:13px;margin:3px 0 3px 18px;color:#33475a}
+.mdetail .trans li{color:var(--muted)}
+.col2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.fcard{padding:20px 22px}
+.fcard .ban{display:flex;gap:9px;align-items:center;padding:11px 14px;border-radius:10px;font-size:12.5px;margin-bottom:14px}
+.fcard .ban.ok{background:#effaf4;border:1px solid #bfe3d2;color:#22684b}
+.fcard .ban.info{background:#eef6fa;border:1px solid #cfe4ee;color:#2a5a74}
+.fcard form{display:flex;flex-direction:column;gap:10px}
+.fcard form .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fcard .acts{display:flex;gap:8px;margin-top:6px}
+.evt{border:1px solid var(--line);border-radius:11px;padding:13px 16px;margin-bottom:10px;background:#fff}
+.evt.open{border-color:#f0c9c4;background:#fffaf9}
+.evt .top{display:flex;gap:9px;align-items:center;margin-bottom:5px;flex-wrap:wrap}
+.evt .top b{font-size:13px}
+.evt .top .when{margin-left:auto;color:var(--muted);font-size:11.5px}
+.evt p{font-size:12.5px;color:#33475a}
+.evt .ops{display:flex;gap:6px;margin-top:9px}
+.term{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.tcard{padding:18px;text-align:center}
+.tcard .em{font-size:30px;margin-bottom:6px}
+.tcard h4{font-size:14px;margin:4px 0 5px}
+.tcard p{font-size:12px;color:var(--muted);min-height:46px}
+.tok{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+.tok .t{overflow:hidden}
+.tok .sw{height:58px}
+.tok .lb{padding:7px 9px;font-size:11.5px;border-top:1px solid var(--line)}
+.tok .lb code{display:block;color:var(--muted);font-size:10.5px;background:none;padding:0}
+.modal{position:fixed;inset:0;background:rgba(24,50,67,.45);display:none;align-items:center;justify-content:center;z-index:100}
+.modal.on{display:flex}
+.modal .box{width:440px;max-width:92vw;background:#fff;border-radius:14px;padding:24px}
+.modal h3{font-size:16px;margin-bottom:14px}
+.modal label.f{display:block;font-size:12.5px;color:var(--muted);margin-bottom:10px}
+.modal label.f b{display:block;color:var(--ink);font-weight:600;margin-bottom:4px}
+.modal .acts{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+.kbox{background:#fdf6ec;border:1px solid #f2ddb8;border-radius:10px;padding:12px 14px;margin:12px 0}
+.kbox b{font-size:12.5px;color:#8a5a12}
+.kbox code{display:block;font-size:18px;letter-spacing:2px;margin:7px 0;color:#7a4c0a;background:none;padding:0}
+.kbox small{color:#a17434;font-size:11px}
+@media (max-width:980px){
+  .auth,.chat,.mgrid,.col2{grid-template-columns:1fr}
+  .res-grid,.cmdgrid,.term{grid-template-columns:1fr 1fr}
+  .tok{grid-template-columns:repeat(3,1fr)}
+  .app{grid-template-columns:170px 1fr}
+}
+</style>
+
+<!-- 2 对话工作台 -->
+<section class="screen" id="s-chat">
+  <div class="head"><h1>对话工作台</h1><span class="sub">流式回复 · 暂停/续写 · 撤销/重新生成 · 滚动跟随</span></div>
+  <div class="card app">
+    <aside class="side">
+      <div class="brand"><span class="mark">A</span>AIDesk</div>
+      <nav>
+        <button class="on">💬 对话</button>
+        <button>🧩 模型</button>
+        <button>🎭 角色</button>
+        <button>🤖 设备</button>
+        <button>📋 会议</button>
+        <button>🎙️ 语音</button>
+        <button>📡 代理</button>
+      </nav>
+      <div class="foot"><span>已登录：demo</span><button>退出</button></div>
+    </aside>
+    <div class="chat">
+      <div class="history">
+        <button class="btn primary" style="justify-content:center">＋ 新的对话</button>
+        <h5>最近的对话</h5>
+        <div class="conv on">周末出行计划</div>
+        <div class="conv">机器人唤醒词调优</div>
+        <div class="conv">10 月产品复盘</div>
+        <div class="role">当前角色<br><b>创意搭档</b></div>
+      </div>
+      <div class="cmsgs">
+        <div class="msgs">
+          <div class="msg me">
+            <div class="ava">我</div>
+            <div class="bub">
+              <p>帮我规划一个周六的机器人调试计划，上午和下午各做什么？</p>
+              <div class="ops"><button>撤销</button><button>重新生成</button></div>
+            </div>
+          </div>
+          <div class="msg">
+            <div class="ava">AI</div>
+            <div class="bub">
+              <p>好的，给你一个张弛有度的安排——</p>
+              <p><b>上午（9:00–11:30）· 静态验证</b><br>1. 用 device-sim 跑通指令通道，确认表情/动作/音量回报都正常；<br>2. 检查唤醒词阈值日志（prob 曲线），必要时下调到 0.15；<br>3. 校准音量滑块在中位数 60 时的听感。</p>
+              <p><b>下午（14:00–16:30）· 真机联调</b><br>1. 烧录最新固件，连续喊 10 次唤醒词记录成功率；<br>2. 用 voice-profile 跑一轮语音链路，看下行是否 ≥32 KB/s；<br>3. 复测"再说唤醒词打断回答"的切换延迟。</p>
+              <div class="typing">继续生成中 <i></i><i></i><i></i></div>
+            </div>
+          </div>
+        </div>
+        <div class="band">⏸ 已暂停 · 已生成内容已保存。点击「继续」将从上次中断处接着写，不会重复你的提问。</div>
+        <div class="composer">
+          <div class="row">
+            <textarea placeholder="输入消息，回车发送，Shift+回车换行"></textarea>
+            <button class="btn primary" style="height:58px;padding:0 16px">继续 ↵</button>
+          </div>
+          <div class="hint">
+            <span>Enter 发送 · Shift+Enter 换行</span>
+            <span>生成中：角色切换与新提问已锁定</span>
+            <span>上滑即停跟随，回到底部恢复</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 3 模型连接 -->
+<section class="screen" id="s-models">
+  <div class="head"><h1>模型连接</h1><span class="sub">OpenAI 兼容接口 · 密钥加密存储与掩码显示 · 连接测试</span><div class="right"><button class="btn primary" onclick="openModal('m-model')">＋ 添加模型</button></div></div>
+  <div class="card app">
+    <aside class="side">
+      <div class="brand"><span class="mark">A</span>AIDesk</div>
+      <nav>
+        <button>💬 对话</button><button class="on">🧩 模型</button><button>🎭 角色</button><button>🤖 设备</button><button>📋 会议</button><button>🎙️ 语音</button><button>📡 代理</button>
+      </nav>
+      <div class="foot"><span>已登录：demo</span><button>退出</button></div>
+    </aside>
+    <div class="main">
+      <div class="res-grid">
+        <div class="card res">
+          <div class="ic">🧩</div>
+          <div class="bd"><h4>DeepSeek 主力</h4><p>deepseek-chat · https://api.deepseek.com</p><code>sk-••••7f2a</code></div>
+          <div class="ops"><button class="btn tiny">测试连接</button><button class="btn tiny">✏️</button><button class="btn tiny">🗑</button></div>
+        </div>
+        <div class="card res">
+          <div class="ic">🧩</div>
+          <div class="bd"><h4>OpenAI 备用</h4><p>gpt-4.1-mini · https://api.openai.com/v1</p><code>sk-••••9c1d</code></div>
+          <div class="ops"><button class="btn tiny">测试连接</button><button class="btn tiny">✏️</button><button class="btn tiny">🗑</button></div>
+        </div>
+        <div class="card res" style="opacity:.7">
+          <div class="ic">🧩</div>
+          <div class="bd"><h4>硅基流动</h4><p>Qwen/Qwen2.5-7B · https://api.siliconflow.cn/v1</p><code>sk-••••3a8e</code></div>
+          <div class="ops"><button class="btn tiny">测试连接</button><button class="btn tiny">✏️</button><button class="btn tiny">🗑</button></div>
+        </div>
+      </div>
+      <div class="card" style="padding:11px 16px;display:flex;gap:9px;align-items:center">
+        <span class="chip ok">连接正常</span>
+        <span style="font-size:12px;color:var(--muted)">测试通过后，密钥掩码保持不变；连接失败会返回安全摘要（超时 / 网络 / 协议），不泄露响应头。</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 4 角色设定 -->
+<section class="screen" id="s-roles">
+  <div class="head"><h1>角色设定</h1><span class="sub">系统提示词 + 任务 + 关联模型 · 一台设备绑定一个语音角色</span><div class="right"><button class="btn primary" onclick="openModal('m-role')">＋ 创建角色</button></div></div>
+  <div class="card app">
+    <aside class="side">
+      <div class="brand"><span class="mark">A</span>AIDesk</div>
+      <nav>
+        <button>💬 对话</button><button>🧩 模型</button><button class="on">🎭 角色</button><button>🤖 设备</button><button>📋 会议</button><button>🎙️ 语音</button><button>📡 代理</button>
+      </nav>
+      <div class="foot"><span>已登录：demo</span><button>退出</button></div>
+    </aside>
+    <div class="main">
+      <div class="res-grid">
+        <div class="card res">
+          <div class="ic">🎭</div>
+          <div class="bd"><h4>桌面小助手</h4><p>负责日常问答、日程提醒与闲聊</p><small>关联模型：DeepSeek 主力</small></div>
+          <div class="ops"><button class="btn tiny">✏️</button><button class="btn tiny">🗑</button></div>
+        </div>
+        <div class="card res">
+          <div class="ic">🎭</div>
+          <div class="bd"><h4>会议记录员</h4><p>把会议录音整理成纪要与待办</p><small>关联模型：OpenAI 备用</small></div>
+          <div class="ops"><button class="btn tiny">✏️</button><button class="btn tiny">🗑</button></div>
+        </div>
+        <div class="card res">
+          <div class="ic">🎭</div>
+          <div class="bd"><h4>创意搭档</h4><p>头脑风暴与文案润色</p><small>关联模型：DeepSeek 主力</small></div>
+          <div class="ops"><button class="btn tiny">✏️</button><button class="btn tiny">🗑</button></div>
+        </div>
+        <div class="card res" style="border-style:dashed;background:#fbfdfe">
+          <div class="ic" style="background:#fbfdfe;color:var(--muted)">＋</div>
+          <div class="bd" style="display:flex;align-items:center;color:var(--muted)">先添加模型，再来创建你的第一个角色</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 5 设备管理 -->
+<section class="screen" id="s-devices">
+  <div class="head"><h1>设备管理</h1><span class="sub">一次性密钥绑定 · 在线状态 · 表情/动作/音量/播报 · 唤醒词 · 语音角色</span><div class="right"><button class="btn primary" onclick="openModal('m-device')">＋ 绑定设备</button></div></div>
+  <div class="card app">
+    <aside class="side">
+      <div class="brand"><span class="mark">A</span>AIDesk</div>
+      <nav>
+        <button>💬 对话</button><button>🧩 模型</button><button>🎭 角色</button><button class="on">🤖 设备</button><button>📋 会议</button><button>🎙️ 语音</button><button>📡 代理</button>
+      </nav>
+      <div class="foot"><span>已登录：demo</span><button>退出</button></div>
+    </aside>
+    <div class="main">
+      <div class="devlist">
+        <div class="card dev">
+          <span class="st on"></span>
+          <div class="bd">
+            <h4>客厅的机器人 <span class="chip ok">在线</span></h4>
+            <p>固件 v2.3.1 · 电量 82% · 3 秒前在线 · 密钥 <code>••••-••••-VP1R</code> · 唤醒词「小桌」</p>
+          </div>
+          <div class="ops"><button class="btn tiny" onclick="document.querySelector('.cmdpanel').scrollIntoView({behavior:'smooth'})">指令 ▾</button><button class="btn tiny">重命名</button><button class="btn tiny danger">解绑</button></div>
+        </div>
+        <div class="card dev" style="opacity:.75">
+          <span class="st off"></span>
+          <div class="bd">
+            <h4>书房原型机 <span class="chip off">离线</span></h4>
+            <p>固件 v2.2.0 · 电量 — · 2 小时前在线 · 密钥 <code>••••-••••-K3M8</code></p>
+          </div>
+          <div class="ops"><button class="btn tiny">指令 ▾</button><button class="btn tiny">重命名</button><button class="btn tiny danger">解绑</button></div>
+        </div>
+      </div>
+
+      <div class="card cmdpanel">
+        <div class="cmdhead">
+          <div class="ttl">客厅的机器人 · 指令面板</div>
+          <span class="chip ok">在线</span>
+          <span class="sp"></span>
+          <label style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px">语音角色
+            <select style="width:auto;padding:5px 8px"><option>桌面小助手</option><option>创意搭档</option><option>未绑定</option></select>
+          </label>
+        </div>
+        <div class="cmdgrid">
+          <div>
+            <h6>表情</h6>
+            <div class="tags"><span class="tag">开心</span><span class="tag">难过</span><span class="tag">生气</span><span class="tag">惊讶</span><span class="tag">思考</span><span class="tag">爱心</span><span class="tag">睡眠</span></div>
+          </div>
+          <div>
+            <h6>动作</h6>
+            <div class="tags"><span class="tag">点头</span><span class="tag">摇头</span><span class="tag">左看</span><span class="tag">右看</span><span class="tag">跳舞</span><span class="tag">回中</span></div>
+          </div>
+          <div>
+            <h6>音量</h6>
+            <div class="vol"><input type="range" min="0" max="100" value="60" oninput="this.nextElementSibling.textContent=this.value"><b>60</b></div>
+            <h6 style="margin-top:12px">自定义唤醒词</h6>
+            <div class="wake"><input type="text" placeholder="中文或拼音，如 xiaozhuo"><button class="btn primary tiny">下发</button></div>
+            <small style="color:var(--muted);font-size:11px;display:block;margin-top:4px">运行时生效并写入 NVS；无效词会被拒绝且保留原词。</small>
+          </div>
+        </div>
+        <div>
+          <h6 style="font-size:11.5px;color:var(--muted);margin-bottom:6px">文本播报</h6>
+          <div class="say"><input type="text" placeholder="要播报的文字（最多 200 字）"><button class="btn primary tiny">播报</button></div>
+        </div>
+        <div class="log">
+          <h6>最近指令</h6>
+          <div class="lrow"><span class="t">14:22:10</span><span>表情 · 开心</span><span class="s"><span class="chip ok">已完成</span></span></div>
+          <div class="lrow"><span class="t">14:21:58</span><span>动作 · 点头</span><span class="s"><span class="chip ok">已完成</span></span></div>
+          <div class="lrow"><span class="t">14:21:31</span><span>音量 · 60</span><span class="s"><span class="chip warn">已下发</span></span></div>
+          <div class="lrow"><span class="t">14:20:47</span><span>播报 · "会议还有十分钟开始"</span><span class="s"><span class="chip ok">已完成</span></span></div>
+          <div class="lrow"><span class="t">14:19:02</span><span>唤醒词 · xiaozhuo</span><span class="s"><span class="chip err">待执行</span></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 6 会议纪要 -->
+<section class="screen" id="s-meetings">
+  <div class="head"><h1>会议纪要</h1><span class="sub">长时间录音 · 转写与说话人分离 · 摘要与待办</span><div class="right"><button class="btn primary">＋ 新建会议</button></div></div>
+  <div class="card app">
+    <aside class="side">
+      <div class="brand"><span class="mark">A</span>AIDesk</div>
+      <nav>
+        <button>💬 对话</button><button>🧩 模型</button><button>🎭 角色</button><button>🤖 设备</button><button class="on">📋 会议</button><button>🎙️ 语音</button><button>📡 代理</button>
+      </nav>
+      <div class="foot"><span>已登录：demo</span><button>退出</button></div>
+    </aside>
+    <div class="main">
+      <div class="mgrid">
+        <div class="mlist">
+          <div class="card mitem on"><h4>10 月产品周会</h4><p>2026-10-15 · 42 分钟 · 已出纪要</p></div>
+          <div class="card mitem"><h4>硬件联调同步</h4><p>2026-10-13 · 26 分钟 · 转写中</p></div>
+          <div class="card mitem"><h4>语音链路评审</h4><p>2026-10-11 · 35 分钟 · 已出纪要</p></div>
+          <div class="card mitem" style="border-style:dashed;background:#fbfdfe;text-align:center;color:var(--muted)"><p>还有 7 场历史会议</p></div>
+        </div>
+        <div class="card mdetail">
+          <h3>10 月产品周会</h3>
+          <div class="meta">
+            <span>📅 2026-10-15 14:00</span>
+            <span>⏱ 42 分钟</span>
+            <span>👥 4 位说话人</span>
+            <span class="chip ok">纪要已生成</span>
+            <span class="chip">录音已归档</span>
+          </div>
+          <h4>摘要</h4>
+          <ul>
+            <li>设备接入闭环上线：绑定、指令、唤醒词运行时生效与 NVS 持久化均已真机验证。</li>
+            <li>语音链路瓶颈定位到设备侧 TCP 窗口，已调整 lwIP 参数，等待真机复测吞吐 ≥32 KB/s。</li>
+            <li>Agent 远程批准闭环完成端到端验收（允许/拒绝均生效）。</li>
+          </ul>
+          <h4>待办</h4>
+          <ul>
+            <li>Android：为通知添加「允许/拒绝」快捷按钮 — <b>@硬件组</b></li>
+            <li>真机烧录验证 TCP 窗口改动 — <b>@嵌入式</b></li>
+            <li>小程序端全链路真机验收 — <b>@小程序</b></li>
+          </ul>
+          <h4>原始转写（节选）</h4>
+          <ul class="trans">
+            <li><b>说话人 1</b>：这轮唤醒成功率 7/10，阈值压得太紧了…</li>
+            <li><b>说话人 2</b>：窗口调到 20000 字节后理论吞吐应该够 32 KB/s…</li>
+            <li><b>说话人 3</b>：我建议把允许/拒绝按钮直接放到通知里…</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 7 语音设置 -->
+<section class="screen" id="s-voice">
+  <div class="head"><h1>语音设置</h1><span class="sub">火山引擎（豆包）双向流式语音 · 凭据按账号加密存储</span></div>
+  <div class="card app">
+    <aside class="side">
+      <div class="brand"><span class="mark">A</span>AIDesk</div>
+      <nav>
+        <button>💬 对话</button><button>🧩 模型</button><button>🎭 角色</button><button>🤖 设备</button><button>📋 会议</button><button class="on">🎙️ 语音</button><button>📡 代理</button>
+      </nav>
+      <div class="foot"><span>已登录：demo</span><button>退出</button></div>
+    </aside>
+    <div class="main">
+      <div class="col2">
+        <div class="card fcard">
+          <div class="ban ok">🎙️ 正在使用你的语音凭据 · 密钥 volc-••••4e2b · 音色 zh_female_lin</div>
+          <form onsubmit="return false">
+            <label class="f" style="font-size:12.5px"><b>API Key</b><input type="password" placeholder="留空则保留已有密钥" autocomplete="off"></label>
+            <div class="row2">
+              <label class="f" style="font-size:12.5px"><b>ASR 资源号</b><input type="text" value="volc-asr-01"></label>
+              <label class="f" style="font-size:12.5px"><b>TTS 资源号</b><input type="text" value="volc-tts-01"></label>
+            </div>
+            <label class="f" style="font-size:12.5px"><b>音色 Speaker</b><input type="text" value="zh_female_lin"></label>
+            <div class="acts"><button class="btn primary">保存设置</button><button class="btn danger">清除凭据</button></div>
+          </form>
+          <p style="font-size:12px;color:var(--muted);margin-top:12px">凭据仅在服务端解密使用；未配置时回落平台默认凭据。每台设备用哪个角色说话，在「设备管理」里设置。</p>
+        </div>
+        <div class="card fcard">
+          <h4 style="font-size:14px;margin-bottom:10px">语音链路说明</h4>
+          <ul style="font-size:12.5px;color:#33475a;margin-left:18px;line-height:1.8">
+            <li>设备上传完整 PCM（16 kHz / 16 bit / 单声道），上限 30 秒。</li>
+            <li>服务端依次完成：ASR 转写 → 角色模型流式回复 → 按句 TTS → 边合成边下发。</li>
+            <li>事件与音频共用一条流，任何一步失败都会下发 <code>error</code> + <code>done</code>，设备不会只看到断线。</li>
+            <li>每轮对话自动写入设备专属会话，失败也会留痕，可在「对话」页回看。</li>
+            <li>流式回复：<code>分块上传</code> 与 <code>整段上传</code> 可由设备按网络质量切换。</li>
+          </ul>
+          <h4 style="font-size:14px;margin:14px 0 8px">凭据来源优先级</h4>
+          <ol style="font-size:12.5px;color:#33475a;margin-left:18px;line-height:1.8">
+            <li>本账户凭据（绿色横幅显示）</li>
+            <li>平台默认凭据（蓝色横幅显示）</li>
+            <li>无可用凭据（机器人会回报"未配置语音服务"）</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 8 Agent 动态 -->
+<section class="screen" id="s-agent">
+  <div class="head"><h1>Agent 动态</h1><span class="sub">Codex 待批准事件远程允许/拒绝 · 手机提醒联动</span><div class="right"><button class="btn">＋ 生成电脑凭据</button><button class="btn">发送测试提醒</button></div></div>
+  <div class="card app">
+    <aside class="side">
+      <div class="brand"><span class="mark">A</span>AIDesk</div>
+      <nav>
+        <button>💬 对话</button><button>🧩 模型</button><button>🎭 角色</button><button>🤖 设备</button><button>📋 会议</button><button>🎙️ 语音</button><button class="on">📡 代理</button>
+      </nav>
+      <div class="foot"><span>已登录：demo</span><button>退出</button></div>
+    </aside>
+    <div class="main">
+      <div class="fcard" style="padding:14px 18px;margin-bottom:10px">
+        <div class="ban info" style="margin:0">📱 手机提醒：iPhone 14 在线（最后心跳 12 秒前，已弹 3 条）</div>
+      </div>
+      <div class="evt open">
+        <div class="top">
+          <b>Codex 申请执行命令</b>
+          <span class="chip warn">待决定</span>
+          <span class="when">2 分钟前 · 来自 desktop-01</span>
+        </div>
+        <p>Set-Content C:\Users\15163\aidesk-approve-test.txt — 创建一个测试文件以验证批准链路。</p>
+        <div class="ops">
+          <button class="btn primary tiny" onclick="decide(this,'ok')">允许</button>
+          <button class="btn danger tiny" onclick="decide(this,'err')">拒绝</button>
+          <button class="btn ghost tiny">标记已处理</button>
+        </div>
+      </div>
+      <div class="evt">
+        <div class="top">
+          <b>Codex 申请权限：写 outputs/ 目录</b>
+          <span class="chip ok">已允许</span>
+          <span class="when">1 小时前 · 来自 desktop-01</span>
+        </div>
+        <p>request_permissions · file_system.write: D:\AIDeskRobort\outputs\**</p>
+      </div>
+      <div class="evt">
+        <div class="top">
+          <b>Codex 申请执行命令</b>
+          <span class="chip err">已拒绝</span>
+          <span class="when">昨天 · 来自 desktop-01</span>
+        </div>
+        <p>Remove-Item data\live-rescue.sqlite — 危险操作，已远程拒绝。</p>
+      </div>
+      <div class="card" style="padding:13px 17px;font-size:12px;color:var(--muted);display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <span>电脑凭据：<code>ak_live_••••••••</code></span>
+        <button class="btn tiny">复制</button>
+        <button class="btn tiny danger">吊销</button>
+        <span style="flex:1"></span>
+        <span>凭据仅显示一次，吊销后该电脑不能再上报事件。</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 9 多端形态 -->
+<section class="screen" id="s-multi">
+  <div class="head"><h1>多端形态</h1><span class="sub">同一账户、同一套数据 · 4 种客户端承载同一份 UI</span></div>
+  <div class="term">
+    <div class="card tcard">
+      <div class="em">🌐</div><h4>网页控制台</h4><p>响应式 SPA，360–1440 全宽度覆盖；HttpOnly Cookie 会话。</p><span class="chip">Cloudflare Worker / 云托管</span>
+    </div>
+    <div class="card tcard">
+      <div class="em">🤖</div><h4>Android 壳</h4><p>原生 WebView 完整加载控制台；服务器地址可切换，Cookie 持久化。</p><span class="chip">WebView · Java 17</span>
+    </div>
+    <div class="card tcard">
+      <div class="em">🖥️</div><h4>Windows 桌面</h4><p>Electron 壳，本机自动拉起 Node 后端（45713 端口），也可指向远端。</p><span class="chip">Electron · 约 210 MB</span>
+    </div>
+    <div class="card tcard">
+      <div class="em">📱</div><h4>微信小程序</h4><p>Bearer token 会话 + <code>wx.request</code> 分块读取 SSE，与网页同账号。</p><span class="chip">原生小程序</span>
+    </div>
+  </div>
+  <div class="card" style="padding:18px 22px;margin-top:14px">
+    <h4 style="font-size:14px;margin-bottom:8px">多端共享原则</h4>
+    <ul style="font-size:13px;color:#33475a;margin-left:18px;line-height:1.8">
+      <li>所有端访问同一套 <code>/api/*</code>，数据按 user_id 严格隔离。</li>
+      <li>客户端外壳只负责承载与网络，<b>不复制业务逻辑</b>。</li>
+      <li>模型密钥、语音凭据只在服务端解密，任何端都不落明文。</li>
+      <li>同一份 UI、同一份数据，切换端的体验是"无缝的"。</li>
+    </ul>
+  </div>
+  <div class="card" style="padding:18px 22px;margin-top:14px">
+    <h4 style="font-size:14px;margin-bottom:8px">首次启动差异</h4>
+    <ul style="font-size:13px;color:#33475a;margin-left:18px;line-height:1.8">
+      <li>网页：直接进入登录页，登录后进入工作台。</li>
+      <li>Android：先选服务器地址（Cloudflare/腾讯 CloudBase/局域网），再进入控制台。</li>
+      <li>Windows：默认本机形态（自拉 Node 后端），环境变量 <code>AIDESK_SERVER_URL</code> 可切远端。</li>
+      <li>小程序：填写服务地址 → 登录或注册 → 进入工作台（带 <code>X-Aidesk-Client: miniprogram</code> 请求头）。</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 10 设计规范 -->
+<section class="screen" id="s-design">
+  <div class="head"><h1>设计规范</h1><span class="sub">冷白纸面 + 深青蓝控制面板 · 珊瑚色仅用于信号</span></div>
+  <div class="tok">
+    <div class="card t"><div class="sw" style="background:#f7fafc"></div><div class="lb">纸白 · 页面底色<code>#f7fafc</code></div></div>
+    <div class="card t"><div class="sw" style="background:#fff;border-bottom:1px solid #eee"></div><div class="lb">纯白 · 卡片<code>#ffffff</code></div></div>
+    <div class="card t"><div class="sw" style="background:#183243"></div><div class="lb">墨蓝 · 标题正文<code>#183243</code></div></div>
+    <div class="card t"><div class="sw" style="background:#126b82"></div><div class="lb">青蓝 · 主操作<code>#126b82</code></div></div>
+    <div class="card t"><div class="sw" style="background:#dbe6ec"></div><div class="lb">边线<code>#dbe6ec</code></div></div>
+    <div class="card t"><div class="sw" style="background:#ed7867"></div><div class="lb">珊瑚 · 信号眼<code>#ed7867</code></div></div>
+  </div>
+  <div class="card" style="margin-top:14px;padding:18px 22px">
+    <h4 style="font-size:14px;margin-bottom:8px">字体</h4>
+    <p style="font-size:13px;color:#33475a">中文：系统微软雅黑 / 苹方；数字与代码：<code>SF Mono</code> / <code>Consolas</code>。标题清晰紧凑，正文 14px / 行高 1.55。</p>
+  </div>
+  <div class="card" style="margin-top:14px;padding:18px 22px">
+    <h4 style="font-size:14px;margin-bottom:8px">布局</h4>
+    <ul style="font-size:13px;color:#33475a;margin-left:18px;line-height:1.8">
+      <li>桌面：左侧导航 200px + 主工作区，移动：横向导航 + 列表自动折叠。</li>
+      <li>所有内容左对齐；机器人轮廓作为空会话的唯一视觉焦点，不放统计卡片。</li>
+      <li>五个目标宽度：360 / 390 / 768 / 1024 / 1440，必须无水平溢出与遮挡。</li>
+    </ul>
+  </div>
+  <div class="card" style="margin-top:14px;padding:18px 22px">
+    <h4 style="font-size:14px;margin-bottom:8px">交互原则</h4>
+    <ul style="font-size:13px;color:#33475a;margin-left:18px;line-height:1.8">
+      <li>输入框回车发送，Shift+回车换行；中文输入法组合态不触发发送。</li>
+      <li>消息区自动跟随最新；上滑离开底部即停跟随，回到底部恢复。</li>
+      <li>生成中按钮三态互斥：发送 / 暂停（处理中显示"保存中"）/ 继续。</li>
+      <li>生成中锁定：禁止新提问与角色切换；撤销/重新生成需先暂停。</li>
+      <li>设备密钥一次性显示：<code>XXXX-XXXX-XXXX</code>，可省横线、不分大小写。</li>
+      <li>设备页/对话页停留时每 3 秒只读轮询；后台标签页停止。</li>
+      <li>失败/删除/解绑等关键操作都需二次确认（confirm 弹窗）。</li>
+    </ul>
+  </div>
+  <div class="card" style="margin-top:14px;padding:18px 22px">
+    <h4 style="font-size:14px;margin-bottom:8px">可访问性</h4>
+    <ul style="font-size:13px;color:#33475a;margin-left:18px;line-height:1.8">
+      <li>弹窗使用 <code>role="dialog"</code> + <code>aria-modal="true"</code>，ESC 关闭。</li>
+      <li>所有图标按钮有 <code>aria-label</code> 或可见文字。</li>
+      <li>错误信息 <code>role="alert"</code>，表单字段有关联的 <code>label</code>。</li>
+      <li>键盘焦点可见，不被 <code>tabindex</code> 强行改写顺序。</li>
+    </ul>
+  </div>
+</section>
+
+<footer style="text-align:center;color:var(--muted);font-size:12px;padding:30px 0 50px">
+  AIDesk 机器人控制台 · 交互原型 · 基于 memory_bank 九文档与现有实现整理 · 2026-10-16
+</footer>
+</div>
+
+<!-- 弹窗：绑定设备（一次性密钥） -->
+<div class="modal" id="m-device" onclick="if(event.target===this)closeModal('m-device')">
+  <div class="box">
+    <h3>绑定设备</h3>
+    <label class="f"><b>设备名称</b><input type="text" value="客厅的机器人"></label>
+    <div class="kbox">
+      <b>设备密钥（只显示这一次）</b>
+      <code>9F3K-CT8V-VP1R</code>
+      <button class="btn tiny" onclick="alert('已复制到剪贴板（演示）')">复制密钥</button>
+      <small>填写时可省略短横线，也不区分大小写；关闭后无法再次查看，只能重新绑定换新码。</small>
+    </div>
+    <div class="acts"><button class="btn" onclick="closeModal('m-device')">完成</button></div>
+  </div>
+</div>
+
+<!-- 弹窗：添加模型 -->
+<div class="modal" id="m-model" onclick="if(event.target===this)closeModal('m-model')">
+
+<!-- 弹窗：创建角色 -->
+<div class="modal" id="m-role" onclick="if(event.target===this)closeModal('m-role')">
+  <div class="box">
+    <h3>创建角色</h3>
+    <form onsubmit="return false">
+      <label class="f"><b>名称</b><input type="text" placeholder="例如：创意搭档"></label>
+      <label class="f"><b>关联模型</b><select><option>DeepSeek 主力</option><option>OpenAI 备用</option><option>硅基流动</option></select></label>
+      <label class="f"><b>系统提示词</b><textarea rows="4" placeholder="你是一位耐心、清晰的机器人助手…"></textarea></label>
+      <label class="f"><b>角色任务</b><input type="text" placeholder="这个角色主要帮你完成什么？"></label>
+      <div class="acts"><button class="btn" onclick="closeModal('m-role')">取消</button><button class="btn primary" onclick="closeModal('m-role')">保存配置</button></div>
+    </form>
+  </div>
+</div>
+
+<script>
+const tabs=document.querySelectorAll('#tabs button');
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id==='s-'+id));
+  tabs.forEach(b=>b.classList.toggle('on',b.dataset.s===id));
+  window.scrollTo({top:0,behavior:'instant'});
+}
+tabs.forEach(b=>b.addEventListener('click',()=>show(b.dataset.s)));
+function openModal(id){document.getElementById(id).classList.add('on')}
+function closeModal(id){document.getElementById(id).classList.remove('on')}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.modal.on').forEach(m=>m.classList.remove('on'))});
+function decide(btn,kind){
+  const ev=btn.closest('.evt');
+  ev.classList.remove('open');
+  const chip=ev.querySelector('.chip');
+  chip.className=kind==='ok'?'chip ok':'chip err';
+  chip.textContent=kind==='ok'?'已允许':'已拒绝';
+  ev.querySelector('.ops').remove();
+}
+</script>
+</body>
+</html>
