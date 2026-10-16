@@ -92,7 +92,12 @@ try {
   });
   const text = await response.text();
   if (!response.ok) warning(`上报失败：HTTP ${response.status} ${text.slice(0, 160)}`);
-  console.log(`[aidesk] 已上报：${text.slice(0, 160)}`);
+  if (args.includes('--return-id')) {
+    /* 只吐事件 id：给 hook 用（它拿到 id 才能去等远程表态）。多一个字都可能被当成 id。 */
+    process.stdout.write(String(JSON.parse(text).event?.id || ''));
+  } else {
+    console.log(`[aidesk] 已上报：${text.slice(0, 160)}`);
+  }
 } catch (error) {
   if (!(error instanceof Bail)) console.warn(`[aidesk] 上报出错：${error instanceof Error ? error.message : String(error)}`);
   /* 默认不阻断 agent：除非 --strict，一律退出 0。 */

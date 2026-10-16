@@ -102,7 +102,12 @@ function reportAndGetId(extraArgs) {
       timeout: 20000,
       windowsHide: true,
     });
-    return String(text || '').trim();
+    /*
+     * 只认 UUID：哪怕上游把日志行、警告一起打出来，这里也能捞到正确的事件 id。
+     * （2026-10-16 踩过：--return-id 没生效时，整行日志被当成 id 去轮询，永远 404。）
+     */
+    const match = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i.exec(String(text || ''));
+    return match ? match[0] : '';
   } catch (error) {
     trace('同步上报失败：' + String(error));
     return '';
@@ -114,7 +119,7 @@ function reportAndGetId(extraArgs) {
  * 直到总预算（AIDESK_APPROVAL_WAIT_SEC，默认 80 秒）用完 —— 容器冷启动可能吃掉十几秒，
  * 所以预算要留够，同时必须短于 hooks.json 里的 timeout（120 秒）。返回 'allow' / 'deny' / null。
  */
-function waitForDecision(id) {
+async function waitForDecision(id) {
   if (dryRun) {
     console.error('[dry-run] 会等待远程表态（跳过）');
     return null;
@@ -122,40 +127,42 @@ function waitForDecision(id) {
   const budgetMs = Math.max(0, Number(process.env.AIDESK_APPROVAL_WAIT_SEC || 80)) * 1000;
   const deadline = Date.now() + budgetMs;
   let loggedFailure = false;
-  warmUp();
+  await warmUp();
   while (Date.now() < deadline) {
     const remaining = deadline - Date.now();
     /* 单次等待：服务端封顶 20 秒，问 20 秒能少一半请求。 */
     const wait = Math.min(20, Math.max(1, Math.round(remaining / 1000)));
-    const answer = askDecision(id, wait);
+    const answer = await askDecision(id, wait);
     if (answer.decision === 'allow' || answer.decision === 'deny') return answer.decision;
     /* 失败只记一次：一轮里同一件事刷三遍日志没有信息量，只有噪音。 */
     if (answer.failed && !loggedFailure) {
       loggedFailure = true;
       trace('查询远程表态失败（后面还会继续重试，不再重复记录）');
     }
-    sleepMs(1000);
   }
   return null;
 }
 
 /**
  * 先敲一下 /api/health 把容器叫醒：CloudBase 容器闲时会缩到零，冷启动十几秒，
- * 第一轮轮询很容易整轮超时（我们就是因为这个丢掉过一条真实的拒绝决定）。
+ * 第一轮轮询很容易整轮超时。
  */
-function warmUp() {
+async function warmUp() {
   try {
-    const done = fetch(`${remoteBase()}/api/health`, {signal: AbortSignal.timeout(45000)})
-      .then(() => null)
-      .catch(() => null);
-    waitFor(done, 20);
+    await fetch(`${remoteBase()}/api/health`, {signal: AbortSignal.timeout(45000)});
   } catch {
     /* 预热失败不影响后面重试 */
   }
 }
 
-/** 问一次服务端：返回 {decision, failed}；decision 为 null 表示还没人表态。 */
-function askDecision(id, waitSeconds) {
+/**
+ * 问一次服务端：返回 {decision, failed}；decision 为 null 表示还没人表态。
+ *
+ * 必须是 async：早先我用 Atomics.wait 做"同步等待"，那会把 Node 线程整个卡住，
+ * 而 fetch 的响应要靠同一个事件循环处理 —— 于是永远等不到响应、每轮必然超时。
+ * （2026-10-16 实测：手机 13.7 秒点的拒绝就是这么被丢掉的。）
+ */
+async function askDecision(id, waitSeconds) {
   const key = agentKey();
   if (!key) {
     trace('没有上报凭据，问不了远程表态');
@@ -163,36 +170,18 @@ function askDecision(id, waitSeconds) {
   }
   const url = `${remoteBase()}/api/agent/events/${encodeURIComponent(id)}/decision?wait=${waitSeconds}`;
   try {
-    const done = fetch(url, {
+    const response = await fetch(url, {
       headers: {Authorization: `Agent ${key}`, Accept: 'application/json'},
-      signal: AbortSignal.timeout((waitSeconds + 30) * 1000),
-    })
-      .then(response => (response.ok ? response.json() : null))
-      .then(body => ({decision: (body && body.decision) || null, failed: false}))
-      .catch(() => ({decision: null, failed: true}));
-    /* hook 必须阻塞等待，所以这里同步地把它等完。 */
-    return waitFor(done, waitSeconds) || {decision: null, failed: true};
+      signal: AbortSignal.timeout((waitSeconds + 20) * 1000),
+    });
+    if (!response.ok) return {decision: null, failed: true};
+    const body = await response.json();
+    return {decision: (body && body.decision) || null, failed: false};
   } catch (error) {
     trace('查询远程表态异常：' + String(error));
     return {decision: null, failed: true};
   }
 }
-function sleepMs(ms) {
-  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
-}
-
-/** 极简的「等 Promise」：用一个 Atomics.wait 轮询，避免把整个脚本改成异步。 */
-function waitFor(promise, seconds) {
-  /* 同步等待必须比请求自身的超时（wait+30）更长，否则会把已经到了的决定丢掉：
-     ——2026-10-16 实测踩过：容器冷启动慢，第一轮整轮作废，真实的拒绝决定就这么丢了。 */
-  let settled = false, value = null;
-  promise.then(result => { value = result; settled = true; });
-  const deadline = Date.now() + (seconds + 45) * 1000;
-  const buffer = new Int32Array(new SharedArrayBuffer(4));
-  while (!settled && Date.now() < deadline) Atomics.wait(buffer, 0, 0, 50);
-  return value;
-}
-
 function remoteBase() {
   return (process.env.AIDESK_EVENT_URL || 'https://aidesk-console-312359-12-1485927190.sh.run.tcloudbase.com').replace(/\/+$/, '');
 }
@@ -254,7 +243,8 @@ try {
       '--detail', 'Codex 正在等你批准',
       '--options', APPROVAL_OPTIONS,
     ]);
-    const decision = id ? waitForDecision(id) : null;
+    trace('事件 id = ' + (id || '(空，拿不到就不等)') + '（应为标准 UUID）');
+    const decision = id ? await waitForDecision(id) : null;
     if (decision === 'allow' || decision === 'deny') {
       trace(`远程表态：${decision}（事件 ${id}）`);
       if (!dryRun) {
