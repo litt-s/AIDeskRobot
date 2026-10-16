@@ -232,6 +232,31 @@ public class AgentAlertService extends Service {
         }
     }
 
+    /**
+     * 会话 Cookie 从 WebView 那边借：WebView 的 API 归主线程所有，
+     * 在轮询线程里直接问 CookieManager 有"某些机型直接抛异常、还看不出错"的风险，
+     * 所以统一 post 到主线程取，取不到（没登录）就当没有。
+     */
+    private String cookieFor(String base) {
+        final String[] holder = new String[1];
+        final CountDownLatch latch = new CountDownLatch(1);
+        new Handler(getMainLooper()).post(() -> {
+            try {
+                holder[0] = CookieManager.getInstance().getCookie(base);
+            } catch (Exception error) {
+                Log.w(TAG, "读 Cookie 失败：" + error);
+            } finally {
+                latch.countDown();
+            }
+        });
+        try {
+            latch.await(5, TimeUnit.SECONDS);
+        } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+        }
+        return holder[0];
+    }
+
     private void postEventNotification(JSONObject event) {
         String source = event.optString("source", "Codex");
         String kind = event.optString("kind", "finished");
