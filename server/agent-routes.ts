@@ -128,6 +128,29 @@ export function agentRoutes(app:any){
     return c.json({events});
   });
 
+  /*
+   * 手机提醒的心跳。手机上的常驻服务每轮轮询后都报一次（含着"这一轮为什么没成"），
+   * 于是控制台能显示「手机提醒：Pixel 8 在线（30 秒前，已弹 3 条）」或「已断开 / 从未连接」，
+   * 而不是让人对着通知栏猜是没开开关、没给权限、还是服务被系统杀了。
+   */
+  app.post('/api/agent/watch/heartbeat',async(c:any)=>{
+    const userId=c.get('user').id;
+    const b=await c.req.json().catch(()=>({}));
+    const label=typeof b.label==='string'?b.label.trim().slice(0,60):'';
+    const error=typeof b.error==='string'&&b.error.trim()?b.error.trim().slice(0,200):null;
+    const counted=Number(b.notified);
+    const notified=Number.isFinite(counted)?Math.max(0,Math.min(100000,Math.trunc(counted))):0;
+    const t=now();
+    await c.env.DB.prepare('INSERT INTO agent_watch (user_id,label,last_seen_at,notified_count,last_error) VALUES (?,?,?,?,?) ON CONFLICT(user_id) DO UPDATE SET label=excluded.label,last_seen_at=excluded.last_seen_at,notified_count=excluded.notified_count,last_error=excluded.last_error')
+      .bind(userId,label||null,t,notified,error).run();
+    return c.json({ok:true,last_seen_at:t});
+  });
+
+  app.get('/api/agent/watch',async(c:any)=>{
+    const row=await c.env.DB.prepare('SELECT label,last_seen_at,notified_count,last_error FROM agent_watch WHERE user_id=?').bind(c.get('user').id).first() as any;
+    return c.json({watch:row||null});
+  });
+
   app.post('/api/agent/events/:id/ack',async(c:any)=>{
     const r=await c.env.DB.prepare("UPDATE agent_events SET status='acked',acked_at=? WHERE id=? AND user_id=? AND status='open'").bind(now(),c.req.param('id'),c.get('user').id).run();
     if(!r.meta.changes)fail('事件不存在或已处理',404);

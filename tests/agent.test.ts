@@ -98,3 +98,25 @@ describe('console test alert',()=>{
   expect(list.events[0].status).toBe('open');
  });
 });
+describe('phone watch heartbeat',()=>{
+ it('records the phone and reports it back for the console',async()=>{
+  const {call}=fixture();
+  const empty=await (await call('/api/agent/watch')).json() as any;
+  expect(empty.watch).toBeNull();
+  const posted=await call('/api/agent/watch/heartbeat',{method:'POST',body:JSON.stringify({label:'Pixel 8',notified:3,error:''})});
+  expect(posted.status).toBe(200);
+  const body=await (await call('/api/agent/watch')).json() as any;
+  expect(body.watch.label).toBe('Pixel 8');
+  expect(body.watch.notified_count).toBe(3);
+  expect(body.watch.last_error).toBeNull();
+  expect(typeof body.watch.last_seen_at).toBe('string');
+ });
+ it('keeps the last error so the console can say why the phone went quiet',async()=>{
+  const {call}=fixture();
+  await call('/api/agent/watch/heartbeat',{method:'POST',body:JSON.stringify({label:'Pixel 8',notified:0,error:'没拿到登录态'})});
+  await call('/api/agent/watch/heartbeat',{method:'POST',body:JSON.stringify({label:'Pixel 8',notified:5,error:''})});
+  const body=await (await call('/api/agent/watch')).json() as any;
+  expect(body.watch.notified_count).toBe(5);
+  expect(body.watch.last_error).toBeNull();
+ });
+});

@@ -14,6 +14,7 @@
     <string name="alerts_enable">开启手机提醒</string>
     <string name="alerts_disable">关闭手机提醒</string>
     <string name="alerts_enabled">手机提醒已开启：需要批准、失败或完成时会通知你</string>
+    <string name="alerts_auto_enabled">手机提醒已自动开启：需要批准、失败或完成时会通知你（右上角菜单可关闭）</string>
     <string name="alerts_disabled">手机提醒已关闭</string>
     <string name="alerts_denied">通知权限被拒绝：请到系统设置里允许 AIDesk 发通知，否则收不到提醒</string>
     <string name="alert_channel_events">Codex 任务提醒</string>

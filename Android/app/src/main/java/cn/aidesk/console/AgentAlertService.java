@@ -8,6 +8,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
@@ -19,6 +20,7 @@ import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -45,6 +47,7 @@ public class AgentAlertService extends Service {
     static final String PREFS = "aidesk_console";
     static final String KEY_SERVER_URL = "server_url";
     static final String KEY_ALERTS_ENABLED = "alerts_enabled";
+    static final String KEY_ALERTS_PROMPTED = "alerts_prompted";
 
     private static final String KEY_SEEN_IDS = "alerts_seen_ids";
     private static final String CHANNEL_EVENTS = "aidesk_agent_events";
@@ -57,6 +60,8 @@ public class AgentAlertService extends Service {
 
     private SharedPreferences preferences;
     private volatile boolean running;
+    /** 本次服务启动后弹过的通知条数，随心跳上报，控制台据此判断"到底有没有在干活"。 */
+    private int notifiedTotal;
     private Thread worker;
 
     @Override
@@ -116,16 +121,29 @@ public class AgentAlertService extends Service {
         }
     }
 
-    private void pollOnce() throws Exception {
+    private void pollOnce() {
         String base = preferences.getString(KEY_SERVER_URL, "");
         if (base == null || base.isEmpty()) {
             return;
         }
         String cookie = cookieFor(base);
         if (cookie == null || cookie.isEmpty()) {
+            /* 心跳本身也要登录态，这种情况只能留在本机日志里；控制台会显示"从未连接"。 */
+            Log.w(TAG, "没有登录态，本轮跳过（先在 App 里登录）");
             return;
         }
+        String trouble = "";
+        try {
+            trouble = fetchOpenEvents(base, cookie);
+        } catch (Exception failure) {
+            trouble = String.valueOf(failure);
+            Log.w(TAG, "轮询失败：" + trouble);
+        }
+        reportHeartbeat(base, cookie, notifiedTotal, trouble);
+    }
 
+    /** 拉一次"待处理事件"并弹通知。返回空串表示这一轮没问题，否则返回给控制台看的原因。 */
+    private String fetchOpenEvents(String base, String cookie) throws Exception {
         HttpURLConnection connection = null;
         try {
             connection = (HttpURLConnection) new URL(base + "/api/agent/events?status=open").openConnection();
@@ -134,13 +152,17 @@ public class AgentAlertService extends Service {
             connection.setReadTimeout(10000);
             connection.setRequestProperty("Accept", "application/json");
             connection.setRequestProperty("Cookie", cookie);
-            if (connection.getResponseCode() != 200) {
-                return;
+            int code = connection.getResponseCode();
+            if (code == 401) {
+                return "登录态已失效：请在 App 里重新登录";
+            }
+            if (code != 200) {
+                return "服务端返回 HTTP " + code;
             }
             String body = readAll(connection.getInputStream());
             JSONArray events = new JSONObject(body).optJSONArray("events");
             if (events == null) {
-                return;
+                return "";
             }
 
             List<String> seen = readSeen();
@@ -159,6 +181,7 @@ public class AgentAlertService extends Service {
                 postEventNotification(event);
                 fresh.add(id);
                 posted++;
+                notifiedTotal++;
             }
             if (!fresh.isEmpty()) {
                 seen.addAll(fresh);
@@ -167,6 +190,7 @@ public class AgentAlertService extends Service {
                 }
                 writeSeen(seen);
             }
+            return "";
         } finally {
             if (connection != null) {
                 connection.disconnect();
@@ -175,28 +199,37 @@ public class AgentAlertService extends Service {
     }
 
     /**
-     * 会话 Cookie 从 WebView 那边借：WebView 的 API 归主线程所有，
-     * 在轮询线程里直接问 CookieManager 有"某些机型直接抛异常、还看不出错"的风险，
-     * 所以统一 post 到主线程取，取不到（没登录）就当没有。
+     * 心跳：告诉控制台"这个手机还活着、弹了几条、这一轮为什么没成"。
+     * 弹不出通知时，人最需要的不是再去翻系统设置，而是能一眼看出卡在链路的哪一环。
      */
-    private String cookieFor(String base) {
-        final String[] holder = new String[1];
-        final CountDownLatch latch = new CountDownLatch(1);
-        new Handler(getMainLooper()).post(() -> {
-            try {
-                holder[0] = CookieManager.getInstance().getCookie(base);
-            } catch (Exception error) {
-                Log.w(TAG, "读 Cookie 失败：" + error);
-            } finally {
-                latch.countDown();
-            }
-        });
+    private void reportHeartbeat(String base, String cookie, int notified, String trouble) {
+        HttpURLConnection connection = null;
         try {
-            latch.await(5, TimeUnit.SECONDS);
-        } catch (InterruptedException interrupted) {
-            Thread.currentThread().interrupt();
+            byte[] payload = new JSONObject()
+                    .put("label", Build.MODEL == null ? "" : Build.MODEL)
+                    .put("notified", notified)
+                    .put("error", trouble == null ? "" : trouble)
+                    .toString()
+                    .getBytes(StandardCharsets.UTF_8);
+            connection = (HttpURLConnection) new URL(base + "/api/agent/watch/heartbeat").openConnection();
+            connection.setRequestMethod("POST");
+            connection.setConnectTimeout(8000);
+            connection.setReadTimeout(10000);
+            connection.setDoOutput(true);
+            connection.setRequestProperty("Content-Type", "application/json");
+            connection.setRequestProperty("Accept", "application/json");
+            connection.setRequestProperty("Cookie", cookie);
+            try (OutputStream out = connection.getOutputStream()) {
+                out.write(payload);
+            }
+            connection.getResponseCode();
+        } catch (Exception ignored) {
+            /* 心跳失败不打扰用户：下一轮还会再来。 */
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
         }
-        return holder[0];
     }
 
     private void postEventNotification(JSONObject event) {

@@ -185,6 +185,7 @@ public class MainActivity extends Activity {
     private void showConsole() {
         destroyWebView();
         content.removeAllViews();
+        autoEnableAlertsOnce();
 
         webView = new WebView(this);
         WebSettings settings = webView.getSettings();
@@ -303,6 +304,22 @@ public class MainActivity extends Activity {
             preferences.edit().putBoolean(AgentAlertService.KEY_ALERTS_ENABLED, true).apply();
             startAlertService(true);
         }
+        invalidateOptionsMenu();
+    }
+
+    /**
+     * 第一次进入工作台就把手机提醒打开（只自动开这一次）：用户装这个 App 就是为了"不在电脑前也能收到"，
+     * 再让他去菜单里找一个开关，等于把最容易失败的一步留给运气。关过之后就永远不再自动开。
+     */
+    private void autoEnableAlertsOnce() {
+        if (preferences.getBoolean(AgentAlertService.KEY_ALERTS_PROMPTED, false)) {
+            return;
+        }
+        preferences.edit().putBoolean(AgentAlertService.KEY_ALERTS_PROMPTED, true).apply();
+        requestNotificationPermission();
+        preferences.edit().putBoolean(AgentAlertService.KEY_ALERTS_ENABLED, true).apply();
+        startAlertService(false);
+        toast(R.string.alerts_auto_enabled);
         invalidateOptionsMenu();
     }
 
