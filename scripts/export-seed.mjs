@@ -80,7 +80,8 @@ const quote = value => {
  * agent_keys / agent_events 必须在清单里：它们是"这台电脑能不能上报"和"事件历史"的全部依据，
  * 而容器每次发布都从种子重建库——漏了这两张表，发布一次就等于吊销一次 PC 上的上报凭据
  * （2026-10-16 实测：部署完成后上报立刻 401）。
- * device_commands 故意不带：那是"待下发"的队列，属于易失状态，重放旧指令比丢掉更糟。
+ * device_commands（待下发队列）与 agent_watch（手机提醒心跳）故意不带：都是易失状态——
+ * 旧指令重放比丢掉更糟，心跳在手机下一轮（30 秒内）就会重新报上来。
  */
 const tables = ['users', 'models', 'roles', 'conversations', 'messages', 'devices', 'voice_settings', 'agent_keys', 'agent_events'];
 const lines = [
