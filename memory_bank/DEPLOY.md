@@ -298,6 +298,8 @@ VOLC_API_KEY=你的key npm run volc:smoke
 **远程批准（T043）**：`permission` 分支会**同步上报 → 拿事件 id → 在预算内（默认 80 秒，`AIDESK_APPROVAL_WAIT_SEC` 可调）轮询"手机/控制台表态了吗"**：拿到决定就返回
 **已实测（2026-10-16，真机各一次）**：允许 → 命令真的执行（写出的文件存在）；拒绝 → 命令被拒（执行器回显 `Rejected("来自 AIDesk 的远程拒绝")`、目标文件未生成）。排查过程中修掉三个真 bug（决定轮询接口漏进会话白名单被 401、上报脚本 `--return-id` 从未生效导致事件 id 是整行日志、hook 用 `Atomics.wait` 同步等 Promise 导致每轮必然超时），细节见 LEARNINGS。
 **验证用入口**：`AIDESK_APPROVAL_ID=<某条事件的 id>` + `--event permission` 可以直接对一条已有决定的事件走一遍轮询（跳过上报、不惊动 Codex 弹框），用来单独验证轮询这段代码。
+**两类批准要分清（2026-10-16 用户实测发现）**：①**命令批准**（"要执行这条命令吗"）走 `PermissionRequest` —— 已接、已能远程允许/拒绝；②**目录/文件写入权限**（"允许编辑 outputs 的内容吗"）是 App 内部另一套（`request_permissions` 工具 / `FileChangeRequestApproval`），`PermissionRequest` 收不到。槽位 1（`PreToolUse`）已挂 `--event pretool` 但**只记录不打扰**（`async: true`），用来观察这类调用实际长什么样；确认字段后再决定过滤与是否支持远程决定。
+
 
 `{"hookSpecificOutput":{"hookEventName":"PermissionRequest","decision":{"behavior":"allow"|"deny","message":…}}}`，替人在 Codex 里把这次批准点掉；**没人表态就什么都不输出**，Codex 照旧弹它自己的确认框（与没接这个功能时完全一致，绝不自动放行）。
 用法：控制台「代理」页 →「最近事件」里待批准那条 →「允许」/「拒绝」（**手机浏览器打开控制台同样可以**，不必等新 APK）。决定写进事件（`decision`/`decided_at`/`decided_from`）并在列表显示。

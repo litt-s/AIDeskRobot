@@ -220,7 +220,16 @@ try {
   const input = await readInput();
   trace(`event=${event} stdin=${JSON.stringify(input).slice(0, 300)}`);
 
-  if (event === 'permission') {
+  if (event === 'pretool') {
+    /*
+     * PreToolUse（槽位 1）：所有工具调用都会过这里。**当前只记录、不打扰** ——
+     * 目的是先看清「申请目录写入权限」那类对话框实际产生的是什么工具调用（工具名、字段），
+     * 再决定过滤规则（绝不能变成「每次改文件都提醒」）。
+     * 它是 async 的：绝不能让 App 等我们，所以这里不输出任何东西。
+     */
+    const tool = firstString(input.tool_name, input.tool?.name, input.tool_input?.tool, '(未知工具)');
+    trace('pretool: ' + tool + ' | ' + JSON.stringify(input.tool_input || input.arguments || {}).slice(0, 400));
+  } else if (event === 'permission') {
     /*
      * Codex 的「需要批准」事件。两步走：
      *  ① 同步上报（要拿到事件 id 才谈得上等）；
