@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "hooks": {
+    "beforeShellExecution": [
+      {
+        "command": "node .cursor/hooks/report-to-aidesk.mjs --event shell",
+        "timeout": 10,
+        "failClosed": false
+      }
+    ],
+    "postToolUseFailure": [
+      {
+        "command": "node .cursor/hooks/report-to-aidesk.mjs --event tool-failure",
+        "timeout": 10,
+        "failClosed": false
+      }
+    ],
+    "stop": [
+      {
+        "command": "node .cursor/hooks/report-to-aidesk.mjs --event stop",
+        "timeout": 10,
+        "failClosed": false
+      }
+    ]
+  }
+}

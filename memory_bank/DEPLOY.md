@@ -263,6 +263,20 @@ VOLC_API_KEY=你的key npm run volc:smoke
 
 首次启动 App 要求填写完整控制台地址：Cloudflare/CloudBase 用 `https://...`，局域网 Node 容器可用 `http://192.168.x.x:端口`。更换服务器可通过底部原生「更换服务器」或右上溢出菜单。因为 Android 只保存服务器 URL 和 WebView Cookie，清应用数据即可登出并清除本机会话；服务端账户、模型、设备与密钥不受影响。发布签名 APK 仍需后续提供正式 keystore，当前未配置。
 
+### 接 Codex hook（T042 第一期收尾，2026-10-16）
+让"需要批准 / 执行失败"**自动**上报，不用再手点控制台的测试按钮：
+```
+.cursor/hooks.json                      # 项目级 hook 配置（Codex 会监听并热加载）
+.cursor/hooks/report-to-aidesk.mjs      # hook 脚本：读 stdin 的 JSON → 调 scripts/report-agent-event.mjs
+```
+- `beforeShellExecution`：命中危险命令（`rm -rf`、`git push --force`、`git reset --hard`、`npm publish`、`gh pr merge`、`curl|sh`、`sudo`、`chmod 777`、`DROP/TRUNCATE TABLE`、`deploy-cloudbase.mjs`）→ 返回 `permission:"ask"` 让 Codex 弹确认框，**同时**上报一条 `needs_confirmation`（标题＝命令、选项＝弹窗那几项）。命中清单在脚本顶部的 `RISKY` 里，想加就加一行。
+- `postToolUseFailure` → 上报 `failed`（标题＝工具名，细节＝错误摘要）。
+- `stop` **默认不报**（每轮回复结束都会触发，会变成"每聊一句念一句"）；想开就把脚本里的 `REPORT_FINISHED` 改成 `true`。
+- **安全约定（改这个 hook 前必读）**：只有命中危险命令时才往 stdout 写 JSON，其余一律不输出——**不输出就是不改变 Codex 原有的判定**。绝不能图省事返回 `permission:"allow"`，那等于把我们没判断过的命令统统放行。上报走 detached 子进程，不拖慢 Codex 的每一步；脚本任何异常都吞掉并 exit 0。
+- 手动试（不会真发通知）：`echo '{"command":"rm -rf dist"}' | node .cursor/hooks/report-to-aidesk.mjs --event shell --dry-run`（干跑结果走 stderr，stdout 留给真正返回给 Codex 的 JSON）。
+- 批准选项文案如需改成和 Codex 弹窗逐字一致：设环境变量 `AIDESK_APPROVAL_OPTIONS="允许一次|本次会话都允许|拒绝"`，或直接改脚本里的常量。
+- hooks.json 保存后 Codex 会自动重载；若没生效，重启一次 Codex。
+
 ### 手机提醒（T042 第一期续项，2026-10-16）
 App 右上角菜单新增「开启手机提醒 / 关闭手机提醒」。开启后由**前台常驻服务** `AgentAlertService` 每 30 秒问一次 `GET /api/agent/events?status=open`（凭据直接用 WebView 的会话 Cookie，不引入第二套设备令牌），有新事件就发系统通知：**标题行 = `<软件名> 待批准｜任务中断｜任务完成`；正文 = 标题 / 内容 / 可选**。语音那头只报一句"软件名 + 状态"，细节看手机或控制台——三处的数据是同一份（服务端 `agent_events.title/detail/options`）。去重按事件 id 记在本机，重启服务不会重复弹；每轮最多弹 5 条，剩下的留到下一轮。
 
