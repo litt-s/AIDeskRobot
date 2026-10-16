@@ -236,7 +236,11 @@ try {
     );
     const tool = firstString(input.tool_name, input.tool?.name, input.tool_input?.tool, '命令');
     trace(`permission 事件（工具 ${tool}）：${(command || '(无命令)').slice(0, 120)}`);
-    const id = reportAndGetId([
+    /*
+     * AIDESK_APPROVAL_ID 是**只用于验证**的入口：直接指定一条已存在的批准事件去等结果，
+     * 跳过上报。这样可以在不惊动 Codex 批准框、也不用再麻烦用户点一次的前提下，验证轮询本身。
+     */
+    const id = process.env.AIDESK_APPROVAL_ID ? process.env.AIDESK_APPROVAL_ID.trim() : reportAndGetId([
       '--kind', 'needs_confirmation',
       '--source', 'Codex',
       '--title', clip(command || `${tool} 需要你批准`, 120),
