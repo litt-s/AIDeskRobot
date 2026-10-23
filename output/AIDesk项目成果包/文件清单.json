@@ -88,13 +88,13 @@
     },
     {
       "path": "03_AI能力筑基与工具链报告/AI工具链配置报告.md",
-      "bytes": 2512,
-      "sha256": "3670f56de1eb28a430a39b190fd9223f15110e5638d5eb6736b4e13e430c35ee"
+      "bytes": 3149,
+      "sha256": "2aedea186302b33ed9c5d5bb8fc95fca6255cf8238cfa82d61a70ce151af2e16"
     },
     {
       "path": "03_AI能力筑基与工具链报告/AI能力筑基实操报告.md",
-      "bytes": 2990,
-      "sha256": "3e2db85174cc408bf889a069a6bd7c43f77b055a44fa076b95f64778746dfd99"
+      "bytes": 3436,
+      "sha256": "f7adf2710143d7ee4b8862c6235b38d0fe4d58848460d9ea8f95caa29fff5f98"
     },
     {
       "path": "04_架构设计文档/ARCHITECTURE.md",
@@ -143,8 +143,8 @@
     },
     {
       "path": "05_开发日志与AI使用日志/AI使用日志.md",
-      "bytes": 2783,
-      "sha256": "cf001180ccf27cf7d6547f5e2acb8762681e2362d035ababa30db5cd2af9ccc6"
+      "bytes": 3225,
+      "sha256": "04e896dcddbc9f9919eb4cdf447d8285e4e75727389f94ea47320b7d4d2add3d"
     },
     {
       "path": "05_开发日志与AI使用日志/PROGRESS.md",
@@ -157,9 +157,44 @@
       "sha256": "afe2f4c8ac9de651af34000ffd92213c6eae3eeccebcb58691e704dfb34599c3"
     },
     {
+      "path": "06_个人Skills清单/project-memory.zip",
+      "bytes": 13578,
+      "sha256": "0c85c86e9dc95de62c3d245932765fe5f50fa3012256d17544fb86604dde5859"
+    },
+    {
       "path": "06_个人Skills清单/Skills清单.md",
-      "bytes": 2236,
-      "sha256": "2a1e8c9a7f2288633e3c9eccdcaeb4d141ff8b922204b258a9fea8883f8fdb2a"
+      "bytes": 4337,
+      "sha256": "ea71f13be173a9f64ecb669ffbfdcf8bb6ec2c33921a50b07367a1a611c20bea"
+    },
+    {
+      "path": "06_个人Skills清单/个人技能源码/project-memory/assets/AGENTS.template.md",
+      "bytes": 3370,
+      "sha256": "1c78f53aeec74180bfa483f5e684ad1b99c110be673c7db6b82398e40aa4b7be"
+    },
+    {
+      "path": "06_个人Skills清单/个人技能源码/project-memory/README.md",
+      "bytes": 1907,
+      "sha256": "dd25da5fa7c562fbddf00c59153cd4ec506282fca3d60f539ae9bfe58547d4ef"
+    },
+    {
+      "path": "06_个人Skills清单/个人技能源码/project-memory/references/document-templates.md",
+      "bytes": 6976,
+      "sha256": "973f7c1990013ba54ac4fc4ff902a411dd842abbed0fe063dfd772a2f370a454"
+    },
+    {
+      "path": "06_个人Skills清单/个人技能源码/project-memory/references/source-analysis.md",
+      "bytes": 4168,
+      "sha256": "b9d58437ca3b8feeddd4455b47465fcbb4df4f0e27fd897f58179ab11bb84202"
+    },
+    {
+      "path": "06_个人Skills清单/个人技能源码/project-memory/SKILL.md",
+      "bytes": 9115,
+      "sha256": "6d31d910376592bc456769f5bec4f7247bb74811609b46aa88d97fc02d8474bb"
+    },
+    {
+      "path": "06_个人Skills清单/来源与文件核验.md",
+      "bytes": 1499,
+      "sha256": "0018ce5a3464308a782495b87cb44578392062c9799e928c9608094475561de8"
     },
     {
       "path": "07_可运行App/AIDesk源码快照.zip",
@@ -3538,8 +3573,8 @@
     },
     {
       "path": "08_测试报告/交付文件检查记录.md",
-      "bytes": 1059,
-      "sha256": "fe46d359747c74c357fb733d0a11625461a77ca39b661c8b4b3f31b01930914a"
+      "bytes": 1380,
+      "sha256": "d3da101e9dcaa91eb55322cfa0bfff6eb6a1997ed4600178ec603c32af296a7c"
     },
     {
       "path": "09_上架材料包/上架材料清单与缺口.md",
@@ -3623,8 +3658,8 @@
     },
     {
       "path": "10_总结报告/总结报告.md",
-      "bytes": 2551,
-      "sha256": "c3a3fa5ed5ee8bd4dabc4f72b8e81708889cbf218e30f0f87407b8669b11d767"
+      "bytes": 2890,
+      "sha256": "053a8c8fccfb57e2e84e655f1f2406b94030a2f6db02801142235e76672aaef9"
     },
     {
       "path": "11_答辩PPT与演示视频/AIDesk开题答辩PPT-5页.pptx",
@@ -3708,8 +3743,8 @@
     },
     {
       "path": "13_简历项目素材/简历项目素材.md",
-      "bytes": 2972,
-      "sha256": "02b9ea0eebf1740701c25f09e7cf18993144063ce9fc4e9681952929b1133a25"
+      "bytes": 3524,
+      "sha256": "84a443473cf9384ce878e1b62280265bdd38a66890b6064ea522590922cf5055"
     },
     {
       "path": "13_简历项目素材/项目图标.png",
@@ -3718,13 +3753,13 @@
     },
     {
       "path": "README.md",
-      "bytes": 3430,
-      "sha256": "f287a85ea47c4c35a7ee8f454eaee40129896d9a1132fc3a5c7e67a60beebdb1"
+      "bytes": 3490,
+      "sha256": "d8c05d6da1547ad3fdcccf5df78182edbcd7940737a91b354a2fc8a82c6da96b"
     },
     {
       "path": "打开成果包.html",
-      "bytes": 3866,
-      "sha256": "e5bd58c8518e0547b9fed0f282e145db525a66feb1dd1f1f05ae1ed1ebfe4554"
+      "bytes": 4122,
+      "sha256": "bf84ece62179a00feffa4b150906c2844e048f2e896587df96beeeea52aae432"
     }
   ]
 }
