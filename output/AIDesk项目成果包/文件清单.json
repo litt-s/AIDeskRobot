@@ -1,0 +1,3730 @@
+{
+  "created": "2026-10-23",
+  "files": [
+    {
+      "path": "00_待填写位置清单.md",
+      "bytes": 2339,
+      "sha256": "5017f36c4dda75f1d8e3eccc46e3fb562937d2915f9b5548490b2af5d5f7771c"
+    },
+    {
+      "path": "01_选题申报表/选题申报表.docx",
+      "bytes": 38765,
+      "sha256": "42847a9906e077b318b2b2425f620eb5922d6c12e812703f468a8917aeb87bf9"
+    },
+    {
+      "path": "01_选题申报表/选题申报表.md",
+      "bytes": 3302,
+      "sha256": "5ed21eed3f88221f229a9660fe5e11ef08b1627faa4b305635a935f2f1a0591d"
+    },
+    {
+      "path": "02_需求规格说明书与原型/AIDesk_需求文档.md",
+      "bytes": 6446,
+      "sha256": "81ce70581d95ae49ce058de5d7666e4b70b1661f43329e8c0529b9c6c080b287"
+    },
+    {
+      "path": "02_需求规格说明书与原型/design/assets/01-登录.png",
+      "bytes": 57619,
+      "sha256": "12dddc8cfe70cf514aecc93a4bc106557f26d9a35c2b9f1b6591ce122776b450"
+    },
+    {
+      "path": "02_需求规格说明书与原型/design/assets/02-对话工作台-演示数据.png",
+      "bytes": 66615,
+      "sha256": "df40d2ef7c0316db6c8774c2276aa7a89fb55184d08092dc7cbc6ad7be624595"
+    },
+    {
+      "path": "02_需求规格说明书与原型/design/assets/03-模型管理.png",
+      "bytes": 51043,
+      "sha256": "6d6aa7245c2ddb002af80f4d135fdf2b97a9812dd529c8977493086d1c9fbc61"
+    },
+    {
+      "path": "02_需求规格说明书与原型/design/assets/04-角色设定.png",
+      "bytes": 46917,
+      "sha256": "d483e4f63d8a6f10a6f631877671a6668e4a46e7fc3642d1081ea3c8daed1eb2"
+    },
+    {
+      "path": "02_需求规格说明书与原型/design/assets/05-设备管理-模拟设备.png",
+      "bytes": 55244,
+      "sha256": "fc4c6e637a219fd12c29fc30aa8335ae3464c8062984d09978bdd0d8cb77ec1f"
+    },
+    {
+      "path": "02_需求规格说明书与原型/design/assets/06-会议纪要-演示数据.png",
+      "bytes": 96879,
+      "sha256": "a27524f246551d2b0454dbd7c13df6950bbbb4131f55fca33ee767211b45bfae"
+    },
+    {
+      "path": "02_需求规格说明书与原型/design/assets/07-语音设置.png",
+      "bytes": 68960,
+      "sha256": "28c67b790a64c1fda1cc91ef5bf43c1902ccb47b09b5db0c4446af65f583e5a5"
+    },
+    {
+      "path": "02_需求规格说明书与原型/design/assets/08-Agent动态-测试提醒.png",
+      "bytes": 95310,
+      "sha256": "59e75dd4a1f5324836839a0390534aff3427ffd23fe99cff84a0035ad8b0425a"
+    },
+    {
+      "path": "02_需求规格说明书与原型/design/assets/09-移动端对话-演示数据.png",
+      "bytes": 42574,
+      "sha256": "e6049c028f8ad7716796c7b220745b1b50a38243f60967b974b484e23858b14c"
+    },
+    {
+      "path": "02_需求规格说明书与原型/design/index.html",
+      "bytes": 2153,
+      "sha256": "59bde782d646e3146c45bf95ec76cc15bebdbcaa3c75ba8cca5b5beef356ea74"
+    },
+    {
+      "path": "02_需求规格说明书与原型/design/README.md",
+      "bytes": 459,
+      "sha256": "3069c357513f4cce84e9b1bb6109f182365e9a47a254ab8ba5cf4fd76c3a23a6"
+    },
+    {
+      "path": "02_需求规格说明书与原型/PRD.md",
+      "bytes": 6446,
+      "sha256": "81ce70581d95ae49ce058de5d7666e4b70b1661f43329e8c0529b9c6c080b287"
+    },
+    {
+      "path": "02_需求规格说明书与原型/prototype.html",
+      "bytes": 2164,
+      "sha256": "3189c390f1099997e0cba6eec89086f8d61a39a7cf7e056ea072b6587d571edd"
+    },
+    {
+      "path": "03_AI能力筑基与工具链报告/AI工具链配置报告.md",
+      "bytes": 2512,
+      "sha256": "3670f56de1eb28a430a39b190fd9223f15110e5638d5eb6736b4e13e430c35ee"
+    },
+    {
+      "path": "03_AI能力筑基与工具链报告/AI能力筑基实操报告.md",
+      "bytes": 2990,
+      "sha256": "3e2db85174cc408bf889a069a6bd7c43f77b055a44fa076b95f64778746dfd99"
+    },
+    {
+      "path": "04_架构设计文档/ARCHITECTURE.md",
+      "bytes": 3747,
+      "sha256": "3e7ccae80e35f31186d0e4b5e78145eda8fb43dd79a36b05287bd7abb92f75c1"
+    },
+    {
+      "path": "04_架构设计文档/DATA_MODEL.md",
+      "bytes": 5842,
+      "sha256": "aaeaae971105bcdc1b98b3e9c60f50cf74ba51c3636fb2f344a46eff2f62e449"
+    },
+    {
+      "path": "04_架构设计文档/DESIGN.md",
+      "bytes": 1953,
+      "sha256": "915c7307b4ebc1544113654cd991ee426d6ecba5a32c5edfa52e5b8faa368d90"
+    },
+    {
+      "path": "04_架构设计文档/init.sql",
+      "bytes": 10411,
+      "sha256": "b2e21cd3121e9c0baebc6c984a668a511831513e3b91f126fae82392faadde3a"
+    },
+    {
+      "path": "04_架构设计文档/TECH_STACK.md",
+      "bytes": 1817,
+      "sha256": "c69a2eadabb34375751b2f88b48ab733ce445ab245e726803316a8943f9f8b22"
+    },
+    {
+      "path": "04_架构设计文档/系统功能结构图.png",
+      "bytes": 75944,
+      "sha256": "281918ff5ff8e7defb2f43dc32efa8da6d0418f4ba877e487eb0921b4f83b2df"
+    },
+    {
+      "path": "04_架构设计文档/系统功能结构图.svg",
+      "bytes": 4105,
+      "sha256": "33b3f30e1181c306578478f2d43ce743e26b3bbf68829e97eae54bc0e7e5c94d"
+    },
+    {
+      "path": "04_架构设计文档/系统架构图.png",
+      "bytes": 94556,
+      "sha256": "caac827a3605e4b4cdfc0047945539e85aaad42e33e1f157aee1343000577fd1"
+    },
+    {
+      "path": "04_架构设计文档/系统架构图.svg",
+      "bytes": 1900,
+      "sha256": "0b15810a85d1b1ba76931256306b30d78a2ae598cc838d2522188f01f58b5129"
+    },
+    {
+      "path": "05_开发日志与AI使用日志/AI使用日志.md",
+      "bytes": 2783,
+      "sha256": "cf001180ccf27cf7d6547f5e2acb8762681e2362d035ababa30db5cd2af9ccc6"
+    },
+    {
+      "path": "05_开发日志与AI使用日志/PROGRESS.md",
+      "bytes": 2732,
+      "sha256": "251a97307f6dc05342d8d504f59b30cb3d817f3d3e3964fd4dbbb17ae410894d"
+    },
+    {
+      "path": "05_开发日志与AI使用日志/证据索引.md",
+      "bytes": 3991,
+      "sha256": "afe2f4c8ac9de651af34000ffd92213c6eae3eeccebcb58691e704dfb34599c3"
+    },
+    {
+      "path": "06_个人Skills清单/Skills清单.md",
+      "bytes": 2236,
+      "sha256": "2a1e8c9a7f2288633e3c9eccdcaeb4d141ff8b922204b258a9fea8883f8fdb2a"
+    },
+    {
+      "path": "07_可运行App/AIDesk源码快照.zip",
+      "bytes": 2073609,
+      "sha256": "9123cfe813d408af68d8700f31f7a2e808b184403ec43454643f4f0116a16c55"
+    },
+    {
+      "path": "07_可运行App/README.md",
+      "bytes": 1848,
+      "sha256": "7b2ca0e88ab5a10ad7d8903bb1d126c98413a9790f1e7cb9a3409e34d4df7017"
+    },
+    {
+      "path": "07_可运行App/Web构建_dist/apple-touch-icon.png",
+      "bytes": 7210,
+      "sha256": "755177e0df1a621776ac89e95ef466702fdf28d1f68b6bdaaf981b9f2e955547"
+    },
+    {
+      "path": "07_可运行App/Web构建_dist/assets/index-CpkzEM4t.js",
+      "bytes": 281105,
+      "sha256": "54d191a7dce6245e5b75ee83859ec2f921f99d6bbb21a2715a655bc007edfd52"
+    },
+    {
+      "path": "07_可运行App/Web构建_dist/assets/index-WphIfUmo.css",
+      "bytes": 20724,
+      "sha256": "e840c202118c45771403ac0e817e2e36c6ce03366c27c3bc248bd8c2f1425a1e"
+    },
+    {
+      "path": "07_可运行App/Web构建_dist/favicon.ico",
+      "bytes": 3939,
+      "sha256": "591eb13166bf3653f373e6d9afae5ab81d79404a135b9f6ac97b675ec63d04b5"
+    },
+    {
+      "path": "07_可运行App/Web构建_dist/favicon.svg",
+      "bytes": 931,
+      "sha256": "d26e0aa250d82ac5df83bcbb91a347474e306a943955e84d472a0e3ac4ccdf84"
+    },
+    {
+      "path": "07_可运行App/Web构建_dist/icon-192.png",
+      "bytes": 7790,
+      "sha256": "bd860fdd02e1ecee6b3c584a859282d4bc11d606f8e3ea075e7d24fe073abf4d"
+    },
+    {
+      "path": "07_可运行App/Web构建_dist/icon-512.png",
+      "bytes": 20753,
+      "sha256": "8cfd85675b4e71bc13015f779df8581653993731e6f40750e44843129ea7d421"
+    },
+    {
+      "path": "07_可运行App/Web构建_dist/index.html",
+      "bytes": 589,
+      "sha256": "3409effd27b807e55aa175834ec269ccd12acf91363d02a9209fdee557f7601a"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/dist/apple-touch-icon.png",
+      "bytes": 7210,
+      "sha256": "755177e0df1a621776ac89e95ef466702fdf28d1f68b6bdaaf981b9f2e955547"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/dist/assets/index-CpkzEM4t.js",
+      "bytes": 281105,
+      "sha256": "54d191a7dce6245e5b75ee83859ec2f921f99d6bbb21a2715a655bc007edfd52"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/dist/assets/index-WphIfUmo.css",
+      "bytes": 20724,
+      "sha256": "e840c202118c45771403ac0e817e2e36c6ce03366c27c3bc248bd8c2f1425a1e"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/dist/favicon.ico",
+      "bytes": 3939,
+      "sha256": "591eb13166bf3653f373e6d9afae5ab81d79404a135b9f6ac97b675ec63d04b5"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/dist/favicon.svg",
+      "bytes": 931,
+      "sha256": "d26e0aa250d82ac5df83bcbb91a347474e306a943955e84d472a0e3ac4ccdf84"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/dist/icon-192.png",
+      "bytes": 7790,
+      "sha256": "bd860fdd02e1ecee6b3c584a859282d4bc11d606f8e3ea075e7d24fe073abf4d"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/dist/icon-512.png",
+      "bytes": 20753,
+      "sha256": "8cfd85675b4e71bc13015f779df8581653993731e6f40750e44843129ea7d421"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/dist/index.html",
+      "bytes": 589,
+      "sha256": "3409effd27b807e55aa175834ec269ccd12acf91363d02a9209fdee557f7601a"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/dist-server/index.mjs",
+      "bytes": 176448,
+      "sha256": "aec44acf79cff4f7f5fd660fedb6026fbe5b97292dcf7dd55eabfa85ebf110aa"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/migrations/0001_initial.sql",
+      "bytes": 1904,
+      "sha256": "61724bac2127d9de7b1b5dd075c48abbba2324fbdf136669b36d9b3a6cecf630"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/migrations/0002_limits.sql",
+      "bytes": 266,
+      "sha256": "67eff207a2d31ba3e4c72f43ba57f8ee84ca3d1ea3e84bf89f9f141a9367fb53"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/migrations/0003_generations.sql",
+      "bytes": 509,
+      "sha256": "8f5ad4d37f82dc47e2a03694dd49012aad0d52c8f4ef280b9c101566763f18ba"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/migrations/0004_devices.sql",
+      "bytes": 870,
+      "sha256": "d2afe2a8eb024730e5e9a8682cac6e31a4bacb3848e5a05643d02990f18b13a0"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/migrations/0005_voice.sql",
+      "bytes": 900,
+      "sha256": "8d0ca815fefdbb9a106cbfe22efc6822aef44e351750a2cc3a7b58350f891c54"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/migrations/0006_wake.sql",
+      "bytes": 551,
+      "sha256": "259288535351318c94c2aeda226f8fa8c01022e09611cd92d5fc6ba80a58d0cc"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/migrations/0007_agent_events.sql",
+      "bytes": 1202,
+      "sha256": "73d4c5734e96a2ba3a9b176b05098a47ecaddd49158005cfdf4ccee592aed4b7"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/migrations/0008_agent_event_options.sql",
+      "bytes": 399,
+      "sha256": "306db3ee1201c42d61c30498d74879ab50c5f30f7be494135f13e714b7e768ae"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/migrations/0009_agent_watch.sql",
+      "bytes": 1091,
+      "sha256": "0dca2997a496ac72b6dfc260df1ecdcbe1605950700d6cd8229410e4bf509177"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/migrations/0009_meetings.sql",
+      "bytes": 1280,
+      "sha256": "22fd465e3f6c922938f71df97b70168404cf51cf4e7886c87986b3aad00a68e0"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/migrations/0010_approval_decisions.sql",
+      "bytes": 738,
+      "sha256": "1d7b5739739f5520c516a0262984d9b97a88a09a1c703cc01491fe84c744316f"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/@hono/node-server/dist/conninfo.cjs",
+      "bytes": 599,
+      "sha256": "9b5088b89f4729e7bd4c841b5a35f59ddd5bc9666762a3c6d41a3c9d6a143cd6"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/@hono/node-server/dist/conninfo.d.cts",
+      "bytes": 230,
+      "sha256": "e156ecd958ee4a1be3e97e523e262255b14fe7fd346cf5cfb0cb0a5c1d9f261f"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/@hono/node-server/dist/conninfo.d.mts",
+      "bytes": 230,
+      "sha256": "e156ecd958ee4a1be3e97e523e262255b14fe7fd346cf5cfb0cb0a5c1d9f261f"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/@hono/node-server/dist/conninfo.mjs",
+      "bytes": 514,
+      "sha256": "842ac1a99e65b837aefefd407951a632a97c3b5a50e1f22882e7b93976fb286d"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/@hono/node-server/dist/constants-BLSFu_RU.mjs",
+      "bytes": 133,
+      "sha256": "34b08b4910a07fb86fa6a03c21c7c56f1bd45cdf412496c5cf84074f63b32977"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/@hono/node-server/dist/constants-BXAKTxRC.cjs",
+      "bytes": 229,
+      "sha256": "1c4c147f7fc140bfc476fe86445af7e6df6bc41e1564a02ade581bd2c738f4f0"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/@hono/node-server/dist/early-hints.cjs",
+      "bytes": 1200,
+      "sha256": "ee1afd85b0d0d0cd27be3973a61500ec440b4ec2a592a8b7443338e4aefb49d0"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/@hono/node-server/dist/early-hints.d.cts",
+      "bytes": 591,
+      "sha256": "21dea23df2253b3bb2a49a5125560eb74b49c283a8768a4d623a45f59743033b"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/@hono/node-server/dist/early-hints.d.mts",
+      "bytes": 591,
+      "sha256": "21dea23df2253b3bb2a49a5125560eb74b49c283a8768a4d623a45f59743033b"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/@hono/node-server/dist/early-hints.mjs",
+      "bytes": 1116,
+      "sha256": "c317c2e08ce197407a19dd9cb91e41e9cac74d647148e45c4052a15e1fd5ac7a"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/@hono/node-server/dist/index.cjs",
+      "bytes": 46103,
+      "sha256": "ea92ef9148b4ccd695db8c20fcde27ad69f6f422f84dba0704c9d4f1e6ef016f"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/@hono/node-server/dist/index.d.cts",
+      "bytes": 4192,
+      "sha256": "2627b747984791606301549860fac3c1d0e4d6856c4cfaecf5773039e0cd2d51"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/@hono/node-server/dist/index.d.mts",
+      "bytes": 4192,
+      "sha256": "34b7ca9e007d7f740b33dc65da10ddbe25829dd7a82ca1935c7b47e50b744843"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/@hono/node-server/dist/index.mjs",
+      "bytes": 45789,
+      "sha256": "6fa5ab4d3cb10b5c1aad67b226b3d7b34dfe8367d3d45694d9ac03483a8add19"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/@hono/node-server/dist/serve-static.cjs",
+      "bytes": 5404,
+      "sha256": "ef68af740050e44971e8823d409b6e798319920b2d8130975972bf020a1610ac"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/@hono/node-server/dist/serve-static.d.cts",
+      "bytes": 802,
+      "sha256": "832bb2b1769485c8db7a3a3e1e7c3cb4fd7c6d11da15eb773927f1f4b4b1bc39"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/@hono/node-server/dist/serve-static.d.mts",
+      "bytes": 802,
+      "sha256": "832bb2b1769485c8db7a3a3e1e7c3cb4fd7c6d11da15eb773927f1f4b4b1bc39"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/@hono/node-server/dist/serve-static.mjs",
+      "bytes": 5195,
+      "sha256": "b1a3cfa4d814c1e2963faca8b36777d3e03f86ef0aeb73a080cbcb633f9e39d8"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/@hono/node-server/dist/utils/response.cjs",
+      "bytes": 349,
+      "sha256": "698a161eb18062211e566006bc00d8d1a0a08c85fd1563850d5e7cd928c2557f"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/@hono/node-server/dist/utils/response.d.cts",
+      "bytes": 127,
+      "sha256": "8541f49e23c7b14760d4b98c18907ffc3a5695214f57ea997fe6d1ebe558f281"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/@hono/node-server/dist/utils/response.d.mts",
+      "bytes": 127,
+      "sha256": "8541f49e23c7b14760d4b98c18907ffc3a5695214f57ea997fe6d1ebe558f281"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/@hono/node-server/dist/utils/response.mjs",
+      "bytes": 238,
+      "sha256": "bbf2e14f55e5c0225ec0829a19c183206a1f9c5605ff9dc941a09ebe11310b33"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/@hono/node-server/dist/utils/stream.cjs",
+      "bytes": 1784,
+      "sha256": "27b3e3a32ce29ee584b6b942cf88b27b7a2d0e275ed4269d6273df06e1e67f58"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/@hono/node-server/dist/utils/stream.d.cts",
+      "bytes": 230,
+      "sha256": "35b8258fa66ae4779d8393866c42923bbc985f9091e5605cbb5a5306686701e1"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/@hono/node-server/dist/utils/stream.d.mts",
+      "bytes": 230,
+      "sha256": "35b8258fa66ae4779d8393866c42923bbc985f9091e5605cbb5a5306686701e1"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/@hono/node-server/dist/utils/stream.mjs",
+      "bytes": 1665,
+      "sha256": "d7a223bc0ac51a20e6cf1efad157c9a435f7a0841a1c8e22360781ae3579bab8"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/@hono/node-server/LICENSE",
+      "bytes": 1101,
+      "sha256": "6895190430d809c4c57a7582ecc2f99acbc2ea39a5dfad20262a41d5b3e91733"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/@hono/node-server/package.json",
+      "bytes": 3166,
+      "sha256": "28b7c255c6c7ae6b994ceae9326211b6c6877c4746adb85b780b759ce1ceba41"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/@hono/node-server/README.md",
+      "bytes": 11860,
+      "sha256": "6aaa1cbe255c764197d3e796580aac7388f3fa7b0671161978965855a9a414c1"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/_virtual/_rolldown/runtime.js",
+      "bytes": 355,
+      "sha256": "1b10431e13b4eb349c329aba7d2beb6e6c224de569eac52966731c8239a941c9"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/adapter/aws-lambda/conninfo.js",
+      "bytes": 1361,
+      "sha256": "0c137b2cf22fa44c4063d2eb95c94c3561cbf707c955261690f68bf522a15586"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/adapter/aws-lambda/handler.js",
+      "bytes": 12770,
+      "sha256": "360103ad2e2e4257904fe59616ecdb88cdb5c3adeaadde54ecae828ea63c93d8"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/adapter/aws-lambda/index.js",
+      "bytes": 200,
+      "sha256": "e1d1c2a824b7191d0d8e1f3625fb583adc6b2935f29bdf853b4f1b09c6a057fa"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/adapter/aws-lambda/types.js",
+      "bytes": 11,
+      "sha256": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/adapter/bun/conninfo.js",
+      "bytes": 777,
+      "sha256": "d19de2ed9ca8fb8b9e11f40a1655ed5b3768d78b4a4bb1c9bf12985ffb9626dd"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/adapter/bun/index.js",
+      "bytes": 403,
+      "sha256": "4f6d9ed5349f76100f045cb5d25dea41a210337203a3d4c7cfc7c30b80d8f423"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/adapter/bun/serve-static.js",
+      "bytes": 788,
+      "sha256": "e882b1f20cf2305efba8b6cc5b34c5f315ae2497c91b86d1d971700a4633dbef"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/adapter/bun/server.js",
+      "bytes": 367,
+      "sha256": "be1336601bc44ab1e078922b7bbeda5afffa59eac9ab557df6d71e87e5a338f6"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/adapter/bun/ssg.js",
+      "bytes": 812,
+      "sha256": "29e11e2fe0315396529dbdb7ed2c89a4610ff78d744232723869374021778602"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/adapter/bun/websocket.js",
+      "bytes": 2192,
+      "sha256": "8890a422851496d78294a7423740c8ea6883e52746fc57ac929f85099282e019"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/adapter/cloudflare-pages/conninfo.js",
+      "bytes": 757,
+      "sha256": "2a9f104b2cfa0d7677be65eebb2925ed259428a9df119dc8f534992908cc8101"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/adapter/cloudflare-pages/handler.js",
+      "bytes": 1995,
+      "sha256": "b211322a7e85b550bd0dd59af5bb8d5294ca5e62d201434d323c8ac6f221a859"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/adapter/cloudflare-pages/index.js",
+      "bytes": 178,
+      "sha256": "c309ccebac9abd93fed5a1642b242fa8e5d19a2e4323755e65dbe8e34eaf26c8"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/adapter/cloudflare-workers/conninfo.js",
+      "bytes": 314,
+      "sha256": "c7e67bb67c41de45d31abf2f8a622b32998d0cea2eb912a3a3d00f836c2b6235"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/adapter/cloudflare-workers/index.js",
+      "bytes": 227,
+      "sha256": "f1e0016d690ba56aa959dce57f4f1d48501169ad30be627cf5709d792be196c3"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/adapter/cloudflare-workers/serve-static-module.js",
+      "bytes": 223,
+      "sha256": "24744623f334a6d334b42198565f8ba159747c84f26a7e87dddb208048359d6e"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/adapter/cloudflare-workers/serve-static.js",
+      "bytes": 1061,
+      "sha256": "16840c5afa5910d02db9cba9aa961b22841f5566067e6f15b081789e99dd10ed"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/adapter/cloudflare-workers/utils.js",
+      "bytes": 957,
+      "sha256": "7bfcd6f92b6d4c7972405196702a42a11032c224ebaa8ed4767e6c374b92de4d"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/adapter/cloudflare-workers/websocket.js",
+      "bytes": 1249,
+      "sha256": "3faa3551b567996ad79485cda7416a4c415b5974d7e87fe9371327dcf1ad81b1"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/adapter/deno/conninfo.js",
+      "bytes": 428,
+      "sha256": "aac68e0b4c7d6df2a03253ae37bfd4ab285bf13138b9a94191ab927a041d6474"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/adapter/deno/deno.d.js",
+      "bytes": 11,
+      "sha256": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/adapter/deno/index.js",
+      "bytes": 285,
+      "sha256": "e4b98634dfa5da3f65f6a143d5b345c81a2456f875129d17df33af14f0b0b192"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/adapter/deno/serve-static.js",
+      "bytes": 889,
+      "sha256": "79c05d31ca942a4c785d7067305128f29cc61623253e0724dc11aff02dd050af"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/adapter/deno/ssg.js",
+      "bytes": 1000,
+      "sha256": "053130c5a60adbad1adb9c4f8777a44b57433129a512dff42c2a2ca302414989"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/adapter/deno/websocket.js",
+      "bytes": 1197,
+      "sha256": "857899560c4e607c49b12f50990a55de008f17d64de37494fc49fb0c436033e0"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/adapter/lambda-edge/conninfo.js",
+      "bytes": 303,
+      "sha256": "99550f645f2b17f7a6f2434ac90c3897c113515e5f584eb6b4480b491e51c524"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/adapter/lambda-edge/handler.js",
+      "bytes": 4024,
+      "sha256": "e39fd32030ed552e721088056473a0dd26c9065a24f2922d745082c935f9210b"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/adapter/lambda-edge/index.js",
+      "bytes": 116,
+      "sha256": "10b12694337df921ed3fbeb6a12e1e23434e05a02fab1a4a02bd9257aa7de621"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/adapter/netlify/conninfo.js",
+      "bytes": 670,
+      "sha256": "1adcd56f58a710e30c3f41a5eef2b10a7bcbf944b82daa2b2eb3851da1668f5d"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/adapter/netlify/handler.js",
+      "bytes": 286,
+      "sha256": "ccf650f15a8ef0e27b729b7532519917ce876e74fec3ebe21e05fd0275291463"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/adapter/netlify/index.js",
+      "bytes": 116,
+      "sha256": "10b12694337df921ed3fbeb6a12e1e23434e05a02fab1a4a02bd9257aa7de621"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/adapter/netlify/mod.js",
+      "bytes": 116,
+      "sha256": "10b12694337df921ed3fbeb6a12e1e23434e05a02fab1a4a02bd9257aa7de621"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/adapter/service-worker/handler.js",
+      "bytes": 532,
+      "sha256": "be9dbb9de6695f24e86f398838ff13bf346a33dbbb661894a01c003179a1af2c"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/adapter/service-worker/index.js",
+      "bytes": 675,
+      "sha256": "06089047e5c1a177bfb99d3489a0d655ecf2283cc87113afb3a0fb607c8f323d"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/adapter/service-worker/types.js",
+      "bytes": 11,
+      "sha256": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/adapter/vercel/conninfo.js",
+      "bytes": 271,
+      "sha256": "2569b63796ec177663578928afa8569b29568218dea05d7c89e7e961e82033df"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/adapter/vercel/handler.js",
+      "bytes": 246,
+      "sha256": "8afcbbed51445912a601335fa57b7a420a5768a941053d46682d13c3c39b8b82"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/adapter/vercel/index.js",
+      "bytes": 116,
+      "sha256": "10b12694337df921ed3fbeb6a12e1e23434e05a02fab1a4a02bd9257aa7de621"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/_virtual/_rolldown/runtime.js",
+      "bytes": 1328,
+      "sha256": "3366cfc673858aaea1300f206dfa5d457d0d7caf0bc5553e09f8c675e39bfe48"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/adapter/aws-lambda/conninfo.js",
+      "bytes": 1445,
+      "sha256": "7b2be16b492e4e6d6e223a30f4b320fe09069b7fcd091c95ec85f141f49837dd"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/adapter/aws-lambda/handler.js",
+      "bytes": 13171,
+      "sha256": "ad56599b6ed4036f7e58f69db82fa67816e8c7cf385b8cdfa8879b89f09362b8"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/adapter/aws-lambda/index.js",
+      "bytes": 514,
+      "sha256": "671ef421cfe996b060ddd014a2a3096e098a48ce405ecb998f0e7448ce07e671"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/adapter/aws-lambda/types.js",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/adapter/bun/conninfo.js",
+      "bytes": 903,
+      "sha256": "710edd1a1684ae9f54b1c8c97dc3868a7f3b270f062abf0c01f3403592ad8d32"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/adapter/bun/index.js",
+      "bytes": 917,
+      "sha256": "39c0ef1c4c93e4762ccb0723cdf6cc8f829bddf929a6831b95c56df5bbeefe2a"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/adapter/bun/serve-static.js",
+      "bytes": 971,
+      "sha256": "4c12e75686a7bfeafd62881fe0f876db16dc6acd97c93b7fbbbf6f6ba247e28f"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/adapter/bun/server.js",
+      "bytes": 452,
+      "sha256": "326ebcb9e0e64ef5331ffe2a3bd2e8b9ddf3dc59649d60faa5cbdc1a7a91408c"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/adapter/bun/ssg.js",
+      "bytes": 950,
+      "sha256": "68178877d0061431d5a73c8ea43aef883270021bb472548088081680b2430682"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/adapter/bun/websocket.js",
+      "bytes": 2468,
+      "sha256": "a5860637d9afacfe523d8199e83c93771e511b58a4ac0d2438e927084883c1ae"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/adapter/cloudflare-pages/conninfo.js",
+      "bytes": 841,
+      "sha256": "ad1cfe271ae01d3dded8de8e4dc6944e92ea62d7e805370c98e10f67133d2621"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/adapter/cloudflare-pages/handler.js",
+      "bytes": 2181,
+      "sha256": "8f169819d6534774c96475e495b3ebaafc67d3139fe1f426ce360aee3368f8d9"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/adapter/cloudflare-pages/index.js",
+      "bytes": 528,
+      "sha256": "a9f0837e9e0e206563c0832f834682e809332507bfd66589c0d436b49dd46b43"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/adapter/cloudflare-workers/conninfo.js",
+      "bytes": 398,
+      "sha256": "21f12476adc20b1dc98897b0b3f42daa32445979c2f3fa92b79adaea5deef96a"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/adapter/cloudflare-workers/index.js",
+      "bytes": 590,
+      "sha256": "ff8896f199241f8cf5f85d884963019cd6677349c025d20ce5ac889bb898e41d"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/adapter/cloudflare-workers/serve-static-module.js",
+      "bytes": 381,
+      "sha256": "1333f06eb972b0e4a40e876019eeef87b7da52a89b6b3ce2b32a87a569e62752"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/adapter/cloudflare-workers/serve-static.js",
+      "bytes": 1252,
+      "sha256": "b2a6f07bd23169697703f3931b3555ee3d291a21e9f94a0f15a68fd5223d84d1"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/adapter/cloudflare-workers/utils.js",
+      "bytes": 1051,
+      "sha256": "652898d3b8929267f34636e3d6ac3cefdcd91ca5cb57f3a42ca5feb5a45a1528"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/adapter/cloudflare-workers/websocket.js",
+      "bytes": 1399,
+      "sha256": "ffbfcfc9548d0b7a85961e690d580fd350dcfd8c0918cf9befa49a91b100697a"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/adapter/deno/conninfo.js",
+      "bytes": 512,
+      "sha256": "e6210de2303f997012c29b03875cd609e40fd3a18e3c16b0cc5df45e0d9c5ca9"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/adapter/deno/deno.d.js",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/adapter/deno/index.js",
+      "bytes": 665,
+      "sha256": "46826068deef9415cdbf04a391fe6efdd2e1925008a9e7f591984801ac895555"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/adapter/deno/serve-static.js",
+      "bytes": 1039,
+      "sha256": "e4d03c4bfacf0aa601e48c18f0406273c2d8983f83ac3abb5c7a2e0a73d52949"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/adapter/deno/ssg.js",
+      "bytes": 1139,
+      "sha256": "7e3c631847dc649fa7f36bc8b9a18f32874be5f29d24670c288706c04d36e2a6"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/adapter/deno/websocket.js",
+      "bytes": 1347,
+      "sha256": "e02407431c0e872d51b2e502f8ba1467ae53ba5085c2f3f432507e05e0738732"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/adapter/lambda-edge/conninfo.js",
+      "bytes": 387,
+      "sha256": "534451c852d63406d60b639fbb558234b0acf2c6785e5e3b8a1e7417e4f22f47"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/adapter/lambda-edge/handler.js",
+      "bytes": 4339,
+      "sha256": "9601cce6a663d8ea1b95f458821157623a85d5b807e7cf27bc9e24963e756053"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/adapter/lambda-edge/index.js",
+      "bytes": 346,
+      "sha256": "56ae555d70221ccd06987141c3138dc17f15133df535eb1a63936c17f7bd9499"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/adapter/netlify/conninfo.js",
+      "bytes": 754,
+      "sha256": "6d829b0f06d25f6aa06ac257c4738a513cfa9a49196aabc54b7f4c8a8ce42a70"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/adapter/netlify/handler.js",
+      "bytes": 365,
+      "sha256": "29cb2bb5ea672afab686bbc16759e612d1366fb6590eee526e9cf59678cabf33"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/adapter/netlify/index.js",
+      "bytes": 330,
+      "sha256": "9d8cc4afaf814066c48592830adfec12cd97df9673cbf4e50bce3a6e23263b39"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/adapter/netlify/mod.js",
+      "bytes": 330,
+      "sha256": "9d8cc4afaf814066c48592830adfec12cd97df9673cbf4e50bce3a6e23263b39"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/adapter/service-worker/handler.js",
+      "bytes": 611,
+      "sha256": "cfe00ab4fc4681d0d77c292f904f2ff43f2affab258bf0e43128b47282c89bf5"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/adapter/service-worker/index.js",
+      "bytes": 880,
+      "sha256": "ba04425819ce3e781ee3aa826ab9cd38d73b720378d49a57aa467506df57ba87"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/adapter/service-worker/types.js",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/adapter/vercel/conninfo.js",
+      "bytes": 355,
+      "sha256": "97003c94e3bc090e466baee1d586f2f6f5b583f1f8d804f94d5fa427a60b0ec7"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/adapter/vercel/handler.js",
+      "bytes": 325,
+      "sha256": "4376ddf494855629b538f891872e825c5bac658e743031d31aff31531a2b295f"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/adapter/vercel/index.js",
+      "bytes": 326,
+      "sha256": "8a96b4bc5a67b3dc308bab423995e8dacfbe9b85c5ceb8f0d79a533dd64a456d"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/client/client.js",
+      "bytes": 5271,
+      "sha256": "8a21d031f995f945fa6ed1dca092579effdb02960fbeeaad1d73dcfb07ff388e"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/client/fetch-result-please.js",
+      "bytes": 2035,
+      "sha256": "420fe0bf838df7c159e5f2fade0956302285e450bb559adc53c938bf925876c6"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/client/index.js",
+      "bytes": 432,
+      "sha256": "9d2446fb577e28ac683bcbdfc606da9b4797e728ee40f31c90d631b6fbc024b8"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/client/types.js",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/client/utils.js",
+      "bytes": 2510,
+      "sha256": "27c3adcc8193271305f14137bed41eff25833c1af11161d2161c64900bf16912"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/compose.js",
+      "bytes": 1767,
+      "sha256": "6b7de513fab3ad04c44232ec16b1882a4677c6d2b3b1d4a3eef029141019cf03"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/context.js",
+      "bytes": 10266,
+      "sha256": "63067a35cfa33c1dc23bace6658e533f4cd3b840cb72bf701145a931210814e4"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/helper/accepts/accepts.js",
+      "bytes": 1758,
+      "sha256": "f493df00cf4a438147a2c3d8527adf6c7d6026d7858b58838bea442c655c1df7"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/helper/accepts/index.js",
+      "bytes": 195,
+      "sha256": "1ee7e4ab8ecc9827bbf46678148b462d14ac87d7926703a4489afc29c4dd9068"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/helper/adapter/index.js",
+      "bytes": 1288,
+      "sha256": "bd6a09d4b1a1909c097f5e12796bb256a2c5fdfd019bbff49641372423fa9264"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/helper/conninfo/index.js",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/helper/conninfo/types.js",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/helper/cookie/index.js",
+      "bytes": 2907,
+      "sha256": "f84fce7e4d7b2bba8c612f89debffae84c69e86bd0675582fa659adb5bdf38bd"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/helper/css/common.js",
+      "bytes": 6907,
+      "sha256": "0d1a070abc329a3c34b11778e78df54bc5981a1f99ff7dfb30984a20edc128c9"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/helper/css/index.js",
+      "bytes": 5508,
+      "sha256": "cf94405ae6a26d901561d0f9750d5fc88543029a4e47b880dcac9279f2f6e919"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/helper/dev/index.js",
+      "bytes": 1918,
+      "sha256": "d5401a37a4a208db45ac6ee359eaba60dd2d406e93ae5a3dcfedaea0e8f341ac"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/helper/factory/index.js",
+      "bytes": 991,
+      "sha256": "15671a0d7a777f1557a70448e86e072b209a850b1837d29ffe905375fb2eb696"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/helper/html/index.js",
+      "bytes": 1532,
+      "sha256": "6bdcf4eb8facee9ba555599c5afe9529a87e451e2ea67b46d7e605c55c6cff92"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/helper/proxy/index.js",
+      "bytes": 4457,
+      "sha256": "dde5fea8b4a071d48ad2025ffcfbe8f95afdf575a680beec53c0d50c78b0293a"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/helper/route/index.js",
+      "bytes": 4240,
+      "sha256": "a7fdad505bdab085a701473535902c576c6b8a931ea27103363ecdcd02dd09eb"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/helper/ssg/index.js",
+      "bytes": 1326,
+      "sha256": "f056e5c4d197627107f7d6b4fdb2c0039a80176f14a88f616725640500bdd7b5"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/helper/ssg/middleware.js",
+      "bytes": 1786,
+      "sha256": "54197d8c14209d83996ab8bea4144093269563aacd9fb8a180de75bec9ab07a5"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/helper/ssg/plugins.js",
+      "bytes": 2013,
+      "sha256": "216936ed241da78541a961b8c8afa0ee859d4b1f94c56b0a57e0d6a01a24356f"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/helper/ssg/ssg.js",
+      "bytes": 9276,
+      "sha256": "45fca2c96d8b7fa6485ee464feff377e1853b582e828579a61dbe8118760f0ff"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/helper/ssg/utils.js",
+      "bytes": 3150,
+      "sha256": "4416135d1b86f43a1a2b24aaad77596d920042733dcbad1e0956218e3dc4729f"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/helper/streaming/index.js",
+      "bytes": 507,
+      "sha256": "5688ff3f04cc6f9debd7d850321b62d8ed934f7425dce88bc9a7017747011068"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/helper/streaming/sse.js",
+      "bytes": 2146,
+      "sha256": "d24a317afade834a438b0afc19ac83000c42b53097a064de69253ef7e80f1315"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/helper/streaming/stream.js",
+      "bytes": 964,
+      "sha256": "f638020132fc7134ce91df9374fba15f92d198747c39eba9a12e01cec1bbf981"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/helper/streaming/text.js",
+      "bytes": 529,
+      "sha256": "db23fc9de6dfd41cafd2ccc97ed74b2408c54c699aa9bbbe523a59da4753822a"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/helper/streaming/utils.js",
+      "bytes": 538,
+      "sha256": "63bb52f65ad9c90def62e88691f2f7396e8c452057b9af9f5245b357eb0ff712"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/helper/testing/index.js",
+      "bytes": 520,
+      "sha256": "ba0fbd25154668ee7f4c60eb3584053314715ba5722f52ee99a0c883deb1d264"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/helper/websocket/index.js",
+      "bytes": 1451,
+      "sha256": "bc2cf374b6582a2f953ba45eaef556e3203317bd1b7823b9b8d694c7e7736d4c"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/hono-base.js",
+      "bytes": 10556,
+      "sha256": "6edd50326727cae429f3bdf3c326b9aae15ea6c5cc330c59131f341d52511218"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/hono.js",
+      "bytes": 1231,
+      "sha256": "51269a690024423b1a863e309556fd8ebd7bbb207a4898176cb8b473359602e6"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/http-exception.js",
+      "bytes": 1795,
+      "sha256": "ca45092f389c8013bde72772ed0a99610eb481e7a506bb077ec100e29763153f"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/index.js",
+      "bytes": 489,
+      "sha256": "f06fe5a53cda57589ade2a3c33bb666ceb60bcbef5796dd13e59a87f5a389082"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/jsx/base.js",
+      "bytes": 10526,
+      "sha256": "5e705e75cd95e75a1f8581a4665ea76256447f391bab136f114712b4550a0f25"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/jsx/children.js",
+      "bytes": 625,
+      "sha256": "4cfc28208003fb9ee8afdc54cfca23ce6350c8042cbd60de486e52b42ee5dd52"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/jsx/components.js",
+      "bytes": 6622,
+      "sha256": "744379356b9eaa03940ab4b2617adf29c19ca130e992b7414322ae235fa6ed4a"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/jsx/constants.js",
+      "bytes": 581,
+      "sha256": "41be2819634ecaa5aa1cff463d30234c67b80bf7dcf131b8e33dc9a9f8854c63"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/jsx/context.js",
+      "bytes": 6576,
+      "sha256": "4a4e13e5b846c9fd31925064a0e8a7de77375588fd2a66995657d89ea2daefe8"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/jsx/dom/client.js",
+      "bytes": 1736,
+      "sha256": "b918686583faa6cdaf3c034688222ac4896a8c6bd4828c832fd29578c9e3b81b"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/jsx/dom/components.js",
+      "bytes": 969,
+      "sha256": "de59b7a9873a7039ba4d77027cdd4d85687ea10251732f53eb521ef0ab117c39"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/jsx/dom/context.js",
+      "bytes": 1270,
+      "sha256": "c011e151bdbef945812c1dc422cc0d19511bbfedde4bcc3e7781a4911780e950"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/jsx/dom/css.js",
+      "bytes": 4723,
+      "sha256": "40616722dd3bd1848d3dfaebe4d49dd9e94191a66f73cc056eb2c1df9f72706c"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/jsx/dom/hooks/index.js",
+      "bytes": 2241,
+      "sha256": "e914c92bb0f2878a4d3b7d8ce3691ae029f1f43aac17293fc9da5d5809fe55fe"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/jsx/dom/index.js",
+      "bytes": 5766,
+      "sha256": "48ea58bdfbd25c08fb6be09ecb9cd86d796e841b8c56bc0e147909d6adfd92a0"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/jsx/dom/intrinsic-element/components.js",
+      "bytes": 9497,
+      "sha256": "3a630ca9692d9dbd023577efeeb95af8a92475acf9ebccc828fd14057d1e8b34"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/jsx/dom/jsx-dev-runtime.js",
+      "bytes": 621,
+      "sha256": "e95c452af2b71906dbb234d94b0baa3c363c2420cc12615ce1b39409680f1147"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/jsx/dom/jsx-runtime.js",
+      "bytes": 316,
+      "sha256": "a3c94d733bfe2cd309c7c855a5fb6820522aef6cc997bdc98a31acbed55347ba"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/jsx/dom/render.js",
+      "bytes": 18573,
+      "sha256": "54baf998f98d8cb8647212565936a2a16850ec133e84e1449267f18a88fa76f5"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/jsx/dom/server.js",
+      "bytes": 1814,
+      "sha256": "36699e371600c25d173675b4fe012d022c53c5b2b510ba117b7bf383c933ec16"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/jsx/dom/utils.js",
+      "bytes": 328,
+      "sha256": "61ed1e036ffd0fc25079a5e72008f1141418d176c487638c9f499e46e0c95439"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/jsx/hooks/index.js",
+      "bytes": 9694,
+      "sha256": "55d1f18bac493e382be32bc7850e82b37052e56adc6562670889d7e908fa47f7"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/jsx/index.js",
+      "bytes": 4373,
+      "sha256": "f30b5dbbd655ac595e34152055e62fca314127df94f1be634c3465abbd7947c3"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/jsx/intrinsic-element/common.js",
+      "bytes": 852,
+      "sha256": "202f18a802f0666ac30dc15a8268a093e77bd827588cc5da5b9f9bfd5388037b"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/jsx/intrinsic-element/components.js",
+      "bytes": 6329,
+      "sha256": "f05f80c16212861d49cbbdfeefbf4f18e8ad2eb72eeffb28491e9a8e5b1ef948"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/jsx/intrinsic-elements.js",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/jsx/jsx-dev-runtime.js",
+      "bytes": 582,
+      "sha256": "c23834114d274707bb55b09e872ce4c7d01c0b5bb856a4a67b3480a966501034"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/jsx/jsx-runtime.js",
+      "bytes": 1673,
+      "sha256": "8128e8126c309480f7c792ec702a898f0b8e6cd46464d8eba2b1a7c3e7b2e550"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/jsx/streaming.js",
+      "bytes": 5817,
+      "sha256": "f8e92a911c33481757b817646bd3ee612a8a591f567e6635793d95ff65726bcc"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/jsx/types.js",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/jsx/utils.js",
+      "bytes": 4475,
+      "sha256": "e9402d4f8b24804ff95c2c87c5fd3c53480f84174fcc6aa013b6d862eb2f30ea"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/middleware/basic-auth/index.js",
+      "bytes": 3970,
+      "sha256": "702c2dcde6e19510e8cafdf30f423b527051b1a0e4e35e27f09ab46f5dee7f21"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/middleware/bearer-auth/index.js",
+      "bytes": 6084,
+      "sha256": "f30156198765ebb03e4fadd902a171fe019e200f86298b5d002e5fb35376ee7b"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/middleware/body-limit/index.js",
+      "bytes": 2230,
+      "sha256": "b820897aab5220e6858b8a2503dcf2f4533af3fe792541e16924a436bd5cb843"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/middleware/cache/index.js",
+      "bytes": 8405,
+      "sha256": "a71a010de69a2f9e0b9b1ac3a8813d7e669bc71ccf8cf662839c1c5260a3b4a2"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/middleware/combine/index.js",
+      "bytes": 4954,
+      "sha256": "c1da542854c810a810441d7e3f4e0755137ac92e81b3cbba68f2dfa47c17b901"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/middleware/compress/index.js",
+      "bytes": 4137,
+      "sha256": "e4f0d054252a1104773a5b535252a6473f1cf289de849c8ac716106b2719e443"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/middleware/context-storage/index.js",
+      "bytes": 1285,
+      "sha256": "b2a482dc90ffb32c660c6218c8dedcbcf1998f994fc70e15c25cc002aaae7494"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/middleware/cors/index.js",
+      "bytes": 4284,
+      "sha256": "ccf6380b3a4f7332051ade949b64f482f3f83eec3db7ffdbd54b1cdcfbcf60be"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/middleware/csrf/index.js",
+      "bytes": 4453,
+      "sha256": "43e3f25b840ff304de74bcb1dd73219e638a3b63fa803fe01f489398625c3335"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/middleware/etag/digest.js",
+      "bytes": 2200,
+      "sha256": "619cde04e5708c8bcf83ac1ff7b0c63bc7646382765d0d63700179721de40a10"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/middleware/etag/index.js",
+      "bytes": 3112,
+      "sha256": "f68f9f4e86e7fc19969ede8d34edb1ee6967cf5120892feca4c14f2863eea2f5"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/middleware/ip-restriction/index.js",
+      "bytes": 6396,
+      "sha256": "0c76ddb35e042222978db886b7e9474b399c704ec86da79e4bab794ca5a2b9e4"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/middleware/jsx-renderer/index.js",
+      "bytes": 3660,
+      "sha256": "f8104a798d5d96677090243708459ee22ee9f823b560e09d87772679a1fbbf81"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/middleware/jwk/index.js",
+      "bytes": 175,
+      "sha256": "2e35076ffdec67df1d096f69fc64b1064038bc7cd48f4cd536936335465d3e06"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/middleware/jwk/jwk.js",
+      "bytes": 5724,
+      "sha256": "372e1fb892ad9eeda68b994ce0a3331b4996166bc649acf7b35795a707c97aad"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/middleware/jwt/index.js",
+      "bytes": 523,
+      "sha256": "c6c2664eb49dfa4450c8e26a037f1301826d64195ddd661dc60bf0184e8ebf11"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/middleware/jwt/jwt.js",
+      "bytes": 5105,
+      "sha256": "13feeca2ebd8cc97b86a547398b887febdc3134302c14d2160f5bf40c2843f54"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/middleware/language/index.js",
+      "bytes": 548,
+      "sha256": "8f7196acfd178bfb4abd47d754316d02f5d3114779fbda4916882ba76c2352b4"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/middleware/language/language.js",
+      "bytes": 6384,
+      "sha256": "b2f1bbdc466360486cac02e23d4cb60f3e44f01377d31febb9391285e0ce6141"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/middleware/logger/index.js",
+      "bytes": 1752,
+      "sha256": "8ea625dee42806f7fa01af46b9473a05bc60662d27152f5c0c82a50a55413b79"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/middleware/method-not-allowed/index.js",
+      "bytes": 3513,
+      "sha256": "5c23d03540b3b5049f9e061d9fd3035e08a4dfed13d248594a27dfd05d2cb1d4"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/middleware/method-override/index.js",
+      "bytes": 3541,
+      "sha256": "96b9968183163d8d42eba623a9fb2a8f155e116e7788ced2da352b748ee3f243"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/middleware/mount/index.js",
+      "bytes": 2312,
+      "sha256": "40c9ba31b7b5eae45c25bb5542984fabf8500daee4d463c7149c4825ba917721"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/middleware/powered-by/index.js",
+      "bytes": 680,
+      "sha256": "1b5d5da8dbcbfdfca0d074cdf25adf4a27492ccdb6b6f361a5726e4952be48d8"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/middleware/pretty-json/index.js",
+      "bytes": 1270,
+      "sha256": "e26b63fb1de53bcbbb9a07e7562d970ab3b933ed2f9343f0bc830bb19220ed2f"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/middleware/request-id/index.js",
+      "bytes": 222,
+      "sha256": "0500b2b1eba546f87e0989b1cbcae9b1882a327a434b21dab6f86afa773b0887"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/middleware/request-id/request-id.js",
+      "bytes": 1278,
+      "sha256": "d8eb0c432162017368e4c9f19b807d943b5acbaa3c71976cc72f0f86ebf68ce5"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/middleware/secure-headers/index.js",
+      "bytes": 322,
+      "sha256": "afcc26a41a89865d363fb1130a4bfc88497cacee3529e96be04092c221d730c9"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/middleware/secure-headers/permissions-policy.js",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/middleware/secure-headers/secure-headers.js",
+      "bytes": 8313,
+      "sha256": "9cfa38ec0e779ad29118f0060c822b0774b9e09efeafc6d8dd65703849dd29b7"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/middleware/serve-static/index.js",
+      "bytes": 2701,
+      "sha256": "8fc85110a32a6323934e2e346ed8d0d002c92b9e7f56606d46853da3770559b2"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/middleware/serve-static/path.js",
+      "bytes": 753,
+      "sha256": "10823cdafaeb6db3fe0c434d42e76ef617ec352d6bf9622996151ac691893633"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/middleware/timeout/index.js",
+      "bytes": 1375,
+      "sha256": "9ff46ef32ac8585eb5a10cef72e62953bf7ccf3aeacb328dd5d130340c862f14"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/middleware/timing/index.js",
+      "bytes": 446,
+      "sha256": "e7933db439c368944e52761308422ddc7c5f7ce91182c443df8fa6f85d27714b"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/middleware/timing/timing.js",
+      "bytes": 5734,
+      "sha256": "0d0c550d0e9fa79b1baf5e00a21bf832be41974d145b881989e6197ca52076a6"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/middleware/trailing-slash/index.js",
+      "bytes": 2977,
+      "sha256": "f4c786fceaaae5633df1f776813df91b1461bd2a0141ba9d727b61b0af27b62f"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/package.json",
+      "bytes": 25,
+      "sha256": "8005a3491db7d92f36ac66369861589f9c47123d3a7c71e643fc2c06168cd45a"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/preset/quick.js",
+      "bytes": 852,
+      "sha256": "00d55dbeabebf13471b5347ac33070a1ff3e60270d0d52c26a5155bac41f783c"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/preset/tiny.js",
+      "bytes": 520,
+      "sha256": "d255aa3488c46ea94a8a2f01632a4550c8bed9544ee3bfa86c8a3bfbd9d1e934"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/request/constants.js",
+      "bytes": 201,
+      "sha256": "13e8dbb342132b2008363ec8a511a9c714ad1e96bbc5375d761f56cc62650458"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/request.js",
+      "bytes": 9116,
+      "sha256": "0d89ae8acd1b228c1c1dd6081a57f417e8503c70a679cf4e29b7a678968e19cd"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/router/linear-router/index.js",
+      "bytes": 214,
+      "sha256": "5821ceefe1e9e146c3a346e41552aa6c7a65a2a03963574f38c87e140601162a"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/router/linear-router/router.js",
+      "bytes": 4147,
+      "sha256": "e6b2f30701a8037b936b6bc579bbd20306a30467fa749fa88f26ec47db5af803"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/router/pattern-router/index.js",
+      "bytes": 218,
+      "sha256": "9c753d37a7783993ca2d2797347fe9dd25f9cccea8127d5b79157d19842da54c"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/router/pattern-router/router.js",
+      "bytes": 1447,
+      "sha256": "3852bff6b6ff4dc672a9081b537b266afbfc622a0b85820b747931fc5d10b99b"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/router/reg-exp-router/index.js",
+      "bytes": 588,
+      "sha256": "d392e273292d926647cbd50800e366d541a56a37a6715ad458ec12e0887caa92"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/router/reg-exp-router/matcher.js",
+      "bytes": 695,
+      "sha256": "c77785aa1ab2ab6f71ed56c7e6bf44ab641ecded66c93cc91a1afd9407873446"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/router/reg-exp-router/node.js",
+      "bytes": 3444,
+      "sha256": "4d5b3173787ee45a7c9a15688419fba2385cc89e825b5de322943ace416a94bc"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/router/reg-exp-router/prepared-router.js",
+      "bytes": 3828,
+      "sha256": "ea466566ad9a3b90cd07357ded4eef0e95da90136a350d46ef4530a206b0bc39"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/router/reg-exp-router/router.js",
+      "bytes": 4549,
+      "sha256": "66033c63853f62408e86cadb204689b5f67b4c95c93cbef1b935ed98d8210013"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/router/reg-exp-router/trie.js",
+      "bytes": 2052,
+      "sha256": "c6b21284fb3e39c62c1c4b605d200fbb0281beedd36f88fe3489301365391ea3"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/router/smart-router/index.js",
+      "bytes": 210,
+      "sha256": "d4fca8c18fb980fc945e120d9de6ad94d84d6df484fb4f1fd8223cc130d7b9f3"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/router/smart-router/router.js",
+      "bytes": 1413,
+      "sha256": "947b5e3f07929e3c3b301937d2a32c4b2b8f58bf38f949b973de3a11abaec1ee"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/router/trie-router/index.js",
+      "bytes": 206,
+      "sha256": "5271f43cefbb8fd39e43da6b9efe8f2882e1d3f99084d42644ffbfbcdb006023"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/router/trie-router/node.js",
+      "bytes": 4804,
+      "sha256": "e6c7bbd0c737addfe2e1732078f00d3c2a49380a6e5571ffe13f5a7ba7eba09c"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/router/trie-router/router.js",
+      "bytes": 610,
+      "sha256": "8d1c373203b1578b9954c85aefcc1e103260651387b0dc4b173978816d09c418"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/router/utils.js",
+      "bytes": 213,
+      "sha256": "8a78c9498ba5c6fdf97e74d7b172873842f23cf55e757062b015f4996d971be8"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/router.js",
+      "bytes": 1101,
+      "sha256": "e6e4b22f03bec855c966f4c75cafeca176d471ceeb1779d8ed56eedcae45c1f9"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/types.js",
+      "bytes": 181,
+      "sha256": "ba13154c52e15dac51ed6bdae8ec778f57f33793410d5d36b895e9d9c0a2a7de"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/utils/accept.js",
+      "bytes": 5179,
+      "sha256": "2b7f5fd4e5eadc22bde3bfd91ee96d9ef59f387121a2b53db61c010f1c1311a9"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/utils/basic-auth.js",
+      "bytes": 720,
+      "sha256": "b6a4023c9a0786f8362155dfa3e90cad3f1ad9d665d73d723bcf99836a91217f"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/utils/body.js",
+      "bytes": 3830,
+      "sha256": "a4c6ba89102fbd8de046467008fce23b3c04d60abb67be8f2b9352f7c459fff0"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/utils/buffer.js",
+      "bytes": 2171,
+      "sha256": "3d0d8ba9b6829c4a95ab24c7e3096a3d72f7ef26f89ba43ea23b36da3e0fc1d8"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/utils/color.js",
+      "bytes": 1285,
+      "sha256": "e041c5dc59be4af1fec395c96f6e7df7171cf9b3c2a674f58f3e0749a51c41e7"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/utils/compress.js",
+      "bytes": 977,
+      "sha256": "387e6c74a4bc37ba0f64b89491637e137c12617a13fd8864cabcdd44509c86bf"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/utils/concurrent.js",
+      "bytes": 896,
+      "sha256": "94ffeb6a3d89062e2a128b2c3608380e782150a8b87a1bcfa6bfcfdbca0a4b70"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/utils/constants.js",
+      "bytes": 262,
+      "sha256": "b86c73cf5a6b6aa0a6910e2bb79d5f77b5136c639908cd7ed9f7565d1b08e2b3"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/utils/cookie.js",
+      "bytes": 5517,
+      "sha256": "59e43f7630aabe6107dd4205250fd2252cfb5860dca82805c6e093a1d8e1ecdf"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/utils/crypto.js",
+      "bytes": 1057,
+      "sha256": "fc02aad3a74546b16960145bcf93f438349c3b7147fdbf74dba627841a2efc62"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/utils/encode.js",
+      "bytes": 1061,
+      "sha256": "0f5fa7e6b82aaf126514d3aa23841d6e1fe3911c5bcea0be7f28dcbfc3b0670f"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/utils/filepath.js",
+      "bytes": 1086,
+      "sha256": "f657e24a59184767d4d705be67614b37f3d95d2cba1be35e3cdbe8b09019a957"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/utils/handler.js",
+      "bytes": 514,
+      "sha256": "b7fa1ec58bc4a58f68f85e2c422051e5f48ff334f85086d83430a1367b79bf10"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/utils/headers.js",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/utils/html.js",
+      "bytes": 2984,
+      "sha256": "060228527176a57bd435af8d6daa13f9f5812d3a34339ce3894bce9a7a15cd31"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/utils/http-status.js",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/utils/ipaddr.js",
+      "bytes": 8429,
+      "sha256": "e21672abd64149a80b1e8ee404fe0a013f8ce0db929b2dca721993889835f774"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/utils/jwt/index.js",
+      "bytes": 405,
+      "sha256": "23b1bfd9f40b7db7ff2424aedc8b1d04b291b8b41f98e489ec1dd945debf5270"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/utils/jwt/jwa.js",
+      "bytes": 814,
+      "sha256": "be58de308ec87e9e28fbba81d52ac35f45995d893bc70cefa09605241a3e0f54"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/utils/jwt/jws.js",
+      "bytes": 4639,
+      "sha256": "c91edddda20a692bea2db607cf5b92d6b7dcebffa12accad14904bbbd1ccc71f"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/utils/jwt/jwt.js",
+      "bytes": 6736,
+      "sha256": "48b2d7c3254ef56bf15a2107fae40864b0a7597582a9721fd64e79b4deff0971"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/utils/jwt/types.js",
+      "bytes": 4235,
+      "sha256": "684ce54fce0cae6c8384ef8254addbe8692690bc0debc5c853a0c53a466389d1"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/utils/jwt/utf8.js",
+      "bytes": 323,
+      "sha256": "acd85d4567ddc6804f401e206cdaa06f8b954903ad0876d82b1332b2ca4b8579"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/utils/mime.js",
+      "bytes": 2149,
+      "sha256": "d2a973b0b335368d72f22a697d7cc8fbaf041168195578d930a329d382f77c4b"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/utils/stream.js",
+      "bytes": 1924,
+      "sha256": "9f9bb136ed14dd0587652cbf1f760c0c67a1b8af685e0eee93228f60252f98e3"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/utils/types.js",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/utils/url.js",
+      "bytes": 7408,
+      "sha256": "27d31dcae52c65b9f1710e913f7a7b0967050aff737dfb227f2aaadfcf33db9d"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/validator/index.js",
+      "bytes": 195,
+      "sha256": "67c3075cd4ea89698ba30d87cd42526695402edab15b08e5bf17f8e7ef6219af"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/validator/utils.js",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/cjs/validator/validator.js",
+      "bytes": 2532,
+      "sha256": "33c89a62cc8482394f4f3d54c4cc8f005ae17c04c79b3bea003b622067680725"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/client/client.js",
+      "bytes": 5027,
+      "sha256": "4ef24feab506637b586d873c0a55a718a17865c6806f7afe52bfe7034e65d326"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/client/fetch-result-please.js",
+      "bytes": 1931,
+      "sha256": "b343b7f102480641cf9db6275bc1077bba9d30a12fdadb0c2c6595897e72f6a0"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/client/index.js",
+      "bytes": 181,
+      "sha256": "f324825ef7afa484c7d8a899acd0329ca167fd6eb2042df18757bd03efde50f6"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/client/types.js",
+      "bytes": 11,
+      "sha256": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/client/utils.js",
+      "bytes": 2166,
+      "sha256": "c2214c24d69ef5ec9a8ad57658b159025a8056c9b0a7447d68b346869466fc59"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/compose.js",
+      "bytes": 1687,
+      "sha256": "6dcd93b8a74298b867b8d2c90ca4fa344677333f16e92393668d224404326b3a"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/context.js",
+      "bytes": 10128,
+      "sha256": "1f70e2e2c14ab515476bcf18897d887a9fb2a97464b41a732c61e75c8079893d"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/helper/accepts/accepts.js",
+      "bytes": 1624,
+      "sha256": "149a7cd688ead489dae363c7f8b9136faed195dc043767ec5468cb4f67e8b9f6"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/helper/accepts/index.js",
+      "bytes": 60,
+      "sha256": "d8e17d8f887a9e53ff5e457a8a14342fbe275027a9208c0c9571cb56e5afd7ca"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/helper/adapter/index.js",
+      "bytes": 1131,
+      "sha256": "ddb47fdd81979682ec89860482785b6c5faaf5f001e7367b3a192e136de37336"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/helper/conninfo/index.js",
+      "bytes": 11,
+      "sha256": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/helper/conninfo/types.js",
+      "bytes": 11,
+      "sha256": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/helper/cookie/index.js",
+      "bytes": 2489,
+      "sha256": "fcb2a37f557ac35320064121cd4d060ccda664016e8e7c014a5770be59c9ef4e"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/helper/css/common.js",
+      "bytes": 6448,
+      "sha256": "028560777c63755aa994f7ba7b5c2b8733c72b2c5849ac034f1eec6447c5b1a2"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/helper/css/index.js",
+      "bytes": 4948,
+      "sha256": "b6ce67e556991772d048e462fef66932fb28545856cc87d2e8fead9503368424"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/helper/dev/index.js",
+      "bytes": 1705,
+      "sha256": "385750673fb511fe3bc37201e58d9996777eda4eb2fb37bc61d4261ad814eb35"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/helper/factory/index.js",
+      "bytes": 838,
+      "sha256": "5e46cd194c89fa0ad4a60b6b2b4861a92c8186b2a24f4a92b025ceb2e9be9cb5"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/helper/html/index.js",
+      "bytes": 1332,
+      "sha256": "6d73103df7f662ea449cda118b009ca819de4c6dc50fd750c6429f92fe0ff306"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/helper/proxy/index.js",
+      "bytes": 4346,
+      "sha256": "5370b81f777da242d41a520bda4445b0dd3cea3474ce8f822ca78ef6203d81a7"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/helper/route/index.js",
+      "bytes": 4029,
+      "sha256": "d6d63a0f6a47601c002d8e7ff4bf440b24f31f0f2a97e559d39ff96f7be52a8c"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/helper/ssg/index.js",
+      "bytes": 655,
+      "sha256": "473a144c836a123267707df4a553847a3fd9a430ed9777daf595542c47ab1e3f"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/helper/ssg/middleware.js",
+      "bytes": 1512,
+      "sha256": "bd1aa0705606e155d62d90b7400c56cf9a17d0938807df3bdce7afa356d70d66"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/helper/ssg/plugins.js",
+      "bytes": 1854,
+      "sha256": "cd57a2c3388e12fa5b09424653505474bd11344bb7a129367fb5cfe79a96a359"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/helper/ssg/ssg.js",
+      "bytes": 8618,
+      "sha256": "212c31fbdc6e6537f36837ee2388c0f15d8418f5c4fae4b3a36a5928deeb8d07"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/helper/ssg/utils.js",
+      "bytes": 2922,
+      "sha256": "b9a6395b3db76a977a1c8f8ad04bb09ff1b7ee09b5eb7858dff6e7c96836b790"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/helper/streaming/index.js",
+      "bytes": 192,
+      "sha256": "88ee314551d90c1af601101f77e77ed7596b3d9991c361daacc30e16dc1ba5ed"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/helper/streaming/sse.js",
+      "bytes": 1945,
+      "sha256": "747acd0d83d2b1dc6ec89278c9e21826eee68f3fead7440f7992f8f20a2631d6"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/helper/streaming/stream.js",
+      "bytes": 808,
+      "sha256": "9468dfa62d388c645bfb6b11a1bfb1fec761f71a6c9fe62a801e8eabbf6aac06"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/helper/streaming/text.js",
+      "bytes": 366,
+      "sha256": "a21ea95f07733a21496ec0f4bdd745c8ff0ff0cf12a8da792b2f9b1cc3fa151f"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/helper/streaming/utils.js",
+      "bytes": 370,
+      "sha256": "ee40f063143c32fe44f56cee274260cf3c859888e9ab663b3d1be5c120c5b8f2"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/helper/testing/index.js",
+      "bytes": 395,
+      "sha256": "abd3c028ca1fd62bcdd03741eec5cf9d0c6ef15c1fee1812798c650c0580534c"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/helper/websocket/index.js",
+      "bytes": 1306,
+      "sha256": "c7fc914a4281b144b5fd09317570e8a48ac993117a4329ebe2b15e99fb5f807f"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/hono-base.js",
+      "bytes": 10239,
+      "sha256": "b187a52a0d57f47a6a5ede24bb05bc8f1daab4c1c53f290dd749098d677e1d34"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/hono.js",
+      "bytes": 951,
+      "sha256": "e630eb3e76ab5dc306e64bb5ba78eab92f539aa43202a2def785f1bf9c7defe4"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/http-exception.js",
+      "bytes": 1709,
+      "sha256": "449b2603121978f28c50a9809c577d5a761b24617a55fd21dbfeaea5335ad1d2"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/index.js",
+      "bytes": 347,
+      "sha256": "a18108f10e31afeda6c1489a3dc6588c45966d4800ff6361f7cc77e0159154be"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/jsx/base.js",
+      "bytes": 9498,
+      "sha256": "c3eda9d3c2a06b9eae0d959ca9845152deb7f8bc395870ba605040cfd826f82d"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/jsx/children.js",
+      "bytes": 526,
+      "sha256": "6a7587692b7f752dd2d7128bcf59593876f00badfc5a594aca607eafc7e26ab5"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/jsx/components.js",
+      "bytes": 6026,
+      "sha256": "ae4e0eb0ecc67582b72c1f9a2d04ae6dd07b2983ad755dc7a9650e7824e39601"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/jsx/constants.js",
+      "bytes": 382,
+      "sha256": "7b296145674c9b4d46fbc4d2eecee37f0b4636665dc3eb64ad48ed5c8dee2ccd"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/jsx/context.js",
+      "bytes": 6246,
+      "sha256": "b6f07545a988e874345f29efdf3910ae764138acf85401fcb913745b31344d6b"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/jsx/dom/client.js",
+      "bytes": 1497,
+      "sha256": "4440a5d2409257d34b32f849cbbfbe6c24ed69cd34baaff2e0cda794bbfd80e0"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/jsx/dom/components.js",
+      "bytes": 725,
+      "sha256": "d40d4ac2e9862f699b94ccf955f59eb1d95bfd6617167945f3548d3b205e425a"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/jsx/dom/context.js",
+      "bytes": 1043,
+      "sha256": "f985f2baef48732977979557878ac1b2bbd414ec931ea30ccd4d2b5fd6c26bd4"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/jsx/dom/css.js",
+      "bytes": 4263,
+      "sha256": "c843968b41557ec3d6a0bbe6d360a3ba1ce08a81bf896e0a4fc019ce87e48404"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/jsx/dom/hooks/index.js",
+      "bytes": 1884,
+      "sha256": "c77796504c8bdccf6a42b48e130a58b541d619fb99db4cada4f2e263eaea76c1"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/jsx/dom/index.js",
+      "bytes": 2851,
+      "sha256": "c083719a31ef8113841dac509426ed621f5d13eb6a7b6ad394868e1eb453e554"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/jsx/dom/intrinsic-element/components.js",
+      "bytes": 8681,
+      "sha256": "99b5d9ccc623211149a8edb936dfd0d75962abdc448a93032c3c775a88908fd8"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/jsx/dom/jsx-dev-runtime.js",
+      "bytes": 406,
+      "sha256": "f92e07b6e37722c4e9a5ce76458b625e7a2345ba97243e1d667dbc29b89276aa"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/jsx/dom/jsx-runtime.js",
+      "bytes": 109,
+      "sha256": "3516a77b2e82a41d168188cfe4952efd40a78ad5dad1ce1c63c64f98b7b2e57e"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/jsx/dom/render.js",
+      "bytes": 17758,
+      "sha256": "4ee6ae9823a515999f6fa39c52efd18b8171d0e381a5dbb67a87f829befa86ae"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/jsx/dom/server.js",
+      "bytes": 1578,
+      "sha256": "2d5575bfb50bcc2fd88abde7080819e78e538129214ea42ae816f0b388404b1a"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/jsx/dom/utils.js",
+      "bytes": 209,
+      "sha256": "26c926e46cb6ef95d8671fd214708a3a4ba6644fbf3b4d5b40ad101960f1fe79"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/jsx/hooks/index.js",
+      "bytes": 8659,
+      "sha256": "51463b8adb9b426241f4f001a1003e90bad5e70d3fd808d0dcf034bfe5bf41aa"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/jsx/index.js",
+      "bytes": 1849,
+      "sha256": "ca98edd2ad1fdd40bc2ec72c715d238e7ffabdc4eb61e391095a7c8866771560"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/jsx/intrinsic-element/common.js",
+      "bytes": 646,
+      "sha256": "7774c3b2d850832bcfd27b3eaf3e6a0859963177e3f7aee6582ee73b81bf6ec0"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/jsx/intrinsic-element/components.js",
+      "bytes": 5476,
+      "sha256": "4a18564a1215a9b1da2fafb8fda914d3a34d2a5fe77b07e3dd6aa0aad1865c84"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/jsx/intrinsic-elements.js",
+      "bytes": 11,
+      "sha256": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/jsx/jsx-dev-runtime.js",
+      "bytes": 414,
+      "sha256": "5e8a1f3dd2fc992c516555709a28256448238308edb3827b7e9dc7247dcf20fe"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/jsx/jsx-runtime.js",
+      "bytes": 1256,
+      "sha256": "4c409c30ba0befde4b2be91e18b1b4037b71488ce11088971032d34b2dc61b63"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/jsx/streaming.js",
+      "bytes": 5127,
+      "sha256": "87248a2f512db45269ab9d6a7ae8f457d0a47e48faa55dd412922636bb46fe7d"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/jsx/types.js",
+      "bytes": 11,
+      "sha256": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/jsx/utils.js",
+      "bytes": 4289,
+      "sha256": "e9e8ddcd4c8f0448ff3854053a171e893f6280fb308dbf054481bd8a7d896791"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/middleware/basic-auth/index.js",
+      "bytes": 3761,
+      "sha256": "b54d99c1abcd1ba57fb9d16e1a00376ed8d468c417203501482f723cb5dd4990"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/middleware/bearer-auth/index.js",
+      "bytes": 5920,
+      "sha256": "4a42aa005f5143e3109dde5968383ff3905cfb010ee313ad50806ac47b5f50b1"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/middleware/body-limit/index.js",
+      "bytes": 2115,
+      "sha256": "19761aea2af27b7c539d6d7e6bf856e147b2f2842d96e0099aa0c36e3023bb82"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/middleware/cache/index.js",
+      "bytes": 8274,
+      "sha256": "5b0145fe6d0d2d53223cd17799b0cc8b8e5be3a5b607f8ae9f3053543d207991"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/middleware/combine/index.js",
+      "bytes": 4757,
+      "sha256": "a8b7a480547d32ee69dba793f86cf05f8dffc1fd6cce317d544fc8fa4991d1f3"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/middleware/compress/index.js",
+      "bytes": 3945,
+      "sha256": "12249147aea7b0bf4dabb8c20a00616139bdc58cfa1c44899ed4fe1d301c0522"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/middleware/context-storage/index.js",
+      "bytes": 1177,
+      "sha256": "21174a4107ea499b660eaa1eefd850bd0566370bb6b084c819fe87c50b7e8417"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/middleware/cors/index.js",
+      "bytes": 4207,
+      "sha256": "cd304718072500b981b7bac430d22e4004c858d91d0c1cefa09d065edf84ef40"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/middleware/csrf/index.js",
+      "bytes": 4343,
+      "sha256": "7af4e6626d5ea4e84b87041f9da0f53343ba68c1f96c297fe20c478c4f541789"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/middleware/etag/digest.js",
+      "bytes": 2113,
+      "sha256": "5250cc08d8962be5cdb92d056dbe07bef2cf3d4322c84e6c2e287349d8cd71f9"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/middleware/etag/index.js",
+      "bytes": 2956,
+      "sha256": "14d4ed7ae141acaa64e7215332eab8887db1e1ab96e150910642ecda0e4e8e30"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/middleware/ip-restriction/index.js",
+      "bytes": 6054,
+      "sha256": "6b9e2830ef85981ad1855670e31adff9bd71d676158a493e796e0f8005f605c8"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/middleware/jsx-renderer/index.js",
+      "bytes": 3326,
+      "sha256": "960f9f96be50b93ef69dc18f15e74c9e679fdb8e1d5335517a05f3d1a6e6119f"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/middleware/jwk/index.js",
+      "bytes": 48,
+      "sha256": "020d2224d18809ee5c4964f3ca3f44bcf3d307a71b8e185e2979c10069be9f56"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/middleware/jwk/jwk.js",
+      "bytes": 5382,
+      "sha256": "12b7ca04967741d5703ce9474359cda04c66a5f83446fa9f95f4014de30f33d4"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/middleware/jwt/index.js",
+      "bytes": 197,
+      "sha256": "f4748b1e748a0e542122f3d395fc03661a01d21262ee34d7b7f2abde4767f459"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/middleware/jwt/jwt.js",
+      "bytes": 4593,
+      "sha256": "89fc957f99ce9218f46d1f22cc8134b851b0d88001b596fada1c7544747b843e"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/middleware/language/index.js",
+      "bytes": 217,
+      "sha256": "61748e76811bd3969c08ba56b2c564ee941de63ce3a0239bb6193a3981b437b2"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/middleware/language/language.js",
+      "bytes": 5965,
+      "sha256": "a7a67f26c2e8b9300fc1b3ad471ac09851b26d5f95b79af7874136ad4374250c"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/middleware/logger/index.js",
+      "bytes": 1653,
+      "sha256": "6c272358c1efa7bbe71603a3407a0189a651b2c0364de180a4dba6e8488d5046"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/middleware/method-not-allowed/index.js",
+      "bytes": 3304,
+      "sha256": "f6bc2239455b98562abaa9759610b4d3dc1e165c6367c296cfcf03fa518af4fd"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/middleware/method-override/index.js",
+      "bytes": 3425,
+      "sha256": "1230960dd0bfcd4641fa402842afd9264183e1b2476e14226b25d47d251b6f04"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/middleware/mount/index.js",
+      "bytes": 2189,
+      "sha256": "aebd9872e726fb86b58f37e168a3662e058e9e86913f215a4d70d71627710625"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/middleware/powered-by/index.js",
+      "bytes": 598,
+      "sha256": "2fe9184982417db3ec2381dd1d3ce79c690d0dafcea0d9a3eb6859904f1d8605"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/middleware/pretty-json/index.js",
+      "bytes": 1187,
+      "sha256": "e484258fddc7db3c95e8bc8edcedc236b7eb7a7fc148c4805b4604b58012a282"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/middleware/request-id/index.js",
+      "bytes": 67,
+      "sha256": "b20aea3f0762f2fbc75a720d081f45d920b32be0bae2242ef012c18d3e230386"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/middleware/request-id/request-id.js",
+      "bytes": 1196,
+      "sha256": "92220b063e60cac761ad70f66d68a81d0db1d899bd2140ee98cb53e291c22e62"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/middleware/secure-headers/index.js",
+      "bytes": 93,
+      "sha256": "6d3881390ec386a9d8e81bb740dc40a25d20b7128f4761796c3ce0d74549faa5"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/middleware/secure-headers/permissions-policy.js",
+      "bytes": 11,
+      "sha256": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/middleware/secure-headers/secure-headers.js",
+      "bytes": 8181,
+      "sha256": "85b46603ed235872459ed4b9c72166b2dbb554c820214a5397d616bdd64792ec"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/middleware/serve-static/index.js",
+      "bytes": 2469,
+      "sha256": "367ab6e405018eb56c8d730910e3c9facb1f6b5973804f9b35cd5816559bb4b9"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/middleware/serve-static/path.js",
+      "bytes": 669,
+      "sha256": "6284fc82686432b2eb30d19a77ed02e801fd6d3437fb90f4965a92e7ade62f83"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/middleware/timeout/index.js",
+      "bytes": 1315,
+      "sha256": "98fd93570335c35806337a31110ab9ddb7df4d15454a2bb8436f03ae22955bab"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/middleware/timing/index.js",
+      "bytes": 139,
+      "sha256": "67100dab6fc34ef790485cce002ebe38d95b2ea557f9d428e74e73419e57b0dd"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/middleware/timing/timing.js",
+      "bytes": 5578,
+      "sha256": "3261b0cab5eb00e0dc220c3ff31d958b63e685427ec95d7613e75657d6439a0b"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/middleware/trailing-slash/index.js",
+      "bytes": 2857,
+      "sha256": "0ee19d4f0aca5bef6a9f7ed9fcbb379948208b7ac6bd3f1afdc0a07f464c8dfd"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/preset/quick.js",
+      "bytes": 576,
+      "sha256": "01709d1cfb78a895282b60e31de2203136db7ec4b42620dbff72ba0d8c96a62c"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/preset/tiny.js",
+      "bytes": 362,
+      "sha256": "56621ddd5e79a890f18ced77db3e58811e417871d09ddc9d6b8c2cb8970e5fd3"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/request/constants.js",
+      "bytes": 112,
+      "sha256": "983bf06a2f366ec289ddbc253008175a63eead569dc501b5adea98b9f8faf3a9"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/request.js",
+      "bytes": 8870,
+      "sha256": "7606a9234008de851797cf618667c4ec9debe8cb517fe5a4aa9a9fa3507cd265"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/router/linear-router/index.js",
+      "bytes": 69,
+      "sha256": "f5d068eefd19f467c93f5eacc7f45dc6e93205bf4dc2af76e707e8e226199dd6"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/router/linear-router/router.js",
+      "bytes": 4038,
+      "sha256": "4c29f2a4b6eb6cbadbadb2ae29adbe0d6ceff5fc7f72b3cb3c055962b074eaf7"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/router/pattern-router/index.js",
+      "bytes": 71,
+      "sha256": "2d6f5753d40866134bd48b971088d466459e4351cb5b1de6696a348bc2a37781"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/router/pattern-router/router.js",
+      "bytes": 1351,
+      "sha256": "36e3c9179edabb70e83930667ca2dca75571a187f563d938d72b54188bd89e8d"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/router/reg-exp-router/index.js",
+      "bytes": 228,
+      "sha256": "822304b59df8cd453267e5335817db09e1d126307a4060afb465b4fa702c807d"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/router/reg-exp-router/matcher.js",
+      "bytes": 594,
+      "sha256": "bbb976ff313449c4490290ef392ab0fe0cb01c5a1f93a4ba5baf47e26ad0036f"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/router/reg-exp-router/node.js",
+      "bytes": 3220,
+      "sha256": "c962a952318e80f0260b47e67a92ae296ce9b253ae4be3c93823029bdecd25a4"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/router/reg-exp-router/prepared-router.js",
+      "bytes": 3518,
+      "sha256": "c3cfadf01bcf8e2fa9963cf891ae395e7c258480a1edeb338cbc12c2ecd97e67"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/router/reg-exp-router/router.js",
+      "bytes": 3983,
+      "sha256": "949c2286aa6787b942336c107b6877fee5518c43491e01bb163a04abc29b8621"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/router/reg-exp-router/trie.js",
+      "bytes": 1883,
+      "sha256": "dc3a7f110a75ae2de852e4de9af9570ae24f5981fc7084e5816a69f1e1dfee9b"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/router/smart-router/index.js",
+      "bytes": 67,
+      "sha256": "66e237deef0c95fb2750b0c38d1b47e702c4af44d0fe0ee64c496fb2dc48a9a8"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/router/smart-router/router.js",
+      "bytes": 1338,
+      "sha256": "545e65d0abf3d265678ad02478f1523610a2f361e338e9fe7abd6dbb54535dc8"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/router/trie-router/index.js",
+      "bytes": 65,
+      "sha256": "0dba884522130fe101909713ef612ebd46da0ab030176259bd2cedd0a39fdd2e"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/router/trie-router/node.js",
+      "bytes": 4624,
+      "sha256": "b8ff86a389359d734245b0bd2096bd7db5cbbe40eaeb910f4d51d29a56923a62"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/router/trie-router/router.js",
+      "bytes": 453,
+      "sha256": "529da9a7e75c8bd388cf00527883d991dfcf51d97cb1934247c230db544af469"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/router/utils.js",
+      "bytes": 124,
+      "sha256": "517286c2e5cfeb573ad35119a4b8813c66ca730f086fc195928a251f88c66824"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/router.js",
+      "bytes": 885,
+      "sha256": "cf1dec50138249bcadc086cfb427780ee46ee5671231ea0bb25a3a5c38dd6bce"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/adapter/aws-lambda/conninfo.d.ts",
+      "bytes": 975,
+      "sha256": "e4f0e4edb63153162fe7eecc36082f4e399d3872ae6785ed0b17df1489bb3779"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/adapter/aws-lambda/handler.d.ts",
+      "bytes": 9682,
+      "sha256": "0c03bef4aada51424980c64bf4535b2841061d24dbd2f5bae482203e0272d05d"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/adapter/aws-lambda/index.d.ts",
+      "bytes": 506,
+      "sha256": "9745b1544e295e24bac7a67d1a1a4c8f27557bd5922bb41f27d249169ca6a542"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/adapter/aws-lambda/types.d.ts",
+      "bytes": 4956,
+      "sha256": "50a853553f947b9ef8565f830fdfd87dd2643c823d8cfde0927d31f1dccbf145"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/adapter/bun/conninfo.d.ts",
+      "bytes": 335,
+      "sha256": "3028948b62d6fe7db0eaecc28db7c2d3d0e1ec85a2d8758d0870945da762f8aa"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/adapter/bun/index.d.ts",
+      "bytes": 490,
+      "sha256": "bbd8d46f2fa89d6ade1a52f473ec96bbca410baa67371e434532a1b42501ace6"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/adapter/bun/serve-static.d.ts",
+      "bytes": 409,
+      "sha256": "e3adc9536bd39de045271f9fc5fb6db5f0f454a1b894a15b10c1427c860f303b"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/adapter/bun/server.d.ts",
+      "bytes": 392,
+      "sha256": "a77502c55fdf7e0ee2117dd3c5afea353487a552a614b68c6981c8c48f1da8ba"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/adapter/bun/ssg.d.ts",
+      "bytes": 641,
+      "sha256": "268abaae3643fa58c6979aa89032f93a6c4e91bc61c8527e23f5d2bee99e0f4f"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/adapter/bun/websocket.d.ts",
+      "bytes": 1961,
+      "sha256": "ced71c56452402f6fc5dbe62f6893eeb6003037ccee96258e34957f81e826a8a"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/adapter/cloudflare-pages/conninfo.d.ts",
+      "bytes": 774,
+      "sha256": "72d7e44c9e51c28a2da96071337964320c9b826339179b6b83d3266ba48c58f8"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/adapter/cloudflare-pages/handler.d.ts",
+      "bytes": 2131,
+      "sha256": "d982eea100ea241ca02a887596a3230ea74c332add129235816de937d249acb1"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/adapter/cloudflare-pages/index.d.ts",
+      "bytes": 210,
+      "sha256": "79f8c39fb00713711331b278af89dc3cfbd0ecddb0b02b740cc62e8817ed5c16"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/adapter/cloudflare-workers/conninfo.d.ts",
+      "bytes": 314,
+      "sha256": "0154485da56c1158ec1e6315ce36f6d8c1e9964abbd43041b9962f7de1b7b6b9"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/adapter/cloudflare-workers/index.d.ts",
+      "bytes": 226,
+      "sha256": "147d37193c4be77cfc02fc7cf4fb782f1a9d9275466ce7caaa2dd3a85389f047"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/adapter/cloudflare-workers/serve-static-module.d.ts",
+      "bytes": 354,
+      "sha256": "74e0fce2b0d6a8aae6c11272e760c4656789db13a506ab89e6bec047d9f67f51"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/adapter/cloudflare-workers/serve-static.d.ts",
+      "bytes": 1072,
+      "sha256": "904b0ceb4de08493681e522abaa6ad664fbcfd2865698b55aa5a1c621e3871d0"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/adapter/cloudflare-workers/utils.d.ts",
+      "bytes": 547,
+      "sha256": "d8ded02b64471a7b2c3167df075fb5fc590f85f0637e48b0c133b895edbee6f8"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/adapter/cloudflare-workers/websocket.d.ts",
+      "bytes": 394,
+      "sha256": "091e55fbc9c59056dc3c85ae6ea5f3e0dab0e980611052d08208bfad6727dfb8"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/adapter/deno/conninfo.d.ts",
+      "bytes": 339,
+      "sha256": "866429943db130e5d58d8568d3a7fadc5b7f3de35abf2f6b303003e36b893507"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/adapter/deno/deno.d.ts",
+      "bytes": 9,
+      "sha256": "f4c5cf9bb78e85f15dc27180260637cf24b2a24bc39e0788783a3accc4dde614"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/adapter/deno/index.d.ts",
+      "bytes": 284,
+      "sha256": "377b70fe7437a42cab67f6bc94a4328870b5daf94059b23032f017a84838fc80"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/adapter/deno/serve-static.d.ts",
+      "bytes": 412,
+      "sha256": "220ed3366e6c2ebb53c05995f9286692029bde019326fccb937f3fd9cb4d5a1f"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/adapter/deno/ssg.d.ts",
+      "bytes": 648,
+      "sha256": "d0015347ab9cbb9b9261381413e2f5cc0920a0db33c7dc7822316b2db07d9926"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/adapter/deno/websocket.d.ts",
+      "bytes": 330,
+      "sha256": "ce3ba829e0ee27ded6694ff886ece5d9d2ee596c434f6f3373848ba2d5f63bf5"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/adapter/lambda-edge/conninfo.d.ts",
+      "bytes": 293,
+      "sha256": "7d46785e18d5793ea7885bc15c7e1c9063bd5573ac878ac29292965a3b1b0603"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/adapter/lambda-edge/handler.d.ts",
+      "bytes": 3261,
+      "sha256": "fb59ad05ac4b674fe9eaf1a7ec678fc719df2c8061c1b7cac6add6bb1f2e047f"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/adapter/lambda-edge/index.d.ts",
+      "bytes": 316,
+      "sha256": "c1f7cdb942180113edda3c7587d58892b9d2d1cee939375678aed4954822c6d3"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/adapter/netlify/conninfo.d.ts",
+      "bytes": 702,
+      "sha256": "f369cf782806dc12c6d8c0139526470b641e176b3b3045fcba02dc2e73899cb3"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/adapter/netlify/handler.d.ts",
+      "bytes": 327,
+      "sha256": "ea77d77922d11ca2273ad1b62886d1e5cc525517491ae4eedc6e38d057bfbdb5"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/adapter/netlify/index.d.ts",
+      "bytes": 115,
+      "sha256": "8bda7286b3974ef19be1a4afeeb671fac74437ece4084a264c71132f0814ffaf"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/adapter/netlify/mod.d.ts",
+      "bytes": 115,
+      "sha256": "8bda7286b3974ef19be1a4afeeb671fac74437ece4084a264c71132f0814ffaf"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/adapter/service-worker/handler.d.ts",
+      "bytes": 737,
+      "sha256": "ee8e11c69b0c031f7c4b9bf51809aff2123c0e1cca63bf69647c68bf29407729"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/adapter/service-worker/index.d.ts",
+      "bytes": 858,
+      "sha256": "7f5dd2c91d1ac6824ff63a8ae714423edf7fa2bcd4a7b0e26dea60413b999474"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/adapter/service-worker/types.d.ts",
+      "bytes": 569,
+      "sha256": "3bb94cec45566d578ebbe9ba298bc63baf035a191115539955e7c72326403cc2"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/adapter/vercel/conninfo.d.ts",
+      "bytes": 278,
+      "sha256": "b82507b26e5b21bc8b318185d75cdd2f566cb592eca37f6b1fa5630cda725cf1"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/adapter/vercel/handler.d.ts",
+      "bytes": 313,
+      "sha256": "26ec4ae67072e53afbb975b8a563845c50c6cd9a2aae704407e86c756860fc28"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/adapter/vercel/index.d.ts",
+      "bytes": 115,
+      "sha256": "8bda7286b3974ef19be1a4afeeb671fac74437ece4084a264c71132f0814ffaf"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/client/client.d.ts",
+      "bytes": 377,
+      "sha256": "85fc5027c27e35ac77f2fe28db8efc88eff8db2b48d6df1ea5cd017613b5c516"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/client/fetch-result-please.d.ts",
+      "bytes": 1081,
+      "sha256": "a5ec600863fcfec53c962b214b5d270d84a789277c76f2e72fde177726c2bfb0"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/client/index.d.ts",
+      "bytes": 537,
+      "sha256": "21100b63b9571c4d595cc77b81fd59a4e81836d873294a8b6cfa0741fefcc14e"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/client/types.d.ts",
+      "bytes": 11489,
+      "sha256": "d8e011c5e09e367cff78be7ef719924470b4373a2372b421dd2a37e223285728"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/client/utils.d.ts",
+      "bytes": 1641,
+      "sha256": "fa2d020487fc9a29014b22a627702c9bf56b0c1bdba4589ccc81e3adfd69bfb0"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/compose.d.ts",
+      "bytes": 932,
+      "sha256": "a2ade0ccd54a2830a2008b4eaf700b27b7d427e4227646d9f561c8e01c302b01"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/context.d.ts",
+      "bytes": 15057,
+      "sha256": "4c37c272fe6a11bd63281450512955515856e8b5ba2c8d49521b8303a8621306"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/helper/accepts/accepts.d.ts",
+      "bytes": 883,
+      "sha256": "db6c34df89cfb2bd0431475104ea574c507dc5dba9ac45cdb984fcc51ed5e198"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/helper/accepts/index.d.ts",
+      "bytes": 59,
+      "sha256": "e2d9556091d017234370ac258ac40ca4e4e75786a415f471149d61b3ccd3e026"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/helper/adapter/index.d.ts",
+      "bytes": 587,
+      "sha256": "b997626838e1cad093700214664910e175cea02d0b2a8d981db7dbaf783ed01f"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/helper/conninfo/index.d.ts",
+      "bytes": 142,
+      "sha256": "52deaf10794b22fccf7fd4daf7941dbd45251bde0d4e81fca13f5063e5b93d9f"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/helper/conninfo/types.d.ts",
+      "bytes": 696,
+      "sha256": "1df5825d25c9b32db4fb261c24c2b0b3ce4a76b4e36f0cf78f68b84f9cab906e"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/helper/cookie/index.d.ts",
+      "bytes": 1421,
+      "sha256": "051f8b6b52e8084a9d696c96e371637ce7f9f6e0e58973b3ef2a277b38b8768f"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/helper/css/common.d.ts",
+      "bytes": 3058,
+      "sha256": "eae9bbc443d62542b785c37476c93e676067cd3aa13fc3f9f4132dc89a9fdf6b"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/helper/css/index.d.ts",
+      "bytes": 2396,
+      "sha256": "fd921fb3ce2f68225e0a25c55f65108fcd881b011093e3b1d3082601230fc95e"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/helper/dev/index.d.ts",
+      "bytes": 569,
+      "sha256": "021866089e215fccca33a3632664fefee98a4b2610c2b9fb5fa812a4fb2343f9"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/helper/factory/index.d.ts",
+      "bytes": 10728,
+      "sha256": "32da6a1d0f6d185d096d1e7872b9ad2c333d72529df0a10453812daa88368b7f"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/helper/html/index.d.ts",
+      "bytes": 259,
+      "sha256": "063077b820b06f52e0e9c164ba2383e4a6f970d1dbe8ef1c5efdd09e211ae662"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/helper/proxy/index.d.ts",
+      "bytes": 2774,
+      "sha256": "660f81359385f7746279c45bb4943ef17a0075bf7b0f462706c0075f6accde52"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/helper/route/index.d.ts",
+      "bytes": 2462,
+      "sha256": "d082706872b7b820d7a0fa0ad2243bbf031a215f288e926d1f920745d070df1c"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/helper/ssg/index.d.ts",
+      "bytes": 958,
+      "sha256": "ad30bd6db4530776c73a2e8188d4746b6408e0be9e3c576d9df44bf023cbc633"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/helper/ssg/middleware.d.ts",
+      "bytes": 1400,
+      "sha256": "73db86fe69c39b974140c6cdd106b5fe3f06975379db5f1372a1efe44aee8fa4"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/helper/ssg/plugins.d.ts",
+      "bytes": 943,
+      "sha256": "136ee15b1cb9e24919903ac4e41b1407ecfb10b824c795bb89bae9d25af19abd"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/helper/ssg/ssg.d.ts",
+      "bytes": 3667,
+      "sha256": "ba858b339e6ca1db5aeed163c2fd98a080f4efde59380edc5a2bf16ec184806a"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/helper/ssg/utils.d.ts",
+      "bytes": 657,
+      "sha256": "d8b070ed8e152ec33b8fddb6ecaa26d1a80abe3645465c92a8a6c8e8e95e1db4"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/helper/streaming/index.d.ts",
+      "bytes": 220,
+      "sha256": "dae717d006d04d2da8e7bea8da2979f1db70acaee880460732510ac1ce0ed3a9"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/helper/streaming/sse.d.ts",
+      "bytes": 614,
+      "sha256": "f4fb8d6f469e5e3d332532fb5d0886c7279c1092b4dea3a83576609c6195404a"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/helper/streaming/stream.d.ts",
+      "bytes": 314,
+      "sha256": "2ef94c24fba8fe932d33989bcfc58df24703f95381d07faf471a4cbebef3be5f"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/helper/streaming/text.d.ts",
+      "bytes": 316,
+      "sha256": "b626e25acddc930910970752c314139416f7b554891847f6b7e3d4b882d40346"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/helper/streaming/utils.d.ts",
+      "bytes": 105,
+      "sha256": "a412278be6f393ea91b83fc7147aea91286455fd993cdcdb1c6d6c4ba01784b6"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/helper/testing/index.d.ts",
+      "bytes": 652,
+      "sha256": "b541f47340594ad926aa38a2021e0f0aab0d51c767930bba330d27953f3265c1"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/helper/websocket/index.d.ts",
+      "bytes": 2348,
+      "sha256": "67935e11e106f33b8ceba31942c8db86e4bd25b21f8f7e9d584dbbb7155dc366"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/hono-base.d.ts",
+      "bytes": 7858,
+      "sha256": "adc54032de5f0751a8a914b0720c26f1cfe854d10031c3e5d37731191dd47191"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/hono.d.ts",
+      "bytes": 756,
+      "sha256": "65451de7c104b560dad74a279855a715db0d0d846e2c7f0f46f163b315d70655"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/http-exception.d.ts",
+      "bytes": 1926,
+      "sha256": "6351d0ee1eefccceab22ec7c2eee67844f69448d081ef43e77f1e397a0716459"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/index.d.ts",
+      "bytes": 838,
+      "sha256": "ec4fd50e1e34d03621c3216ffae720ea2c2abe2d84a06ba29da0c78089e7d3fa"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/jsx/base.d.ts",
+      "bytes": 3024,
+      "sha256": "df8ea7e617bd7138c1ce3ccfbc95c0c03a0fb02b1c09076490cea7ac59f11053"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/jsx/children.d.ts",
+      "bytes": 461,
+      "sha256": "4a233e03fbcd86d49fdfbe8626381b99009a1ab204e21121aa0dd46d611f65bb"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/jsx/components.d.ts",
+      "bytes": 630,
+      "sha256": "b45b44e4deacfd766b630a0df48572cc654ded2fa5a945bc83eefb1fc2cb13bb"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/jsx/constants.d.ts",
+      "bytes": 344,
+      "sha256": "599545af226d8f7ef1304a1f7c53525d986fa676bbddad408a16b48907876759"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/jsx/context.d.ts",
+      "bytes": 2343,
+      "sha256": "406b50b57400004e27fcc9877b172ec425ecc575e7cb877be5b4c093a25fa14a"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/jsx/dom/client.d.ts",
+      "bytes": 1226,
+      "sha256": "11ea52738d2562ee190686085db270797cfc199f9e72b0ea484275cb165a4077"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/jsx/dom/components.d.ts",
+      "bytes": 425,
+      "sha256": "329e70bfb3b7a99ed4b151c6efade50138a2df5a34818172ffc2053ae3978970"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/jsx/dom/context.d.ts",
+      "bytes": 242,
+      "sha256": "db4c1ea6d8e74a4fcd9863bbc2f2086f0d7e542e6f6c3807205b2548a510f47a"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/jsx/dom/css.d.ts",
+      "bytes": 2397,
+      "sha256": "78932a825ffd209e8cfd594fae4641660af1f19856ed204a37434feef661073a"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/jsx/dom/hooks/index.d.ts",
+      "bytes": 1310,
+      "sha256": "ae750468eaf9689f26aca08824d3fdbab412968baf4fe19ae40896fcd4184a2c"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/jsx/dom/index.d.ts",
+      "bytes": 6061,
+      "sha256": "e81da91711140022480711092000076958579030f4eeab9a03649acf979c7d83"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/jsx/dom/intrinsic-element/components.d.ts",
+      "bytes": 1172,
+      "sha256": "6a0673fd596d067ef32b6db94a2858e574271404ec1fe6e744458ed29900c791"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/jsx/dom/jsx-dev-runtime.d.ts",
+      "bytes": 296,
+      "sha256": "8631fcc7c8c4c133549704e17bb12f2b6f58b248f33ac7063abe472702ace291"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/jsx/dom/jsx-runtime.d.ts",
+      "bytes": 152,
+      "sha256": "0952a989b8785565bbcc77b989a9cb87be07bc85ecbfe57cd0974a597e2c1380"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/jsx/dom/render.d.ts",
+      "bytes": 2324,
+      "sha256": "1f78950598e8b37402caa0531bb754511720a600fc0ca21095ab44e19b48d48c"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/jsx/dom/server.d.ts",
+      "bytes": 5223,
+      "sha256": "902d61850737f56283903a3748f6e3e677b852b367507310dde206ce6309e5b7"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/jsx/dom/utils.d.ts",
+      "bytes": 114,
+      "sha256": "48d8d94ed2a3723d85cf0142a0544d00b467a0707b02c2474ca58e248dabed80"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/jsx/hooks/index.d.ts",
+      "bytes": 2768,
+      "sha256": "955cb8ec8e08908ef57840fd92b10b5f6e7d15c7f0fd80f540b08415e8fcf38b"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/jsx/index.d.ts",
+      "bytes": 5361,
+      "sha256": "47716d6b491a7be1db5035fb887347c685c1b0031c97671e494d7fe5084baa41"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/jsx/intrinsic-element/common.d.ts",
+      "bytes": 451,
+      "sha256": "e3c2986ea2841d9ecdf2ed6cc635915858d1bc5cb2fe79da6d3173619c87bc47"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/jsx/intrinsic-element/components.d.ts",
+      "bytes": 793,
+      "sha256": "0ffe24efbc235d2b20a741c69f5bb87d1225a7d5e4a4798342a4c4f38e8b3583"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/jsx/intrinsic-elements.d.ts",
+      "bytes": 30189,
+      "sha256": "5f1dff374aa151eccb77a3c12af7c85d7beb6d58ca2c20cb1e860802fb05ac86"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/jsx/jsx-dev-runtime.d.ts",
+      "bytes": 245,
+      "sha256": "1cd2316be5a76e09fb9758900e1c9068803851aa76aec1b9c952e9d0f73f4df8"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/jsx/jsx-runtime.d.ts",
+      "bytes": 568,
+      "sha256": "bae4e17cb929ef6a010a951a2e8c0a4f9c6692fbb2f97e5582274043ed9970c7"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/jsx/streaming.d.ts",
+      "bytes": 1084,
+      "sha256": "53b2ceeb49da98b9cac6a552a2026fd3f0406e00842fc31b03672d643594fdef"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/jsx/types.d.ts",
+      "bytes": 1326,
+      "sha256": "aa6ddd5cfb2d6841e5b7068a140783681676cd130a8a3b25fa903235b7b15ec6"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/jsx/utils.d.ts",
+      "bytes": 391,
+      "sha256": "be9eae5932c239b3deabbf2342b896e56cc1222b33ee71831c9e76ab75231d9b"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/middleware/basic-auth/index.d.ts",
+      "bytes": 2533,
+      "sha256": "5375ce257527d19aa6fa8a51dbae1e6c3844ab4b44bd799e7e349d95bae0edc2"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/middleware/bearer-auth/index.d.ts",
+      "bytes": 4578,
+      "sha256": "bbfe5e01b7d7b763e3060d2a1c78804f77439828f4c7b741c5cb6c1ae82da666"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/middleware/body-limit/index.d.ts",
+      "bytes": 1272,
+      "sha256": "a1fd37f33dde007518c506e8af15d33c6c16c58072fb368b2786048db4dc2d80"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/middleware/cache/index.d.ts",
+      "bytes": 2599,
+      "sha256": "021eaa57c3c2a726a28651eb1ec63a0b0b48aff384941bc20229c69d2b663b5e"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/middleware/combine/index.d.ts",
+      "bytes": 3426,
+      "sha256": "8ce3eecfa0608155692c4ab19e32c8c8afba0ed1af99e099d8fdfbd8e9096269"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/middleware/compress/index.d.ts",
+      "bytes": 1883,
+      "sha256": "06160dd866938e3e9244bcbf5afdcef6447525611dc5ed712fd1e5e1a10eb38f"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/middleware/context-storage/index.d.ts",
+      "bytes": 976,
+      "sha256": "827c0e2e17efac8e19eb6274cbcdc9b1af21bfbf83340c716eff6ab6cf78196b"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/middleware/cors/index.d.ts",
+      "bytes": 2226,
+      "sha256": "20731800e6e9fdf1d24ad90e1f2db2f6eb281f38d4a20143458fa14672071be6"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/middleware/csrf/index.d.ts",
+      "bytes": 3164,
+      "sha256": "e98c19a109ae327d6efbffbe32a06eb32dc59b766a9c503c76ee9e9ee94f5b72"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/middleware/etag/digest.d.ts",
+      "bytes": 257,
+      "sha256": "627b0790bb5e39d4e13a7fad68ca9f61a4b368af7337cc7a893c2a06326c2807"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/middleware/etag/index.d.ts",
+      "bytes": 1668,
+      "sha256": "fe690d0db2f9f11653c425a68ba3d6bb3b421bd261400f83e6da740dbf9824b6"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/middleware/ip-restriction/index.d.ts",
+      "bytes": 2348,
+      "sha256": "5a261cbfa3a627067abd6d7d8799c9f5f3aa21fa173ecc7275347d64179957a3"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/middleware/jsx-renderer/index.d.ts",
+      "bytes": 2630,
+      "sha256": "770f300d792be89a5164f9659cdb8b20173741fde4477d693aa5e7efb1589562"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/middleware/jwk/index.d.ts",
+      "bytes": 47,
+      "sha256": "a788973aa43ae7f3e2a34a6a54135b623923540e6d950fcd44fb59e3159d2091"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/middleware/jwk/jwk.d.ts",
+      "bytes": 2949,
+      "sha256": "d6235615981635118242eec1b6b182574dd87238fe25843e3c8aa5e413e5969a"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/middleware/jwt/index.d.ts",
+      "bytes": 385,
+      "sha256": "391abddafd30c91747470f7c780e5f42268a458efb02ebb17933073fad5d69d8"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/middleware/jwt/jwt.d.ts",
+      "bytes": 2923,
+      "sha256": "07039135e366082e7e12e0940d97c536d267c9a9abf24d5f716f6c34cc56d2a7"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/middleware/language/index.d.ts",
+      "bytes": 515,
+      "sha256": "fb95dd07fe2d91b6a15e2c7e4226af4fc077a751e4579447a96e9d863112360e"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/middleware/language/language.d.ts",
+      "bytes": 4024,
+      "sha256": "4fa6e1c323f2cada728ec62af4a516ddb26b2042e9fec662ac3cd6f902f0ce41"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/middleware/logger/index.d.ts",
+      "bytes": 639,
+      "sha256": "4600a80b441aef4537fd9ac243cbe7ffba1dcd6ccd0ad2a0b76940a924190338"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/middleware/method-not-allowed/index.d.ts",
+      "bytes": 1639,
+      "sha256": "960d52489a5dce30811e111f2541ea3272062848621d5ca5cd51ec1045b5665d"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/middleware/method-override/index.d.ts",
+      "bytes": 1416,
+      "sha256": "5ef39b43eb867e228b6f6782507249a22b2025b244ef4a59416c6dd46e80bdb1"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/middleware/mount/index.d.ts",
+      "bytes": 1690,
+      "sha256": "7c3486269e23ef68e42ff15e5247205c29608997cc3cdf478e820ace9678f398"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/middleware/powered-by/index.d.ts",
+      "bytes": 693,
+      "sha256": "817919dc12f81dcdc5a4e90e196ada4df27fbeba7fe1bfe169aac9869124f433"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/middleware/pretty-json/index.d.ts",
+      "bytes": 987,
+      "sha256": "83981e75ae3728ea67dd93ac5cbe7ea2f622ca3601328ac8533e55b1cfc95cfe"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/middleware/request-id/index.d.ts",
+      "bytes": 271,
+      "sha256": "bb22f86b8efc3059e33179b1e27b58cc4f4f7ff2e7fa2942e5321814001de8da"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/middleware/request-id/request-id.d.ts",
+      "bytes": 1169,
+      "sha256": "ac1d62fcfcff9a26cad7ec0d20748c1de0c1031adb24642e2833e81502b573e8"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/middleware/secure-headers/index.d.ts",
+      "bytes": 390,
+      "sha256": "e0df88073585e6e85ce375cae2c2c7ab9c83ccf013aaf82fb416af86392648c7"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/middleware/secure-headers/permissions-policy.d.ts",
+      "bytes": 2059,
+      "sha256": "cdd7d3a53c5acb3f7e547fa5c59ae9ccd1bdf96c3f2c5d71a5ca427bc1c81bcd"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/middleware/secure-headers/secure-headers.d.ts",
+      "bytes": 5754,
+      "sha256": "80c2167217e364438255feab625787dd4a74e0dd16c5f43c6f099c218e0a6171"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/middleware/serve-static/index.d.ts",
+      "bytes": 1364,
+      "sha256": "b4a9959949e5b8009cc4e7a9955182b4e1dfe24daebd7eda5591fff81e6e2352"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/middleware/serve-static/path.d.ts",
+      "bytes": 309,
+      "sha256": "7ced1aacf120370abb5e43855a6a332ebac47b9f7b9002043969fa6e8cfc1445"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/middleware/timeout/index.d.ts",
+      "bytes": 1077,
+      "sha256": "65268dc0f73b3dd60d940c75848cc5ac1d27bf84f0887e1e620dd7841b7e09cc"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/middleware/timing/index.d.ts",
+      "bytes": 330,
+      "sha256": "0d0dbc7dbca00e347aeb6ec92d12a0b91b562699be323603c18c75d3610f7f68"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/middleware/timing/timing.d.ts",
+      "bytes": 4100,
+      "sha256": "f3d3c968592ff1c1440996239caa9c66484f220f9dfd19b9e14c301aa61b7bf1"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/middleware/trailing-slash/index.d.ts",
+      "bytes": 2896,
+      "sha256": "11ae412e13bfeaa435a505f5b0621198361c343bd7676684de0e4e004021e707"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/package.json",
+      "bytes": 25,
+      "sha256": "8005a3491db7d92f36ac66369861589f9c47123d3a7c71e643fc2c06168cd45a"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/preset/quick.d.ts",
+      "bytes": 368,
+      "sha256": "2b52f916f2583891015e8a48b5e8db2082214ae0c36efa063a9150946e77721a"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/preset/tiny.d.ts",
+      "bytes": 367,
+      "sha256": "36e041452941f12f8ecffe1e3c878d0779c5e9588a9b4117cd6223319bbd4e8b"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/request/constants.d.ts",
+      "bytes": 103,
+      "sha256": "2105b94251053ac7f09cf04580e184faa248429b73f177f304f692899a940c84"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/request.d.ts",
+      "bytes": 9264,
+      "sha256": "1249777837dd0a8a76970f5336cc20a508770a1e73a7c07707a6484cb2f28359"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/router/linear-router/index.d.ts",
+      "bytes": 68,
+      "sha256": "071aad45502889f75fe45f6fc8a9127315a15a1df3c053ac1e52d21916a02db9"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/router/linear-router/router.d.ts",
+      "bytes": 295,
+      "sha256": "f52bc15eb2acc71dd2b99cc109f42f828ba44f5a75340371d95ddcf7498cde18"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/router/pattern-router/index.d.ts",
+      "bytes": 70,
+      "sha256": "4e9f39cc48a52e0a7a46eff0fcc5a985a3be695be263f156f35ec982bc65e8f7"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/router/pattern-router/router.d.ts",
+      "bytes": 297,
+      "sha256": "3bae67f85178509b3bd9cd56faac00926067a1eace4a953d2f0d02664bf95757"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/router/reg-exp-router/index.d.ts",
+      "bytes": 227,
+      "sha256": "6e541f9423cc1b136c1bcdac75e3a43f755aba5ccdfaee464392ae456646afe7"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/router/reg-exp-router/matcher.d.ts",
+      "bytes": 509,
+      "sha256": "0fe1ed8c5b75d5aeaef9117b856894a228309d8643bb1c76407a88cec22e4ca4"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/router/reg-exp-router/node.d.ts",
+      "bytes": 554,
+      "sha256": "9a3e2bc09f71d01e5c73e4194f246628d501ad45fc80aa9eee373b6d28227a0f"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/router/reg-exp-router/prepared-router.d.ts",
+      "bytes": 823,
+      "sha256": "4ba1df5c3e7ce4a7acc4961a653f4aa0d05ae3284cd4e28c061a12ff6897e7ea"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/router/reg-exp-router/router.d.ts",
+      "bytes": 389,
+      "sha256": "686156bd7fdc58b4c5d07c7b634e0b2ea3bc78fc47e1cdb0759d6b512d9d5cbe"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/router/reg-exp-router/trie.d.ts",
+      "bytes": 335,
+      "sha256": "3d853b2920f42e41408409193b98afc7823f2bd47469ff7fbf81b50083c2901e"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/router/smart-router/index.d.ts",
+      "bytes": 66,
+      "sha256": "eddd35a67af1838b6aaaab6b5ca6914ed09a7ad4ce0c411008fb3c0f1e5fed97"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/router/smart-router/router.d.ts",
+      "bytes": 380,
+      "sha256": "9db80936212fbed6fc279cbdf0cfb94e649b5bf3da60eb8f51738ff31837abd9"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/router/trie-router/index.d.ts",
+      "bytes": 64,
+      "sha256": "98a2d316535753cbc0332139d9856aec2ab04ec1683fbd64842659057ac8cd99"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/router/trie-router/node.d.ts",
+      "bytes": 248,
+      "sha256": "2971312c801c981446c16a63c8d9660578e4bbf6ae863bc10ac6772e9df23408"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/router/trie-router/router.d.ts",
+      "bytes": 291,
+      "sha256": "58715c4b2e04dfe8971309e558008074bfda2df8a707654f4710ef558b8b09f0"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/router/utils.d.ts",
+      "bytes": 94,
+      "sha256": "cf830b8e6538acc3dafc0ac9819012750aef567c2b18dd9f2cf9af902d49149c"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/router.d.ts",
+      "bytes": 2787,
+      "sha256": "1ce58ec0ce67b21f4ec336751d0a0b2e8140e0affa0a3d164379bd7fdb7f9bc8"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/types.d.ts",
+      "bytes": 72248,
+      "sha256": "55f1e79132b033f4ca6c41d46fefe2728af7daf0c2b73c47ee8b861518b5153b"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/utils/accept.d.ts",
+      "bytes": 205,
+      "sha256": "815d08bf64cf477d0e19f3e4bfe04c3ad6f63f712f7e5eaaf701dd1d584247a0"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/utils/basic-auth.d.ts",
+      "bytes": 175,
+      "sha256": "6e509ee35c84d9e30810a224920f7286c90c66a589ea8652e37674cd087ae0e7"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/utils/body.d.ts",
+      "bytes": 2813,
+      "sha256": "1c8318d40ab6d75140cc5698d6bdc4b7744fd2adc237146234c034c4da00a4a5"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/utils/buffer.d.ts",
+      "bytes": 890,
+      "sha256": "cda7dd6156be6b3e6c167376887cdea194b604df82fef690b91ae456ee112696"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/utils/color.d.ts",
+      "bytes": 708,
+      "sha256": "067b1b8484bf46c7b3412a27e15fd8334d7df2b0b0014b6dc0188b2ab2777279"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/utils/compress.d.ts",
+      "bytes": 205,
+      "sha256": "e666561a6794f50f31495b7eb7ada15d54abbec9193f74c2f821001896ccbb84"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/utils/concurrent.d.ts",
+      "bytes": 272,
+      "sha256": "ac605aae991ecfd88a27128dd22df34b85ba5f450f7e50491181988a6030f2a3"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/utils/constants.d.ts",
+      "bytes": 162,
+      "sha256": "b764a7af68042c7b44f58eb170eb10208ff1638f407278756e3fed496f0f7360"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/utils/cookie.d.ts",
+      "bytes": 1543,
+      "sha256": "fe1220eaeef142a1bb3f248667c3592f85e14ab5361b3e087f243bd7db9ba4e3"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/utils/crypto.d.ts",
+      "bytes": 531,
+      "sha256": "5f5ab342c2202d0d4af1567ee3b0ab280c0cfb0a9758bac7b4880f2b8d54c1c3"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/utils/encode.d.ts",
+      "bytes": 380,
+      "sha256": "59d85f2247b867d1e670024d567b7cab2a7a2498e081360c6044f88ef45a2651"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/utils/filepath.d.ts",
+      "bytes": 406,
+      "sha256": "5e46e3cee74b1cfcdbfc09cfc0609c7db2ad63c5c4f07b4de04a287c1727dd71"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/utils/handler.d.ts",
+      "bytes": 224,
+      "sha256": "5a9157adaf70fe1036f45444692ba63496533846e7ea2ff64ba71324bf162889"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/utils/headers.d.ts",
+      "bytes": 6629,
+      "sha256": "6eea6cc08d101b84a7bb4da62ef6fba018ce012c593aa0aee696c0f6c1100db3"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/utils/html.d.ts",
+      "bytes": 1870,
+      "sha256": "21780d54dd79879e33ad827550b144989f40389e1e00c64593801e0149ec064c"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/utils/http-status.d.ts",
+      "bytes": 1434,
+      "sha256": "c110166f886b1c19477a6f59b723d8a48d20a98da3150ffe1c07c32650ec0750"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/utils/ipaddr.d.ts",
+      "bytes": 1836,
+      "sha256": "e8ac6d291fde78806f88baf3e7d897651f6b95fcc98fc393f9f16c15087d6967"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/utils/jwt/index.d.ts",
+      "bytes": 911,
+      "sha256": "77aec8fe3ea1adacefbeb25ee054f1e6cb207643a2b94f155fdb9ce84cb9cdc2"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/utils/jwt/jwa.d.ts",
+      "bytes": 684,
+      "sha256": "721ff7d27ddf7ae3352dbda7cd580d5d3542fad7ba26732f61e09dcdcfe80792"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/utils/jwt/jws.d.ts",
+      "bytes": 501,
+      "sha256": "5d930504be6c8847b39c244838ca29398f2f0e5eccd17f46219f8c66d87fae0a"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/utils/jwt/jwt.d.ts",
+      "bytes": 1590,
+      "sha256": "047994936ab230f8dce5864d31acf9a26a7b6f6f771b74d5313055565f702722"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/utils/jwt/types.d.ts",
+      "bytes": 2487,
+      "sha256": "e4edecded22abbe0aa0333df06714a228be15b8eda692c830faebc879f7c0379"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/utils/jwt/utf8.d.ts",
+      "bytes": 200,
+      "sha256": "5818b8ffe6f4750eac9edc98ab8efa99d4f10cbe53bcfa17669c82edf08414a9"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/utils/mime.d.ts",
+      "bytes": 2517,
+      "sha256": "3081cc93e03f3ee991e44b106a124f3dbe6cab242319ebbe3b3648ac82b1ba2b"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/utils/stream.d.ts",
+      "bytes": 862,
+      "sha256": "296409cd6bd20e6a18ccf2718c99769b7ee0a90c3c084ce5451e9e4009d4eca5"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/utils/types.d.ts",
+      "bytes": 3829,
+      "sha256": "2f0d7b357f7ec60afc012f4e3422460abecd57a56537c149218eb4bdb17c77b3"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/utils/url.d.ts",
+      "bytes": 2027,
+      "sha256": "e65bf247e12af82654acab7ebd06b7de8982d625fec226e43cbbd728263417cc"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/validator/index.d.ts",
+      "bytes": 168,
+      "sha256": "0017d93aa933a4e276720fb9e17e49a4288ab954d36a520d7283d9a1db48ad6a"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/validator/utils.d.ts",
+      "bytes": 1906,
+      "sha256": "1f0d7752ef3bccdd03c4cbdbb914ffbd8e2b6634d31d427ddb5b2cc2b57cd29d"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types/validator/validator.d.ts",
+      "bytes": 2249,
+      "sha256": "bf3bcfec74d36a703ea33e943523177eec2de05c47233a7b212cc64136e3f371"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/types.js",
+      "bytes": 94,
+      "sha256": "619377da140c8d689dcd6a993cae2290d4c9b21fe0cfb3d5206a7af76b033abf"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/utils/accept.js",
+      "bytes": 5095,
+      "sha256": "8a7b2b942e56fa9cda83588d741ba8e0e3099965cbad58f6efa150499e254033"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/utils/basic-auth.js",
+      "bytes": 613,
+      "sha256": "8e86558bea5f4336bbea28114a750c686f704457aea8a1684efc2b34a82a720d"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/utils/body.js",
+      "bytes": 3722,
+      "sha256": "6e41a63e30a29a0158a2016aecc7b5c68c7a465c20d08868262cc8a3e21e74e4"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/utils/buffer.js",
+      "bytes": 1958,
+      "sha256": "f72bd9c18c958eeccf72fd658de570a2471942a1a93da2f60930f46b8beb3bae"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/utils/color.js",
+      "bytes": 1166,
+      "sha256": "0db35994db8e2830b3de5660e2f98df439b1dcc32ea0207e9f306d58de749c2f"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/utils/compress.js",
+      "bytes": 873,
+      "sha256": "0fd4e822b7322591da6f437fd41379e554cc0bba83440885daaf0c64ba6c296d"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/utils/concurrent.js",
+      "bytes": 813,
+      "sha256": "683be95e4689e958a90e1f4a5ebc82e74098df7a24087e4930c1c737fcd5c92a"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/utils/constants.js",
+      "bytes": 173,
+      "sha256": "9252298eac70224f65a052b98eab0f81460e9eb1d835bbd652faa762fcf4131a"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/utils/cookie.js",
+      "bytes": 5356,
+      "sha256": "a3794b506645c5b004d78f730ded447100e2d128b759ebc307bc0ccdb59f54ef"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/utils/crypto.js",
+      "bytes": 928,
+      "sha256": "cd2ad39f936ad472b583e248d218ea0fbc0d10678feb629571421bd38c05734b"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/utils/encode.js",
+      "bytes": 901,
+      "sha256": "39db4c67891401c8839439cc98b1c7ae421a3269c4b71c0cf7180234260abb71"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/utils/filepath.js",
+      "bytes": 958,
+      "sha256": "5d3f7489ddfe90f3d1e9a3f08e5ae22ec263d40918267109b46b03916bc66c34"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/utils/handler.js",
+      "bytes": 369,
+      "sha256": "d6561d12f6a7d21dbb07caa3d1ceca2388c7458eb24fd6a0547633d93fb89ac3"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/utils/headers.js",
+      "bytes": 11,
+      "sha256": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/utils/html.js",
+      "bytes": 2761,
+      "sha256": "fa086b8a756ce3aca5d58dd6d462f3a8cf75fa46c52b78681b792de5d19c4c03"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/utils/http-status.js",
+      "bytes": 11,
+      "sha256": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/utils/ipaddr.js",
+      "bytes": 8080,
+      "sha256": "d4cf46fde348dd73586ba4e0b1e1170f32ab4c5f670e9a64e2ab722f390c2e58"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/utils/jwt/index.js",
+      "bytes": 217,
+      "sha256": "387338c6078cfc93262b01ce15726b8eab338cf067358630c9e5aabeff895d54"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/utils/jwt/jwa.js",
+      "bytes": 727,
+      "sha256": "f0349ddff0ae2dec7d8412cc00359d2f110d05bc62943e302cb2673022618610"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/utils/jwt/jws.js",
+      "bytes": 4384,
+      "sha256": "8ee987b6ff79bf97333b4407425e9926fe6dbc2175f368b28af356ecc8f6b28b"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/utils/jwt/jwt.js",
+      "bytes": 5983,
+      "sha256": "c97745e3263259bbc0b8e756cc53b97b8fdd1e92eb273da0f6b38b9337af2690"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/utils/jwt/types.js",
+      "bytes": 3687,
+      "sha256": "268bed3570fed9b17acdf657321d65e41cfcd7419ed903cabe71762281130428"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/utils/jwt/utf8.js",
+      "bytes": 217,
+      "sha256": "87dc2c8ffef4e648d83b1d39262610ff972ddf3a3ceefcd97f0b556586406832"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/utils/mime.js",
+      "bytes": 2035,
+      "sha256": "28ca5e0b5f8c372996f98b4c4ccf2381e28c445b471ff45ba60a2a21d6b48d56"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/utils/stream.js",
+      "bytes": 1839,
+      "sha256": "a7599a03863853e3b2c1cbd6c6cb5e194ebcaa7463d51f467387c3822ce51813"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/utils/types.js",
+      "bytes": 11,
+      "sha256": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/utils/url.js",
+      "bytes": 7001,
+      "sha256": "2bac19f291e7b82961f1e8c643b1fa2a9c4a45085aba9a24f46c12e88ed4e873"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/validator/index.js",
+      "bytes": 66,
+      "sha256": "05426feb4e961243c849df152a018837f84797172b2a9fca6f94d4cd39e58b84"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/validator/utils.js",
+      "bytes": 11,
+      "sha256": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/dist/validator/validator.js",
+      "bytes": 2321,
+      "sha256": "baa0dc87b51af8d3c7a34a246a68068d19e58ec6f5695823e3b621114e5b7fe0"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/LICENSE",
+      "bytes": 1101,
+      "sha256": "a6ab98e5c77b9070c443eaff2ff81034a6f8cc05a7524d5098eb0f24defa0115"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/package.json",
+      "bytes": 23931,
+      "sha256": "169a02072e32d85aacb089ad14b62b027d975479d811f741771fbd0f559fb5c9"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/hono/README.md",
+      "bytes": 3775,
+      "sha256": "53e88df17f954357adb06113cf996e30cd7ce51da38269a68f7108321b472999"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/ws/browser.js",
+      "bytes": 176,
+      "sha256": "010da44addea1d88b2b732540c3f1fd0cbcb28926b96623d4c64222e0ead2d0e"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/ws/index.js",
+      "bytes": 796,
+      "sha256": "924564d5be26d59b9682c4263f68320e48dde7240bd2d1ad17ec305537429dd2"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/ws/lib/buffer-util.js",
+      "bytes": 3056,
+      "sha256": "8b0a45739132f82e25ea13163780abf547ccfe989267f3eb7abb475beec92da3"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/ws/lib/constants.js",
+      "bytes": 503,
+      "sha256": "391e823142b8b370e55a2fd32b022deaf03b8415c56000009674ebc86a0b4f86"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/ws/lib/event-target.js",
+      "bytes": 7321,
+      "sha256": "c45d3c6e12d170c860c0c3f1a050aa0f864d9806632b609a1e607d675aba128c"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/ws/lib/extension.js",
+      "bytes": 6183,
+      "sha256": "852564f0f6b460287043803eae732666fb5610f676874354fc89f06aa4e986ed"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/ws/lib/limiter.js",
+      "bytes": 1034,
+      "sha256": "e0469d4b83f6ba764b15f80e1766b75c136fbff68f048f4c050f0b1c7f065f69"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/ws/lib/permessage-deflate.js",
+      "bytes": 14532,
+      "sha256": "02c31796f0132a335d4efe7b7adcebadbb69543a1ce65ae04aaccc3530e27ab9"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/ws/lib/receiver.js",
+      "bytes": 17802,
+      "sha256": "4879edbf8e48d04d09783cf9c04b5e25f5a448247bb01279438ded2899747220"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/ws/lib/sender.js",
+      "bytes": 16886,
+      "sha256": "d0791d30c3defd44dcabbddb879a901c757993fea2c00a7ffea01d53b23b4b77"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/ws/lib/stream.js",
+      "bytes": 4204,
+      "sha256": "a56fcb6e2b152097ee820b6f5410b1f71e59819b45d08d9f8bda588fe39070ec"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/ws/lib/subprotocol.js",
+      "bytes": 1498,
+      "sha256": "be3f6323d6f549568577dcba9004c1479d95c65a7abb0fe0c582875b9fac0b7c"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/ws/lib/validation.js",
+      "bytes": 3903,
+      "sha256": "41ce8e83d0d434132e1704895fedb91f6703a701b42d91c80954ab29b2845593"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/ws/lib/websocket-server.js",
+      "bytes": 17026,
+      "sha256": "29029a4d346800c792300df153df2007e9805d9d7b67b0883f9730b64f25b1c8"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/ws/lib/websocket.js",
+      "bytes": 37371,
+      "sha256": "48fdb0f54c1f8ce580d3cfa2908fe7d96fe18f06f9d82306950441cb09b5db26"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/ws/LICENSE",
+      "bytes": 1183,
+      "sha256": "2b29dcfe0d6471f7e8c92c5fb38c9f93edee10330937055440192f1832b1ecef"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/ws/package.json",
+      "bytes": 1753,
+      "sha256": "584ce6e7516587ba249dc910b0c04e2753f6b3f451fc3a5bc324f7735bdacc71"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/ws/README.md",
+      "bytes": 15854,
+      "sha256": "9aa0c4310b6076755b286801176131ddf17768adee5d7d20c71501b6933d13d3"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/node_modules/ws/wrapper.mjs",
+      "bytes": 554,
+      "sha256": "fe154662301fd558f935f9c217fccbe7a7dac02ff39e648a000589403ff27c7f"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/package.json",
+      "bytes": 75,
+      "sha256": "f9ee2a9e7faa64c5f53c240de9c3f6ea98d691d37af8a516142bdb630261a77c"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/runtime/LICENSE.txt",
+      "bytes": 157609,
+      "sha256": "5888dbb9a1d2b18f2c3e6c5f6af1b39de658372b402a0577b002777f14c62ace"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/runtime/node.exe",
+      "bytes": 93713712,
+      "sha256": "6416a2fc6ccaf41d71fc50e3c0ff9074c633249e3c74564d55cd0a5c25b61ecb"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/start.mjs",
+      "bytes": 1065,
+      "sha256": "b931986185e82fe9e89f8e068594d4013defe3c0537c8b1e9716ed1fa7fb371b"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/使用说明.txt",
+      "bytes": 308,
+      "sha256": "927b9e5bbb15d326b57f7e60c4fd98f0fe6b010a10796b21fa8a04a6b041d705"
+    },
+    {
+      "path": "07_可运行App/Windows启动包/启动AIDesk.cmd",
+      "bytes": 65,
+      "sha256": "2ef75be1ab7f0836c6b08744612f6cdef65588c3964f09195ae1ae3539668060"
+    },
+    {
+      "path": "07_可运行App/源码清单.json",
+      "bytes": 43767,
+      "sha256": "e3a9d735c05c8939fac4d13ad5ee6488b82037459c6ce53e905d5115a8a3e5ae"
+    },
+    {
+      "path": "07_可运行App/签名证书配置说明.md",
+      "bytes": 1039,
+      "sha256": "c054ccbef5ff6d7e6e5e4363bb652992710f7735d5cabe518fc85b3cbcf553e1"
+    },
+    {
+      "path": "08_测试报告/README.md",
+      "bytes": 2944,
+      "sha256": "5414e73fa3351b6033b8c629b6f5ff7381814d29ef48e05b7c43322b57188b38"
+    },
+    {
+      "path": "08_测试报告/REVIEW.md",
+      "bytes": 861,
+      "sha256": "855a60f0d81b5fc6d626df79c63923769e9246f8ec872c12cf973a9805cab420"
+    },
+    {
+      "path": "08_测试报告/test-results.json",
+      "bytes": 32632,
+      "sha256": "31ed8cebe19ebe433e970c3f2958bd96c1ff0bb0a8f1fdf7a3ecad27d80012f7"
+    },
+    {
+      "path": "08_测试报告/tests/agent.test.ts",
+      "bytes": 10682,
+      "sha256": "2280b99eb4336f133811618dba75c1d9fb84a6cfdaefdce124ad98a450f04c75"
+    },
+    {
+      "path": "08_测试报告/tests/device.test.ts",
+      "bytes": 6858,
+      "sha256": "bd8fb4ec620d0bf913ee89478fe971ed155a23fa831ab7c96a4138f0f780c8f6"
+    },
+    {
+      "path": "08_测试报告/tests/generation.test.ts",
+      "bytes": 7101,
+      "sha256": "7a0719651348f44bccc2f9179044595095fe89cff7573f643e64d8f851b3a97b"
+    },
+    {
+      "path": "08_测试报告/tests/integration.test.ts",
+      "bytes": 3113,
+      "sha256": "990389fc2ba5769501abfed53ab0a635c0ae64508c1b3b8e1b06918dbea94b06"
+    },
+    {
+      "path": "08_测试报告/tests/meeting.test.ts",
+      "bytes": 7782,
+      "sha256": "2e75eb97216631988be271ee46fa31161f82ff324a35321bda7e8689e6d188c4"
+    },
+    {
+      "path": "08_测试报告/tests/migrations.ts",
+      "bytes": 712,
+      "sha256": "d9a3e0630a8d4b8ddd41b554179f52cb4864e357bb48c6c4218813a0654df736"
+    },
+    {
+      "path": "08_测试报告/tests/provider.test.ts",
+      "bytes": 1836,
+      "sha256": "fb888ae1920fec19c4d43eaa389e1fee69f12815cc566f8a3cca5b81a3c261d3"
+    },
+    {
+      "path": "08_测试报告/tests/rewind.test.ts",
+      "bytes": 5167,
+      "sha256": "c37a1a607eccddb838e316921458aee9d265211effafa54e93e83fc6c34b6498"
+    },
+    {
+      "path": "08_测试报告/tests/security.test.ts",
+      "bytes": 1392,
+      "sha256": "6b8ca62488d5038b90576d75a43fa8afae6597852447948172449bc1599c71be"
+    },
+    {
+      "path": "08_测试报告/tests/trust.test.ts",
+      "bytes": 5079,
+      "sha256": "c97700af4c3dc452f57aad35d5f31d0ba2d3bde6a193d64735838258d63f390c"
+    },
+    {
+      "path": "08_测试报告/tests/voice-frames.test.ts",
+      "bytes": 6859,
+      "sha256": "5fcea99b55fddac7e9f1c85f1b875d7aeab5429e6e93e1c9918beb07008c8871"
+    },
+    {
+      "path": "08_测试报告/tests/voice-turn.test.ts",
+      "bytes": 28212,
+      "sha256": "0320b092c87c6497df073c00dcf152354549c7c1fc32270ee511b4945f9819a0"
+    },
+    {
+      "path": "08_测试报告/交付文件检查记录.md",
+      "bytes": 1059,
+      "sha256": "fe46d359747c74c357fb733d0a11625461a77ca39b661c8b4b3f31b01930914a"
+    },
+    {
+      "path": "09_上架材料包/上架材料清单与缺口.md",
+      "bytes": 889,
+      "sha256": "47c03a3d505dd6e265ac5e8375f66912e32867fa87e646eac317f77b11059b9a"
+    },
+    {
+      "path": "09_上架材料包/后端与云同步方案.md",
+      "bytes": 1108,
+      "sha256": "50fe031329e881b5978a423dfc1a264c64b07ae1a94c30e305683477a84473bc"
+    },
+    {
+      "path": "09_上架材料包/应用图标-background.png",
+      "bytes": 1807,
+      "sha256": "a69d317f18690734cc3007f57331f0cb280c920a48987b6d3aa2f7ea9da5f4cd"
+    },
+    {
+      "path": "09_上架材料包/应用图标-foreground.png",
+      "bytes": 1821,
+      "sha256": "edfd03c35806cf78b62d75e6bf224a2ea5cd065aebe861df5c954045f32bffdd"
+    },
+    {
+      "path": "09_上架材料包/应用图标.png",
+      "bytes": 20753,
+      "sha256": "8cfd85675b4e71bc13015f779df8581653993731e6f40750e44843129ea7d421"
+    },
+    {
+      "path": "09_上架材料包/应用描述.md",
+      "bytes": 1051,
+      "sha256": "6ee75a07011f1849845c3468a593ad30e09bc2e6b611039a564f00f9a321814f"
+    },
+    {
+      "path": "09_上架材料包/界面截图/01-登录.png",
+      "bytes": 57619,
+      "sha256": "12dddc8cfe70cf514aecc93a4bc106557f26d9a35c2b9f1b6591ce122776b450"
+    },
+    {
+      "path": "09_上架材料包/界面截图/02-对话工作台-演示数据.png",
+      "bytes": 66615,
+      "sha256": "df40d2ef7c0316db6c8774c2276aa7a89fb55184d08092dc7cbc6ad7be624595"
+    },
+    {
+      "path": "09_上架材料包/界面截图/03-模型管理.png",
+      "bytes": 51043,
+      "sha256": "6d6aa7245c2ddb002af80f4d135fdf2b97a9812dd529c8977493086d1c9fbc61"
+    },
+    {
+      "path": "09_上架材料包/界面截图/04-角色设定.png",
+      "bytes": 46917,
+      "sha256": "d483e4f63d8a6f10a6f631877671a6668e4a46e7fc3642d1081ea3c8daed1eb2"
+    },
+    {
+      "path": "09_上架材料包/界面截图/05-设备管理-模拟设备.png",
+      "bytes": 55244,
+      "sha256": "fc4c6e637a219fd12c29fc30aa8335ae3464c8062984d09978bdd0d8cb77ec1f"
+    },
+    {
+      "path": "09_上架材料包/界面截图/06-会议纪要-演示数据.png",
+      "bytes": 96879,
+      "sha256": "a27524f246551d2b0454dbd7c13df6950bbbb4131f55fca33ee767211b45bfae"
+    },
+    {
+      "path": "09_上架材料包/界面截图/07-语音设置.png",
+      "bytes": 68960,
+      "sha256": "28c67b790a64c1fda1cc91ef5bf43c1902ccb47b09b5db0c4446af65f583e5a5"
+    },
+    {
+      "path": "09_上架材料包/界面截图/08-Agent动态-测试提醒.png",
+      "bytes": 95310,
+      "sha256": "59e75dd4a1f5324836839a0390534aff3427ffd23fe99cff84a0035ad8b0425a"
+    },
+    {
+      "path": "09_上架材料包/界面截图/09-移动端对话-演示数据.png",
+      "bytes": 42574,
+      "sha256": "e6049c028f8ad7716796c7b220745b1b50a38243f60967b974b484e23858b14c"
+    },
+    {
+      "path": "09_上架材料包/隐私政策.md",
+      "bytes": 2697,
+      "sha256": "5c52f659c07491a2d883782952c5b8b308ffa26c35e3484906a88ead70d93977"
+    },
+    {
+      "path": "10_总结报告/总结报告.md",
+      "bytes": 2551,
+      "sha256": "c3a3fa5ed5ee8bd4dabc4f72b8e81708889cbf218e30f0f87407b8669b11d767"
+    },
+    {
+      "path": "11_答辩PPT与演示视频/AIDesk开题答辩PPT-5页.pptx",
+      "bytes": 105010,
+      "sha256": "218b2700272c2e87d02bc667d40fdcb2a764145999dbf5512112542c15b59663"
+    },
+    {
+      "path": "11_答辩PPT与演示视频/演示脚本与说明.md",
+      "bytes": 1310,
+      "sha256": "99f9da8dd7d77e2c54024ef30456bc9929f4714f9f4cfb9998ddde0d8bde82fc"
+    },
+    {
+      "path": "12_开题报告初稿/图1-系统功能结构图.png",
+      "bytes": 75944,
+      "sha256": "281918ff5ff8e7defb2f43dc32efa8da6d0418f4ba877e487eb0921b4f83b2df"
+    },
+    {
+      "path": "12_开题报告初稿/图2-系统架构图.png",
+      "bytes": 94556,
+      "sha256": "caac827a3605e4b4cdfc0047945539e85aaad42e33e1f157aee1343000577fd1"
+    },
+    {
+      "path": "12_开题报告初稿/毕业设计开题报告-AIDesk.docx",
+      "bytes": 83073,
+      "sha256": "4607c91c54e66c27bd4092313da583f961a64c4c873cdd34f15c424a62b8e5f9"
+    },
+    {
+      "path": "13_简历项目素材/应用图标-background.png",
+      "bytes": 1807,
+      "sha256": "a69d317f18690734cc3007f57331f0cb280c920a48987b6d3aa2f7ea9da5f4cd"
+    },
+    {
+      "path": "13_简历项目素材/应用图标-foreground.png",
+      "bytes": 1821,
+      "sha256": "edfd03c35806cf78b62d75e6bf224a2ea5cd065aebe861df5c954045f32bffdd"
+    },
+    {
+      "path": "13_简历项目素材/界面截图/01-登录.png",
+      "bytes": 57619,
+      "sha256": "12dddc8cfe70cf514aecc93a4bc106557f26d9a35c2b9f1b6591ce122776b450"
+    },
+    {
+      "path": "13_简历项目素材/界面截图/02-对话工作台-演示数据.png",
+      "bytes": 66615,
+      "sha256": "df40d2ef7c0316db6c8774c2276aa7a89fb55184d08092dc7cbc6ad7be624595"
+    },
+    {
+      "path": "13_简历项目素材/界面截图/03-模型管理.png",
+      "bytes": 51043,
+      "sha256": "6d6aa7245c2ddb002af80f4d135fdf2b97a9812dd529c8977493086d1c9fbc61"
+    },
+    {
+      "path": "13_简历项目素材/界面截图/04-角色设定.png",
+      "bytes": 46917,
+      "sha256": "d483e4f63d8a6f10a6f631877671a6668e4a46e7fc3642d1081ea3c8daed1eb2"
+    },
+    {
+      "path": "13_简历项目素材/界面截图/05-设备管理-模拟设备.png",
+      "bytes": 55244,
+      "sha256": "fc4c6e637a219fd12c29fc30aa8335ae3464c8062984d09978bdd0d8cb77ec1f"
+    },
+    {
+      "path": "13_简历项目素材/界面截图/06-会议纪要-演示数据.png",
+      "bytes": 96879,
+      "sha256": "a27524f246551d2b0454dbd7c13df6950bbbb4131f55fca33ee767211b45bfae"
+    },
+    {
+      "path": "13_简历项目素材/界面截图/07-语音设置.png",
+      "bytes": 68960,
+      "sha256": "28c67b790a64c1fda1cc91ef5bf43c1902ccb47b09b5db0c4446af65f583e5a5"
+    },
+    {
+      "path": "13_简历项目素材/界面截图/08-Agent动态-测试提醒.png",
+      "bytes": 95310,
+      "sha256": "59e75dd4a1f5324836839a0390534aff3427ffd23fe99cff84a0035ad8b0425a"
+    },
+    {
+      "path": "13_简历项目素材/界面截图/09-移动端对话-演示数据.png",
+      "bytes": 42574,
+      "sha256": "e6049c028f8ad7716796c7b220745b1b50a38243f60967b974b484e23858b14c"
+    },
+    {
+      "path": "13_简历项目素材/简历项目素材.md",
+      "bytes": 2972,
+      "sha256": "02b9ea0eebf1740701c25f09e7cf18993144063ce9fc4e9681952929b1133a25"
+    },
+    {
+      "path": "13_简历项目素材/项目图标.png",
+      "bytes": 20753,
+      "sha256": "8cfd85675b4e71bc13015f779df8581653993731e6f40750e44843129ea7d421"
+    },
+    {
+      "path": "README.md",
+      "bytes": 3430,
+      "sha256": "f287a85ea47c4c35a7ee8f454eaee40129896d9a1132fc3a5c7e67a60beebdb1"
+    },
+    {
+      "path": "打开成果包.html",
+      "bytes": 3866,
+      "sha256": "e5bd58c8518e0547b9fed0f282e145db525a66feb1dd1f1f05ae1ed1ebfe4554"
+    }
+  ]
+}

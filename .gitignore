@@ -44,3 +44,9 @@ Android/*.iml
 
 # ---- 微信开发者工具的本地私有配置（含本机路径/个人设置，只应留在本机）----
 MiniProgram/**/project.private.config.json
+
+# ---- T045：成果包私有检查材料与本地大型交付，不进公开仓库 ----
+/.deliverable-build/
+/output/AIDesk项目成果包.zip
+/output/AIDesk项目成果包/07_可运行App/*.zip
+/output/AIDesk项目成果包/07_可运行App/Windows启动包/
