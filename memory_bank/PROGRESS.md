@@ -658,3 +658,8 @@ T001–T017 与 T009 已完成（依据见各任务条目）。**T018 语音对�
 ## T047 PostgreSQL 持久化验收完成（2026-10-27）
 
 T047 验收完成：版本030首次切换PG，031再次无种子发布后状态normal、FlowRatio=100、IsReleasing=false。health=200、未登录=401、注册=201、重复用户名=409；模型HTTP写入可从PG读回；031中新实例登录、旧会话和模型标记均保留。原账号models1/roles2/devices2/conversations11读取正常，模型/语音凭据可由原密钥解密。临时会话和隔离测试账号已清理。用户可以恢复使用。
+
+
+## T048 GitHub依赖审计修复（2026-10-27）
+
+T048：复现GitHub中Wrangler→Miniflare→Undici漏洞链，在已提交源码的隔离副本执行 npm audit fix --package-lock-only --ignore-scripts；仅合入此依赖链的锁文件增量，保留桌面端等未提交依赖改动。全新 npm ci、typecheck、Web/Node build、本地D1迁移及100/100测试通过，npm audit --audit-level=high=0漏洞。未降低安全阈值、未添加强制override、未重发云托管。

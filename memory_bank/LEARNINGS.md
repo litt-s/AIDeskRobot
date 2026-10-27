@@ -525,3 +525,8 @@ Electron 39 二进制、7zip、NSIS 缓存都在时，`electron-builder --win --
 ## T047 PostgreSQL 持久化验收完成（2026-10-27）
 
 T047 实证：序列 setval 需要 UPDATE 权限，仅 USAGE/SELECT 会403，导入batch因此完整回滚；JSON行聚合的CTE名 result 会与 device_commands.result 同名列冲突，应使用无冲突别名；CloudBase唯一约束错误码为 DATABASE_23505，需映射到既有409契约；tcb api --json 可在JSON前打印信息行，退出码0但解析失败时先查配置，不能盲目重试。CLI --force仍询问灰度选项，实际发布须在交互终端选择No并确认新版本流量。
+
+
+## T048 GitHub依赖审计修复（2026-10-27）
+
+npm ci 严格使用锁文件，package.json允许的新版本不会自动修复CI。此次通过更新Wrangler/Miniflare的兼容修复版本引入Undici 7.30.1；保留audit安全门槛。在有未提交依赖的工作区中，应从HEAD隔离安装验证，只合入相关锁文件增量，避免混入Electron等无关改动。
