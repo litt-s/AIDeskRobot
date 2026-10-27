@@ -50,3 +50,8 @@ migrations 现为 0001_initial、0002_limits、0003_generations、0004_devices�
 - **打包**：`asar:false`，files 只带 `desktop/main.cjs`／`dist`／`dist-server`／`migrations`／`package.json`／`assets/icons/windows/aidesk-icon.ico`，产物 `desktop/release/win-unpacked/AIDesk.exe`。`portable` 单文件目标在当前网络会卡在下载 `winCodeSign`，暂不作为默认产物。
 - **约束**：不动 `Android`／`MiniProgram`／`Design`，不改 `robot_audio`／`robot_wakeup`。
 同源判定（`server/origins.ts`）在形态 B 下要额外容忍"同主机不同协议"：容器平台把 TLS 终止在网关，应用只看到 `http://`，而浏览器 `Origin` 是 `https://`（详因与实测见 LEARNINGS）。
+
+
+## T047 PostgreSQL 持久化准备（2026-10-27）
+
+用户授权并确认立即切换。现有 CloudBase 上海环境已开通共享 PostgreSQL；已新增 aidesk 独立 schema 和仅供 service_role 调用的 HTTPS 事务函数，15 张原有业务表逐字段校验一致。保留原账户、设备码哈希和凭据密文，沿用原 ENCRYPTION_KEY。npm run check：105/105 测试、类型检查、Web/Node 构建通过；发布与重启持久化验收尚待完成。详见 docs/数据库持久化迁移.md。自动拉库任务保持禁用。

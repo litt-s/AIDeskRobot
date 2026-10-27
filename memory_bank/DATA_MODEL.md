@@ -21,3 +21,7 @@ users(id,username,password_hash,salt)；sessions(token_hash,user_id,expires_at)�
 
 ## Android 客户端数据（T036）
 不新增服务端表和字段。Android 本地只持久化两类轻量状态：SharedPreferences 的 `server_url` 与 WebView Cookie/LocalStorage；控制台业务数据仍完全归服务端用户隔离数据模型所有。
+
+## T047 PostgreSQL 持久化准备（2026-10-27）
+
+用户授权并确认立即切换。现有 CloudBase 上海环境已开通共享 PostgreSQL；已新增 aidesk 独立 schema 和仅供 service_role 调用的 HTTPS 事务函数，15 张原有业务表逐字段校验一致。保留原账户、设备码哈希和凭据密文，沿用原 ENCRYPTION_KEY。npm run check：105/105 测试、类型检查、Web/Node 构建通过；发布与重启持久化验收尚待完成。详见 docs/数据库持久化迁移.md。自动拉库任务保持禁用。

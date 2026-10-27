@@ -49,3 +49,7 @@ production 未配置密钥时拒绝服务。开发密钥仅示例或 gitignored 
 `desktop/main.cjs` 是 Windows Electron 壳：`contextIsolation:true`、`sandbox:true`、`nodeIntegration:false`，不做业务计算，只负责单实例、窗口、安全导航、本机 Node 子进程生命周期和远端/本机双模。本机模式用 `ELECTRON_RUN_AS_NODE=1` 启动 `dist-server/index.mjs`，因此复用 T034 的 Node 容器代码路径（同一套 `node:sqlite` 包装、`ws` ASR、静态资源 SPA 回落、迁移与播种逻辑）；窗口同源加载 `http://127.0.0.1:<PORT>`。远端模式置 `AIDESK_SERVER_URL` 后直接加载既有 URL，与浏览器打开同一地址等价。
 
 PC 端把数据库与 AES-GCM 密钥放在 `%APPDATA%\aidesk-console\`：SQLite 文件是本机数据卷，`encryption.key` 首次启动生成 32 字节 base64 后存盘并 `chmod 600`。设备协议仍走 `server/device-routes.ts`，机器人可指向 `http://<PC-IP>:<PORT>`；`server/` 没有任何业务副本。窗口只允许同源内部导航，外部链接交给系统浏览器。
+
+## T047 PostgreSQL 持久化准备（2026-10-27）
+
+用户授权并确认立即切换。现有 CloudBase 上海环境已开通共享 PostgreSQL；已新增 aidesk 独立 schema 和仅供 service_role 调用的 HTTPS 事务函数，15 张原有业务表逐字段校验一致。保留原账户、设备码哈希和凭据密文，沿用原 ENCRYPTION_KEY。npm run check：105/105 测试、类型检查、Web/Node 构建通过；发布与重启持久化验收尚待完成。详见 docs/数据库持久化迁移.md。自动拉库任务保持禁用。

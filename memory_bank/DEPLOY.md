@@ -472,3 +472,8 @@ node scripts/deploy-cloudbase.mjs --no-pull  # 跳过拉取（不想让线上数
 | **不带 `Content-Type`、无 body** | **400 请求必须使用 JSON** | **404** | ← 就是它 ✓ |
 | 带 `Content-Type` + `{}` | 404 | 404 | 正常 |
 根因：**`wx.request` 在 `data` 为 `undefined` 时会把 `Content-Type` 一起丢掉**，而"测试模型"这类 POST 本身没有 body ⇒ 被"请求必须使用 JSON"拦成 400。修法（`server/index.ts`）：**只有真有 body（`Content-Length>0` 或 `Transfer-Encoding`）时才要求 `application/json`**；空 body 不带任何载荷，跨站表单那条风险不存在，大小上限检查保持不变。同时确认线上库里的模型 key 是好的（直连 DeepSeek 200，尾号 `a4ea`），与本 400 无关。
+
+
+## T047 PostgreSQL 持久化准备（2026-10-27）
+
+用户授权并确认立即切换。现有 CloudBase 上海环境已开通共享 PostgreSQL；已新增 aidesk 独立 schema 和仅供 service_role 调用的 HTTPS 事务函数，15 张原有业务表逐字段校验一致。保留原账户、设备码哈希和凭据密文，沿用原 ENCRYPTION_KEY。npm run check：105/105 测试、类型检查、Web/Node 构建通过；发布与重启持久化验收尚待完成。详见 docs/数据库持久化迁移.md。自动拉库任务保持禁用。

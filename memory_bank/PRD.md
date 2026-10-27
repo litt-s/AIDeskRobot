@@ -29,3 +29,7 @@ HttpOnly cookie、hashed session、CSRF origin、合理限流；HTTPS provider �
 
 ## Android 客户端（REQ12/AC12，2026-10-15 用户提出）
 REQ12 Android 端完全移植网页端能力：登录注册、模型、角色、流式聊天与暂停续写、撤销/重新生成、设备管理、语音设置共用同一套账户与数据。AC12 用户首次打开可选择 Cloudflare/腾讯 CloudBase/局域网控制台地址；Android 使用同源 Cookie 会话加载既有响应式控制台，登录状态持久、返回键符合网页导航语义、局域网 HTTP 可访问，桌面/平板/手机看到同一套工作台功能。
+
+## T047 PostgreSQL 持久化准备（2026-10-27）
+
+用户授权并确认立即切换。现有 CloudBase 上海环境已开通共享 PostgreSQL；已新增 aidesk 独立 schema 和仅供 service_role 调用的 HTTPS 事务函数，15 张原有业务表逐字段校验一致。保留原账户、设备码哈希和凭据密文，沿用原 ENCRYPTION_KEY。npm run check：105/105 测试、类型检查、Web/Node 构建通过；发布与重启持久化验收尚待完成。详见 docs/数据库持久化迁移.md。自动拉库任务保持禁用。

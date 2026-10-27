@@ -18,6 +18,7 @@ import {serve} from '@hono/node-server';
 import {app} from '../index';
 import {setTranscriber} from '../voice/volc';
 import {createD1} from './d1-sqlite';
+import {createPostgresD1} from './d1-postgres';
 import {transcribeViaWs} from './asr-ws';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -107,6 +108,12 @@ function applySeed(db: DatabaseSync, dbPath: string) {
 }
 
 function openDatabase() {
+  if (process.env.DATABASE_BACKEND === 'cloudbase-pg') {
+    const db = createPostgresD1({envId: process.env.CLOUDBASE_ENV_ID || '', apiKey: process.env.CLOUDBASE_DB_API_KEY || ''});
+    console.log('database backend: CloudBase PostgreSQL');
+    return db;
+  }
+  if (process.env.DATABASE_BACKEND && process.env.DATABASE_BACKEND !== 'sqlite') throw new Error('未知的数据库后端');
   const path = process.env.DB_PATH || join(process.cwd(), 'data', 'aidesk.sqlite');
   if (path !== ':memory:') mkdirSync(dirname(path), {recursive: true});
   const db = new DatabaseSync(path);
@@ -247,6 +254,10 @@ function snapshotResponse(request: Request): Response | null {
 }
 
 const env = buildEnv();
+if (process.env.DATABASE_BACKEND === 'cloudbase-pg') {
+  await env.DB.prepare('SELECT COUNT(*) AS n FROM users').first();
+  console.log('PostgreSQL readiness check passed');
+}
 /* 必须在处理第一个请求之前注入，之后 /api/device/voice 才走 Node 版识别。 */
 setTranscriber(transcribeViaWs);
 

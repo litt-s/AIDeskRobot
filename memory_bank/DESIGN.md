@@ -38,3 +38,8 @@ Android 不重画控制台，首屏使用与网页一致的浅色品牌基调：
 
 ## 侧栏导航：宽窄双标签（T040，2026-10-15）
 Android 端 WebView 默认窗口约 360~414 像素，原先“对话工作台”等四字中文在窄宽度下会按 2 字折行成 2×2。导航按钮在 React 端渲染两个 span（`.nav-long` 放全称、`.nav-short` 放两字短称），CSS 默认隐藏短称、在 `max-width:768px` 切换；按钮自身 `white-space:nowrap;min-width:0`，防止中文断字再换行。宽屏/平板仍显示完整标签，手机/小窗口显示干净的双字标签，无需 JS 屏幕宽度判定。
+
+
+## T047 PostgreSQL 持久化准备（2026-10-27）
+
+用户授权并确认立即切换。现有 CloudBase 上海环境已开通共享 PostgreSQL；已新增 aidesk 独立 schema 和仅供 service_role 调用的 HTTPS 事务函数，15 张原有业务表逐字段校验一致。保留原账户、设备码哈希和凭据密文，沿用原 ENCRYPTION_KEY。npm run check：105/105 测试、类型检查、Web/Node 构建通过；发布与重启持久化验收尚待完成。详见 docs/数据库持久化迁移.md。自动拉库任务保持禁用。
