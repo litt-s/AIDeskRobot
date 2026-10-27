@@ -2,7 +2,7 @@
 
 状态：已确认；更新2026-10-15。用户批准连续执行，一次完成一项后同步文档；2026-10-15 已明确授权 T036 新增 Android 端、T037 新增 PC 桌面端，Hardware/MiniProgram/Design 仍不改。
 
-当前任务：T037 PC 桌面端——**编码与本地构建验证完成**。`desktop/main.cjs` 作为 Windows 外壳启动同一份网页控制台与 Node 后端（Electron 39.8.10 + electron-builder 26.15.3，asar=false 适配子进程读 dist/migrations/dist-server），窗口可见、HTTP 200、API 401 均验证通过；用户桌面人工注册/聊天/设备页复验待做。T036 Android 端——**编码完成，GitHub Actions Android 构建通过**（Run #45 `38739826306`，`gradle assembleDebug` 与 APK 上传均 success）。实现为原生 WebView 控制台壳：完全加载网页端响应式 SPA，共用同源 Cookie、账户、模型、角色、聊天、设备与语音设置；首次启动可选择 Cloudflare/CloudBase/局域网地址。后续仅剩 Android 真机安装与登录验收未做。
+当前任务：T047 云端 PostgreSQL 持久化已完成并上线，031 无种子重发布验收通过；后续任务待用户指定。
 
 - T001 基础工程与记忆：已完成。九文档、协作规则、依赖锁、Wrangler/Vite配置、本地D1迁移通过；audit 0漏洞。
 - T002 认证：已完成。公开注册登录退出、PBKDF2、随机hashed session、origin、限流；隔离集成测试通过。
@@ -179,3 +179,8 @@
 ## T047 PostgreSQL 持久化准备（2026-10-27）
 
 用户授权并确认立即切换。现有 CloudBase 上海环境已开通共享 PostgreSQL；已新增 aidesk 独立 schema 和仅供 service_role 调用的 HTTPS 事务函数，15 张原有业务表逐字段校验一致。保留原账户、设备码哈希和凭据密文，沿用原 ENCRYPTION_KEY。npm run check：105/105 测试、类型检查、Web/Node 构建通过；发布与重启持久化验收尚待完成。详见 docs/数据库持久化迁移.md。自动拉库任务保持禁用。
+
+
+## T047 PostgreSQL 持久化验收完成（2026-10-27）
+
+✅ T047 云端数据持久化：现有 PostgreSQL 环境复用，15表原值导入并全字段校验，105/105 测试、类型检查与 Web/Node 构建通过；云托管030首次上线、031无种子重发布接管100%流量，账号/会话/新增模型保留，隔离测试数据已清理。原账号模型1、角色2、设备2、会话11读取正常。真模型推理、语音与客户端真机本次未复测。

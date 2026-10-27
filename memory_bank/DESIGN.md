@@ -43,3 +43,8 @@ Android 端 WebView 默认窗口约 360~414 像素，原先“对话工作台”
 ## T047 PostgreSQL 持久化准备（2026-10-27）
 
 用户授权并确认立即切换。现有 CloudBase 上海环境已开通共享 PostgreSQL；已新增 aidesk 独立 schema 和仅供 service_role 调用的 HTTPS 事务函数，15 张原有业务表逐字段校验一致。保留原账户、设备码哈希和凭据密文，沿用原 ENCRYPTION_KEY。npm run check：105/105 测试、类型检查、Web/Node 构建通过；发布与重启持久化验收尚待完成。详见 docs/数据库持久化迁移.md。自动拉库任务保持禁用。
+
+
+## T047 PostgreSQL 持久化验收完成（2026-10-27）
+
+本次不改用户页面和客户端交互。数据库控制台的数据编辑器需将 Schema 选择为 aidesk；public 仅暴露受服务端角色校验的 aidesk_query 事务函数，客户端不持有 API Key。

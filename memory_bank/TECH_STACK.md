@@ -55,3 +55,8 @@ migrations 现为 0001_initial、0002_limits、0003_generations、0004_devices�
 ## T047 PostgreSQL 持久化准备（2026-10-27）
 
 用户授权并确认立即切换。现有 CloudBase 上海环境已开通共享 PostgreSQL；已新增 aidesk 独立 schema 和仅供 service_role 调用的 HTTPS 事务函数，15 张原有业务表逐字段校验一致。保留原账户、设备码哈希和凭据密文，沿用原 ENCRYPTION_KEY。npm run check：105/105 测试、类型检查、Web/Node 构建通过；发布与重启持久化验收尚待完成。详见 docs/数据库持久化迁移.md。自动拉库任务保持禁用。
+
+
+## T047 PostgreSQL 持久化验收完成（2026-10-27）
+
+云端 Node 后端使用 CloudBase 共享 PostgreSQL（现有上海环境），通过原生 fetch 调用受保护的 PostgREST RPC；无新增运行时数据库依赖。@electric-sql/pglite 仅为本地 PostgreSQL 回归测试的开发依赖。D1 与本机 SQLite 路径保留。

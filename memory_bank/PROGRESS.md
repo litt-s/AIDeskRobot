@@ -653,3 +653,8 @@ T001–T017 与 T009 已完成（依据见各任务条目）。**T018 语音对�
 ## T047 PostgreSQL 持久化准备（2026-10-27）
 
 用户授权并确认立即切换。现有 CloudBase 上海环境已开通共享 PostgreSQL；已新增 aidesk 独立 schema 和仅供 service_role 调用的 HTTPS 事务函数，15 张原有业务表逐字段校验一致。保留原账户、设备码哈希和凭据密文，沿用原 ENCRYPTION_KEY。npm run check：105/105 测试、类型检查、Web/Node 构建通过；发布与重启持久化验收尚待完成。详见 docs/数据库持久化迁移.md。自动拉库任务保持禁用。
+
+
+## T047 PostgreSQL 持久化验收完成（2026-10-27）
+
+T047 验收完成：版本030首次切换PG，031再次无种子发布后状态normal、FlowRatio=100、IsReleasing=false。health=200、未登录=401、注册=201、重复用户名=409；模型HTTP写入可从PG读回；031中新实例登录、旧会话和模型标记均保留。原账号models1/roles2/devices2/conversations11读取正常，模型/语音凭据可由原密钥解密。临时会话和隔离测试账号已清理。用户可以恢复使用。

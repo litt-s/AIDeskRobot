@@ -53,3 +53,8 @@ PC 端把数据库与 AES-GCM 密钥放在 `%APPDATA%\aidesk-console\`：SQLite 
 ## T047 PostgreSQL 持久化准备（2026-10-27）
 
 用户授权并确认立即切换。现有 CloudBase 上海环境已开通共享 PostgreSQL；已新增 aidesk 独立 schema 和仅供 service_role 调用的 HTTPS 事务函数，15 张原有业务表逐字段校验一致。保留原账户、设备码哈希和凭据密文，沿用原 ENCRYPTION_KEY。npm run check：105/105 测试、类型检查、Web/Node 构建通过；发布与重启持久化验收尚待完成。详见 docs/数据库持久化迁移.md。自动拉库任务保持禁用。
+
+
+## T047 PostgreSQL 持久化验收完成（2026-10-27）
+
+客户端→既有 Node API 会话/设备鉴权与租户校验→服务端 API Key→HTTPS aidesk_query→私有 aidesk schema。batch 在一个数据库事务中执行，写请求不自动重试；函数 SECURITY INVOKER 且显式检查 auth.role()=service_role，anon/authenticated 无业务 schema 访问权限。PG 启动必须通过数据库就绪探针。

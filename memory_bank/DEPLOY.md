@@ -477,3 +477,8 @@ node scripts/deploy-cloudbase.mjs --no-pull  # 跳过拉取（不想让线上数
 ## T047 PostgreSQL 持久化准备（2026-10-27）
 
 用户授权并确认立即切换。现有 CloudBase 上海环境已开通共享 PostgreSQL；已新增 aidesk 独立 schema 和仅供 service_role 调用的 HTTPS 事务函数，15 张原有业务表逐字段校验一致。保留原账户、设备码哈希和凭据密文，沿用原 ENCRYPTION_KEY。npm run check：105/105 测试、类型检查、Web/Node 构建通过；发布与重启持久化验收尚待完成。详见 docs/数据库持久化迁移.md。自动拉库任务保持禁用。
+
+
+## T047 PostgreSQL 持久化验收完成（2026-10-27）
+
+T047已落地方案B（PostgreSQL）：云端发布统一 node scripts/deploy-cloudbase.mjs --postgres（需要自动确认时附 --force，灰度选No）。脚本仍从git archive HEAD打包，必须先提交；PG模式不拉SQLite、不生成或携带真实seed。服务端须设置 DATABASE_BACKEND=cloudbase-pg/CLOUDBASE_ENV_ID/CLOUDBASE_DB_API_KEY，并保留原ENCRYPTION_KEY；凭据只在服务端环境变量和忽略目录data/。当前031正常、100%流量，030→031已验证跨实例持久化。自动拉库保持禁用。回滚旧快照前必须处理PG切换后的新写入。详见docs/数据库持久化迁移.md。
